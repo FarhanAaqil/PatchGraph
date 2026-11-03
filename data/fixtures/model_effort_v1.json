@@ -1,0 +1,36 @@
+{
+  "model_name": "PatchGraph Model Two \u2014 Remediation Effort Estimator",
+  "model_version": "ridge-quantile-effort-v1",
+  "dataset_csv": "data/datasets/remediation_effort_dataset.csv",
+  "dataset_sha256": "de1c3ebc62e1ba2ec53f6bff5795ac2041a71761071782d8c9032651cb0da33e",
+  "train_rows": 280,
+  "test_rows": 120,
+  "feature_names": [
+    "is_patch",
+    "is_minor",
+    "is_major",
+    "affected_service_count",
+    "dependency_centrality",
+    "test_coverage",
+    "prior_upgrade_failure_rate"
+  ],
+  "weights": [
+    -2.118369,
+    1.840847,
+    7.74205,
+    1.958945,
+    2.672858,
+    -1.108446,
+    2.015882
+  ],
+  "bias": 5.994338,
+  "q10_residual_offset": -0.8106,
+  "q90_residual_offset": 0.8927,
+  "test_metrics": {
+    "mae_hours": 0.5386,
+    "median_ae_hours": 0.4231,
+    "interval_80pct_coverage": 0.75,
+    "fixed_jump_baseline_mae_hours": 5.4991
+  },
+  "bundle_sha256": "ee7141c5dbd93b00a33c1d7c152b8847fc99970ca5db961a5753aa0476de589b"
+}
