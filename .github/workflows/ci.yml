@@ -1,0 +1,37 @@
+name: PatchGraph CI
+
+on:
+  push:
+    branches: [main, master, "m1/**", "m2/**", "contract/**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend-and-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Lint and syntax check
+        run: |
+          python -m compileall backend tests scripts
+      - name: Run schema, contract, unit, and integration suite
+        run: PYTHONPATH=. python3 -m unittest discover -s tests -p "test_*.py" -v
+
+  frontend-and-types:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Verify frontend contract and route definitions
+        run: test -f frontend/src/api/generated.ts && test -f frontend/src/app/routes.tsx

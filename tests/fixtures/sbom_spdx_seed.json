@@ -1,0 +1,44 @@
+{
+  "spdxVersion": "SPDX-2.3",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "commerce-platform-spdx",
+  "documentNamespace": "https://patchgraph.local/spdx/commerce-platform-1.0.0",
+  "creationInfo": {
+    "created": "2026-11-01T00:00:00Z",
+    "creators": ["Tool: patchgraph-fixture-gen-1.0"]
+  },
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-Package-checkout-sdk",
+      "name": "checkout-sdk",
+      "versionInfo": "2.1.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/checkout-sdk@2.1.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-example-lib",
+      "name": "example-lib",
+      "versionInfo": "1.4.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/example-lib@1.4.0"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-Package-checkout-sdk",
+      "relatedSpdxElement": "SPDXRef-Package-example-lib",
+      "relationshipType": "DEPENDS_ON"
+    }
+  ]
+}

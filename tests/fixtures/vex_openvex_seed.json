@@ -1,0 +1,27 @@
+{
+  "@context": "https://openvex.dev/ns/v0.2.0",
+  "@id": "https://patchgraph.local/vex/seed-vex-01",
+  "author": "security-team@patchgraph.local",
+  "timestamp": "2026-11-01T00:00:00Z",
+  "version": 1,
+  "statements": [
+    {
+      "vulnerability": {
+        "name": "CVE-2026-1001"
+      },
+      "products": [
+        {
+          "@id": "pkg:pypi/example-lib@1.4.0",
+          "subcomponents": [
+            {
+              "@id": "service:analytics-worker"
+            }
+          ]
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "action_statement": "analytics-worker only invokes read-only schema helpers in example-lib; TLS token parser is never called."
+    }
+  ]
+}
