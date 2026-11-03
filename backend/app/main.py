@@ -1,6 +1,6 @@
 """FastAPI application entrypoint for PatchGraph.
 
-Wires request ID middleware, structured error handlers matching
+Wires request ID middleware, CORS middleware, structured error handlers matching
 `{code, message, field_errors, request_id}`, and the `/api/v1` router.
 """
 from __future__ import annotations
@@ -8,6 +8,7 @@ from __future__ import annotations
 import uuid
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from backend.app.api.routes import ContractError, router as api_v1_router
@@ -18,6 +19,14 @@ def create_app() -> FastAPI:
         title="PatchGraph API",
         version="1.0.0",
         description="Software Supply-Chain Intelligence System for Explainable, Constrained Remediation Planning",
+    )
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
     )
 
     @app.middleware("http")
