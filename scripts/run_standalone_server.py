@@ -7,6 +7,8 @@ Serves:
 """
 from __future__ import annotations
 
+import argparse
+import os
 import sys
 from pathlib import Path
 
@@ -39,4 +41,21 @@ async def serve_multipage_route(page_id: str) -> HTMLResponse:
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+
+    parser = argparse.ArgumentParser(description="PatchGraph Standalone Server")
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=int(os.environ.get("PORT", "5000")),
+        help="Port to run the standalone server on (default: 5000)",
+    )
+    parser.add_argument(
+        "--host",
+        type=str,
+        default=os.environ.get("HOST", "127.0.0.1"),
+        help="Host interface to bind to (default: 127.0.0.1)",
+    )
+    args = parser.parse_args()
+
+    print(f"Starting PatchGraph Standalone Server on http://{args.host}:{args.port}")
+    uvicorn.run(app, host=args.host, port=args.port)

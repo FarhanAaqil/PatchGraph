@@ -195,10 +195,10 @@
     "edges_generated": 530,
     "queries_executed": 15,
     "p50_ms": 0.2,
-    "p95_ms": 0.31,
+    "p95_ms": 0.24,
     "target_p95_ms": 2000.0,
     "passes_latency_target": true,
     "cycle_handled_safely": true
   },
-  "result_manifest_sha256": "23fb09597e5ce07b2a3ab2e4a4cdfd60a5810d69e1496c83a5dd024d122883fe"
+  "result_manifest_sha256": "57b4cfad44010f35c1d0681b96b4e94dee00c798d2685e88476fcaabd48555aa"
 }

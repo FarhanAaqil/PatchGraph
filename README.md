@@ -24,3 +24,4 @@ Security teams often triage CVEs by flat severity scores, overlooking deployment
 ## Author
 
 - **Farhan Aaqil** (@FarhanAaqil) — AI Engineer Intern & Final-Year B.Tech AI/ML
+
