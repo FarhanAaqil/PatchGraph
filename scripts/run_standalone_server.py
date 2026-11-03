@@ -1,9 +1,10 @@
 """Production Multi-Page & API Server Launcher (`scripts/run_standalone_server.py`).
 
 Serves:
-- All 12 `/api/v1/*` JSON contract endpoints
-- All 14 multi-page HTML routes at `/pages/<page_id>` (`dashboard`, `assets`, `dependency-graph`, etc.)
-- Root redirect/entrypoint at `/`
+- All `/api/v1/*` JSON contract endpoints
+- Top-level `/health` endpoint
+- Full React + Vite + Three.js single-page application from `frontend/dist`
+- Legacy HTML routes at `/pages/{page_id}`
 """
 from __future__ import annotations
 
@@ -17,15 +18,25 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from fastapi import HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from backend.app.main import app
 
+DIST_DIR = REPO_ROOT / "frontend" / "dist"
+ASSETS_DIR = DIST_DIR / "assets"
 PAGES_DIR = REPO_ROOT / "frontend" / "pages"
 PREVIEW_HTML_PATH = REPO_ROOT / "frontend" / "standalone_preview.html"
+
+# Mount static Vite assets if built
+if ASSETS_DIR.exists():
+    app.mount("/assets", StaticFiles(directory=str(ASSETS_DIR)), name="assets")
 
 
 @app.get("/", response_class=HTMLResponse)
 async def serve_root_app() -> HTMLResponse:
+    dist_index = DIST_DIR / "index.html"
+    if dist_index.exists():
+        return HTMLResponse(dist_index.read_text(encoding="utf-8"))
     if PREVIEW_HTML_PATH.exists():
         return HTMLResponse(PREVIEW_HTML_PATH.read_text(encoding="utf-8"))
     return HTMLResponse("<h1>PatchGraph v1.0 Running</h1>")
@@ -37,6 +48,17 @@ async def serve_multipage_route(page_id: str) -> HTMLResponse:
     if not target.exists():
         raise HTTPException(status_code=404, detail=f"Page '/pages/{page_id}' not found")
     return HTMLResponse(target.read_text(encoding="utf-8"))
+
+
+# Fallback SPA routing for client-side pages
+@app.get("/{full_path:path}", response_class=HTMLResponse)
+async def serve_spa_fallback(full_path: str) -> HTMLResponse:
+    if full_path.startswith("api/") or full_path.startswith("assets/") or full_path == "health":
+        raise HTTPException(status_code=404, detail="Not Found")
+    dist_index = DIST_DIR / "index.html"
+    if dist_index.exists():
+        return HTMLResponse(dist_index.read_text(encoding="utf-8"))
+    raise HTTPException(status_code=404, detail="Page not found")
 
 
 if __name__ == "__main__":

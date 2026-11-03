@@ -826,3 +826,168 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DataHealthResponse'
+
+  /imports/topology:
+    post:
+      summary: Ingest deployment topology
+      operationId: importTopology
+      responses:
+        '200':
+          description: Ingestion job initiated
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /jobs/{id}:
+    get:
+      summary: Check background job status
+      operationId: getJobStatus
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Job status report
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /jobs/{id}/events:
+    get:
+      summary: Stream job events via SSE
+      operationId: streamJobEvents
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: SSE event stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+  /findings/{id}/explain:
+    get:
+      summary: Explain risk score factor decomposition
+      operationId: explainFindingScore
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Detailed factor weights and calibration notes
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /graph:
+    get:
+      summary: Full dependency-and-deployment graph
+      operationId: getFullGraph
+      responses:
+        '200':
+          description: Node-link graph structure
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /graph/nodes/{id}:
+    get:
+      summary: Node detail and blast radius
+      operationId: getGraphNodeDetail
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Node detail profile
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /plans/{id}:
+    get:
+      summary: Get plan detail by ID
+      operationId: getPlanDetail
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Stored plan details
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /audit:
+    get:
+      summary: Query immutable audit logs
+      operationId: listAuditLogs
+      responses:
+        '200':
+          description: Paginated audit logs
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /audit/export:
+    get:
+      summary: Export audit logs as CSV or JSON
+      operationId: exportAuditLogs
+      responses:
+        '200':
+          description: Audit log export file
+          content:
+            application/json:
+              schema:
+                type: object
+            text/csv:
+              schema:
+                type: string
+
+  /sources/status:
+    get:
+      summary: Get data source sync freshness
+      operationId: getSourcesStatus
+      responses:
+        '200':
+          description: Source status table
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /health:
+    get:
+      summary: System health check
+      operationId: getSystemHealth
+      responses:
+        '200':
+          description: System operational status
+          content:
+            application/json:
+              schema:
+                type: object

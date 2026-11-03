@@ -35,3 +35,8 @@ jobs:
           node-version: "20"
       - name: Verify frontend contract and route definitions
         run: test -f frontend/src/api/generated.ts && test -f frontend/src/app/routes.tsx
+      - name: Build frontend bundle
+        run: |
+          cd frontend
+          npm ci || npm install
+          npm run build

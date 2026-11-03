@@ -1,0 +1,180 @@
+/**
+ * PatchGraph Design System Tokens (docs/DESIGN_SYSTEM.md)
+ * Exact Palette: silver #E6E9EE, violet #7A0FE0, indigo #4B0F9E, steel gray #8A929C, ink #1A1220
+ */
+
+:root {
+  /* Exact 5 Colors */
+  --color-silver: #E6E9EE;
+  --color-violet: #7A0FE0;
+  --color-indigo: #4B0F9E;
+  --color-steel-gray: #8A929C;
+  --color-ink: #1A1220;
+
+  /* Color Aliases for components */
+  --pg-silver: #E6E9EE;
+  --pg-violet: #7A0FE0;
+  --pg-indigo: #4B0F9E;
+  --pg-steel: #8A929C;
+  --pg-ink: #1A1220;
+  --gradient-silver: linear-gradient(135deg, #FFFFFF 0%, #E6E9EE 50%, #D8DDE6 100%);
+  --radius-frame: 32px;
+  --shadow-card: 0 20px 48px -12px rgba(26, 18, 32, 0.08), 0 0 1px 1px rgba(230, 233, 238, 0.6);
+
+  /* Surfaces & Gradients */
+  --surface-silver-grad: linear-gradient(135deg, #FFFFFF 0%, #E6E9EE 50%, #D8DDE6 100%);
+  --surface-violet-grad: linear-gradient(135deg, #7A0FE0 0%, #4B0F9E 100%);
+  --surface-ink-panel: rgba(26, 18, 32, 0.90);
+  --surface-card-white: #FFFFFF;
+
+  /* Text & Contrast */
+  --text-dark-primary: #1A1220;
+  --text-dark-secondary: #4A515C;
+  --text-light-primary: #FFFFFF;
+  --text-light-secondary: #E6E9EE;
+  --text-steel: #8A929C;
+
+  /* Border Radii */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-card: 32px;
+  --radius-hero: 44px;
+  --radius-pill: 9999px;
+
+  /* Elevation & Shadows */
+  --shadow-soft-silver: 0 20px 48px -12px rgba(26, 18, 32, 0.08), 0 0 1px 1px rgba(230, 233, 238, 0.6);
+  --shadow-violet-glow: 0 0 24px rgba(122, 15, 224, 0.40);
+  --shadow-ink-depth: 0 16px 40px rgba(0, 0, 0, 0.45);
+
+  /* Fonts */
+  --font-display: 'Unbounded', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* Base Body Application */
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-silver);
+  color: var(--text-dark-primary);
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom Utilities */
+.bg-silver-grad {
+  background: var(--surface-silver-grad);
+}
+
+.bg-violet-grad {
+  background: var(--surface-violet-grad);
+}
+
+.bg-ink-panel {
+  background: var(--surface-ink-panel);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+.shadow-silver-card {
+  box-shadow: var(--shadow-soft-silver);
+}
+
+.shadow-violet {
+  box-shadow: var(--shadow-violet-glow);
+}
+
+/* Circular Violet Arrow Button */
+.circular-arrow-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--color-violet);
+  border: 2px solid #FFFFFF;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 14px rgba(122, 15, 224, 0.35);
+  cursor: pointer;
+}
+
+.circular-arrow-btn:hover {
+  background: var(--color-indigo);
+  transform: scale(1.06);
+  box-shadow: var(--shadow-violet-glow);
+}
+
+.circular-arrow-btn:hover svg,
+.circular-arrow-btn:hover span {
+  transform: translateX(3px);
+}
+
+/* Pill Navigation */
+.nav-pill {
+  border-radius: var(--radius-pill);
+  padding: 0.45rem 1.15rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-dark-secondary);
+  transition: all 0.15s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.nav-pill:hover {
+  color: var(--color-violet);
+  background: rgba(122, 15, 224, 0.08);
+}
+
+.nav-pill.active {
+  background: var(--color-violet);
+  color: #FFFFFF;
+  box-shadow: 0 2px 10px rgba(122, 15, 224, 0.3);
+}
+
+/* Pill Chips */
+.pill-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.pg-card {
+  border-radius: var(--radius-card);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pg-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 24px 54px -12px rgba(26, 18, 32, 0.12);
+}
+
+/* Huge Numerals */
+.huge-numeral {
+  font-family: var(--font-display);
+  font-size: 3.5rem;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  background: linear-gradient(135deg, var(--color-violet) 0%, var(--color-steel-gray) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
