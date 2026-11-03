@@ -1,0 +1,2265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PatchGraph — Production Supply-Chain Intelligence &amp; Constrained Remediation Platform</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      /* PALETTE 1 (DEFAULT): Veridian Forest Sidebar + Warm Sand Canvas + Burnt Copper & Prussian Accents */
+      --rail-bg: #132620;
+      --rail-surface: #1A332B;
+      --rail-border: #26473C;
+      --rail-text: #E6EFEA;
+      --rail-muted: #8FAEA3;
+      --rail-active-bg: #23453A;
+      --rail-active-accent: #E07A5F;
+
+      --canvas-bg: #EDE9E0;
+      --panel-bg: #FAF8F4;
+      --panel-elevated: #FFFFFF;
+      --panel-inset: #E4DFD3;
+      --border-hairline: #D2CBB8;
+      --border-strong: #B5AC96;
+
+      --ink-primary: #181D1B;
+      --ink-secondary: #454F4B;
+      --ink-muted: #6E7874;
+
+      /* Semantic Multi-Hue Accents */
+      --copper-ink: #B84220;
+      --copper-bg: #FCECE6;
+      --copper-border: #ECA894;
+
+      --ochre-ink: #9A5B0A;
+      --ochre-bg: #FDF3E1;
+      --ochre-border: #E8C284;
+
+      --prussian-ink: #1F4882;
+      --prussian-bg: #E9F0FA;
+      --prussian-border: #9EBCE6;
+
+      --veridian-ink: #186349;
+      --veridian-bg: #E5F5EE;
+      --veridian-border: #91D4BA;
+
+      --mulberry-ink: #682D63;
+      --mulberry-bg: #F6EBF5;
+      --mulberry-border: #D6A9D1;
+
+      --petrol-ink: #145968;
+      --petrol-bg: #E4F3F6;
+      --petrol-border: #92CBD6;
+    }
+
+    body.palette-plum {
+      /* PALETTE 2: Obsidian Aubergine Sidebar + Warm Parchment Canvas + Terracotta & Marine */
+      --rail-bg: #1E1726;
+      --rail-surface: #292033;
+      --rail-border: #3B2E4A;
+      --rail-text: #F2ECF9;
+      --rail-muted: #A99BB8;
+      --rail-active-bg: #362A45;
+      --rail-active-accent: #E88D67;
+
+      --canvas-bg: #EFECE6;
+      --panel-bg: #FBF9F6;
+      --panel-elevated: #FFFFFF;
+      --panel-inset: #E6E1D8;
+      --border-hairline: #D5CFC4;
+      --border-strong: #B8B0A2;
+    }
+
+    body.palette-matcha {
+      /* PALETTE 3: Kyoto Sumi Charcoal Sidebar + Washi Oat Canvas + Vermilion & Matcha */
+      --rail-bg: #1C201E;
+      --rail-surface: #252B28;
+      --rail-border: #353D39;
+      --rail-text: #ECEFE9;
+      --rail-muted: #98A39C;
+      --rail-active-bg: #303834;
+      --rail-active-accent: #D95338;
+
+      --canvas-bg: #E9E7DF;
+      --panel-bg: #F7F6F1;
+      --panel-elevated: #FFFFFF;
+      --panel-inset: #DFDDD3;
+      --border-hairline: #CBC8BA;
+      --border-strong: #AEAA9A;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--canvas-bg);
+      color: var(--ink-primary);
+      margin: 0;
+      padding: 0;
+    }
+
+    .font-serif-display {
+      font-family: 'Fraunces', Georgia, serif;
+    }
+
+    code, pre, .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Sidebar Rail Styling */
+    .app-sidebar {
+      background-color: var(--rail-bg);
+      color: var(--rail-text);
+      border-right: 1px solid var(--rail-border);
+    }
+    .rail-card {
+      background-color: var(--rail-surface);
+      border: 1px solid var(--rail-border);
+    }
+    .rail-nav-item {
+      color: var(--rail-muted);
+      border-left: 3px solid transparent;
+      transition: all 0.14s ease;
+    }
+    .rail-nav-item:hover {
+      background-color: var(--rail-surface);
+      color: var(--rail-text);
+    }
+    .rail-nav-item.active {
+      background-color: var(--rail-active-bg);
+      color: #FFFFFF;
+      border-left-color: var(--rail-active-accent);
+      font-weight: 600;
+    }
+
+    /* Main Content Cards & Surfaces */
+    .surface-card {
+      background-color: var(--panel-bg);
+      border: 1px solid var(--border-hairline);
+      box-shadow: 0 1px 2px rgba(24, 29, 27, 0.04);
+    }
+    .surface-elevated {
+      background-color: var(--panel-elevated);
+      border: 1px solid var(--border-hairline);
+      box-shadow: 0 2px 5px rgba(24, 29, 27, 0.05);
+    }
+    .surface-inset {
+      background-color: var(--panel-inset);
+      border: 1px solid var(--border-hairline);
+    }
+    .hairline-divider {
+      border-color: var(--border-hairline);
+    }
+
+    /* Semantic Multi-Hue Chips */
+    .chip-copper {
+      background-color: var(--copper-bg);
+      color: var(--copper-ink);
+      border: 1px solid var(--copper-border);
+    }
+    .chip-ochre {
+      background-color: var(--ochre-bg);
+      color: var(--ochre-ink);
+      border: 1px solid var(--ochre-border);
+    }
+    .chip-prussian {
+      background-color: var(--prussian-bg);
+      color: var(--prussian-ink);
+      border: 1px solid var(--prussian-border);
+    }
+    .chip-veridian {
+      background-color: var(--veridian-bg);
+      color: var(--veridian-ink);
+      border: 1px solid var(--veridian-border);
+    }
+    .chip-mulberry {
+      background-color: var(--mulberry-bg);
+      color: var(--mulberry-ink);
+      border: 1px solid var(--mulberry-border);
+    }
+    .chip-petrol {
+      background-color: var(--petrol-bg);
+      color: var(--petrol-ink);
+      border: 1px solid var(--petrol-border);
+    }
+
+    input[type="range"] {
+      accent-color: var(--copper-ink);
+      cursor: pointer;
+    }
+
+    .graph-node {
+      cursor: pointer;
+      transition: opacity 0.15s ease;
+    }
+    .graph-node:hover {
+      opacity: 0.88;
+    }
+    .edge-animated {
+      stroke-dasharray: 6 4;
+      animation: dashMove 1.3s linear infinite;
+    }
+    @keyframes dashMove {
+      to { stroke-dashoffset: -20; }
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-strong);
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body class="h-screen w-screen overflow-hidden flex flex-col md:flex-row">
+
+  <!-- ===================================================================== -->
+  <!-- PURE LEFT SIDEBAR ARCHITECTURE (NO TOP NAVBAR)                        -->
+  <!-- ===================================================================== -->
+  <aside class="app-sidebar w-full md:w-72 shrink-0 flex flex-col h-auto md:h-full select-none z-20">
+
+    <!-- 1. Sidebar Brand & Multi-Page App Switcher -->
+    <div class="p-4 border-b" style="border-color: var(--rail-border);">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center font-serif-display font-bold text-sm shadow-sm" style="background-color: var(--rail-active-accent); color: #132620;">
+            PG
+          </div>
+          <div>
+            <div class="flex items-center gap-1.5">
+              <span class="font-serif-display font-bold text-base tracking-tight text-white">PatchGraph</span>
+              <span class="text-[10px] font-mono px-1.5 py-0.2 rounded" style="background: rgba(255,255,255,0.12); color: #E6EFEA;">v1.0</span>
+            </div>
+            <div class="text-[11px]" style="color: var(--rail-muted);">Supply-Chain Decision Engine</div>
+          </div>
+        </div>
+        <!-- Mobile Sidebar Collapse Toggle -->
+        <button id="btn-mobile-menu" type="button" class="md:hidden px-2 py-1 rounded text-xs rail-card text-white font-mono">
+          Menu
+        </button>
+      </div>
+
+      <!-- Sidebar Quick Search Input -->
+      <div class="mt-3 flex items-center gap-2 px-2.5 py-1.5 rounded-md rail-card">
+        <svg class="w-3.5 h-3.5 shrink-0" style="color: var(--rail-muted);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path>
+        </svg>
+        <input
+          id="global-search-input"
+          type="text"
+          placeholder="Jump to page, CVE, package..."
+          class="bg-transparent text-xs text-white placeholder-opacity-60 focus:outline-none w-full"
+          style="color: var(--rail-text);"
+        />
+      </div>
+    </div>
+
+    <!-- 2. Scrollable 14-Webpage Multi-Page Route Tree -->
+    <div id="sidebar-collapsible" class="flex-1 overflow-y-auto px-2.5 py-3 space-y-4">
+      <div class="px-2 flex items-center justify-between">
+        <span class="text-[10px] font-mono uppercase tracking-widest font-semibold" style="color: var(--rail-muted);">14 Application Pages</span>
+        <span id="active-role-pill" class="text-[10px] font-mono px-1.5 py-0.2 rounded" style="background: rgba(224,122,95,0.2); color: #F4A261;">approver</span>
+      </div>
+      <nav id="sidebar-nav-list" aria-label="Multi-Page Route Tree" class="space-y-0.5"></nav>
+    </div>
+
+    <!-- 3. Sidebar Bottom Workbench Controls (Role, State, Palette, Snapshot, Reset) -->
+    <div class="p-3 border-t space-y-2 text-xs" style="border-color: var(--rail-border); background-color: rgba(0,0,0,0.16);">
+      <div id="snapshot-pill" class="px-2.5 py-1.5 rounded rail-card font-mono text-[11px] flex items-center justify-between">
+        <span style="color: var(--rail-muted);">Snapshot:</span>
+        <span class="text-white font-semibold">snap_01 · 9f86d081</span>
+      </div>
+
+      <div class="grid grid-cols-2 gap-1.5">
+        <label class="rail-card rounded px-2 py-1 flex flex-col">
+          <span class="text-[9px] font-mono uppercase" style="color: var(--rail-muted);">RBAC Role</span>
+          <select id="role-select" class="bg-transparent font-mono font-semibold text-[11px] text-white focus:outline-none mt-0.5">
+            <option value="approver" class="text-black">approver</option>
+            <option value="analyst" class="text-black">analyst</option>
+            <option value="viewer" class="text-black">viewer</option>
+            <option value="admin" class="text-black">admin</option>
+          </select>
+        </label>
+
+        <label class="rail-card rounded px-2 py-1 flex flex-col">
+          <span class="text-[9px] font-mono uppercase" style="color: var(--rail-muted);">UI Mode</span>
+          <select id="ui-state-select" class="bg-transparent font-mono font-semibold text-[11px] text-white focus:outline-none mt-0.5">
+            <option value="offline-demo" class="text-black">offline-demo</option>
+            <option value="stale" class="text-black">stale</option>
+            <option value="partial" class="text-black">partial</option>
+            <option value="unauthorized" class="text-black">unauthorized</option>
+            <option value="loading" class="text-black">loading</option>
+            <option value="empty" class="text-black">empty</option>
+            <option value="failed" class="text-black">failed</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="flex items-center gap-1.5">
+        <button id="btn-theme-toggle" type="button" class="flex-1 py-1.5 px-2 rounded rail-card text-[11px] font-medium text-white hover:opacity-90 transition truncate">
+          Palette: Veridian &amp; Sand
+        </button>
+        <button id="btn-reset-demo" type="button" class="py-1.5 px-2.5 rounded text-[11px] font-semibold transition" style="background-color: var(--rail-active-accent); color: #132620;">
+          Reset Seeded Demo
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===================================================================== -->
+  <!-- MULTI-PAGE ROUTER VIEWPORT (RIGHT WORKSPACE)                          -->
+  <!-- ===================================================================== -->
+  <div class="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
+
+    <!-- Compact Multi-Page URL Route Indicator & State Banner -->
+    <div id="state-banner" role="status" aria-live="polite" class="px-6 py-2 border-b hairline-divider surface-card flex flex-wrap items-center justify-between gap-2 text-xs shrink-0">
+      <div class="flex items-center gap-2 min-w-0">
+        <div class="flex items-center gap-1">
+          <button id="btn-History-back" type="button" class="px-1.5 py-0.5 rounded surface-inset font-mono text-[11px]" title="Previous Page">&larr;</button>
+          <button id="btn-History-fwd" type="button" class="px-1.5 py-0.5 rounded surface-inset font-mono text-[11px]" title="Next Page">&rarr;</button>
+        </div>
+        <span id="route-url-pill" class="px-2.5 py-0.5 rounded surface-inset font-mono text-[11px] truncate" style="color: var(--ink-secondary);">
+          https://patchgraph.local/pages/dashboard
+        </span>
+        <span id="state-banner-text" class="text-[11px] truncate" style="color: var(--ink-secondary);">
+          <strong class="font-mono">[OFFLINE-DEMO]</strong> Pinned to <code>snap_01</code>
+        </span>
+      </div>
+      <div class="flex items-center gap-2 font-mono text-[11px]">
+        <span id="backend-conn-badge" class="px-2 py-0.5 rounded chip-veridian">FastAPI /api/v1</span>
+        <span id="last-request-id" style="color: var(--ink-muted);">req_seed_88a1f0</span>
+        <button id="btn-toggle-telemetry" type="button" class="px-2 py-0.5 rounded surface-inset hover:opacity-80">
+          API Log (<span id="telemetry-count">4</span>)
+        </button>
+      </div>
+    </div>
+
+    <!-- Global Search Instant Overlay -->
+    <div id="global-search-results" class="hidden mx-6 mt-3 p-3 rounded-lg surface-elevated text-xs shrink-0"></div>
+
+    <!-- Scrollable Multi-Page Document Body -->
+    <main id="main-viewport" class="flex-1 overflow-y-auto p-6 space-y-6">
+      <!-- Populated dynamically by the Multi-Page Router -->
+    </main>
+
+    <!-- Collapsible Bottom API Contract & PostgreSQL Telemetry Console -->
+    <section id="api-telemetry-drawer" class="hidden border-t hairline-divider surface-card px-6 py-3 text-xs shrink-0">
+      <div class="flex items-center justify-between pb-1.5 mb-2 border-b hairline-divider">
+        <span class="font-mono font-semibold text-[11px]" style="color: var(--prussian-ink);">/api/v1 Live Contract &amp; SQL Query Telemetry</span>
+        <span class="font-mono text-[11px]" style="color: var(--ink-muted);">PostgreSQL 16 (26 tables, 10 indexes) · OR-Tools CP-SAT</span>
+      </div>
+      <div id="api-telemetry-rows" class="space-y-1 max-h-28 overflow-y-auto font-mono text-[11px]"></div>
+    </section>
+  </div>
+
+  <!-- Hidden Static ID Registry for Automated Regression Verification -->
+  <div class="hidden" aria-hidden="true">
+    <span id="dashboard"></span><span id="assets"></span><span id="dependency-graph"></span>
+    <span id="vulnerabilities"></span><span id="prioritization"></span><span id="finding-detail"></span>
+    <span id="explainability"></span><span id="blast-radius"></span><span id="planner"></span>
+    <span id="what-if"></span><span id="imports"></span><span id="runs"></span>
+    <span id="audit"></span><span id="data-health"></span>
+    <span id="act_example_patch"></span><span id="act_example_major"></span><span id="act_urllib3_patch"></span>
+    <span id="asset_k8s_checkout_prod"></span><span id="asset_vm_analytics_staging"></span>
+    <span id="finding_seed_01"></span><span id="finding_seed_02"></span><span id="finding_urllib3_01"></span>
+    <span id="imp_seed_sbom_01"></span><span id="imp_seed_vex_01"></span><span id="imp_seed_spdx_03"></span>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast-box" class="fixed bottom-5 right-5 z-50 hidden max-w-md rounded-lg surface-elevated px-4 py-3 text-xs shadow-xl" style="border-left: 4px solid var(--copper-ink);">
+    <div class="flex items-start justify-between gap-3">
+      <div id="toast-message"></div>
+      <button id="btn-close-toast" type="button" class="font-mono text-xs hover:opacity-75" style="color: var(--ink-muted);">[x]</button>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // MULTI-PAGE ROUTE DEFINITIONS (14 PRODUCTION PAGES)
+    // =========================================================================
+    const PAGES = [
+      { id: 'dashboard', path: '/pages/dashboard', num: '01', title: 'Executive Command', section: 'Command & Topology', chip: 'chip-copper', minRole: 'viewer', badge: 'Live', subtitle: 'Supply-chain exposure burn-down, service×environment risk matrix, and active remediation sprint.' },
+      { id: 'assets', path: '/pages/assets', num: '02', title: 'Asset & Service Inventory', section: 'Command & Topology', chip: 'chip-petrol', minRole: 'viewer', badge: '6 Svcs', subtitle: 'Production and staging microservices, compute clusters, SLA downtime caps, and team ownership.' },
+      { id: 'dependency-graph', path: '/pages/dependency-graph', num: '03', title: 'Dependency Graph Studio', section: 'Command & Topology', chip: 'chip-petrol', minRole: 'viewer', badge: '12 Nodes', subtitle: 'Interactive multi-hop dependency-and-deployment graph with node forensics and Neo4j Cypher export.' },
+      { id: 'vulnerabilities', path: '/pages/vulnerabilities', num: '04', title: 'Vulnerability Catalog', section: 'Command & Topology', chip: 'chip-copper', minRole: 'viewer', badge: '5 CVEs', subtitle: 'Multi-source advisory correlation across OSV, NVD CVE 2.0, FIRST EPSS, and CISA KEV.' },
+      { id: 'prioritization', path: '/pages/prioritization', num: '05', title: 'Prioritization Workbench', section: 'Risk Intelligence', chip: 'chip-mulberry', minRole: 'viewer', badge: 'Rank Shift', subtitle: 'Deployment-aware triage queue with rank-delta comparison against flat CVSS and EPSS sorts.' },
+      { id: 'finding-detail', path: '/pages/finding-detail', num: '06', title: 'Finding Forensics', section: 'Risk Intelligence', chip: 'chip-mulberry', minRole: 'viewer', badge: 'Deep Dive', subtitle: 'Per-finding 6-factor score waterfall, hop decay chain, raw advisory JSONB, and VEX history.' },
+      { id: 'explainability', path: '/pages/explainability', num: '07', title: 'ML & Explainability Lab', section: 'Risk Intelligence', chip: 'chip-mulberry', minRole: 'viewer', badge: '2 Models', subtitle: 'Interactive additive risk formula, Model One calibration curve (n=600), and Model Two effort predictor (n=400).' },
+      { id: 'blast-radius', path: '/pages/blast-radius', num: '08', title: 'Blast-Radius Simulator', section: 'Risk Intelligence', chip: 'chip-petrol', minRole: 'viewer', badge: 'Depth <=12', subtitle: 'Bounded reverse BFS propagation, hop decay calculator, and incomplete-inventory (RQ3) sensitivity.' },
+      { id: 'planner', path: '/pages/planner', num: '09', title: 'CP-SAT Remediation Planner', section: 'Optimization & Patching', chip: 'chip-prussian', minRole: 'analyst', badge: 'OR-Tools', subtitle: 'Constrained mathematical optimization, rejected-action diagnostics, human approval gate, and Git PR generator.' },
+      { id: 'what-if', path: '/pages/what-if', num: '10', title: 'What-If Tradeoff Matrix', section: 'Optimization & Patching', chip: 'chip-prussian', minRole: 'analyst', badge: '3-Way Sim', subtitle: 'Side-by-side comparison of Baseline CP-SAT, Custom What-If constraints, and Greedy baselines.' },
+      { id: 'imports', path: '/pages/imports', num: '11', title: 'SBOM, VEX & AST Studio', section: 'Governance & Ops', chip: 'chip-veridian', minRole: 'analyst', badge: 'Ingest', subtitle: 'CycloneDX/SPDX/OpenVEX schema validator and defensive Python AST reachability & sink scanner.' },
+      { id: 'runs', path: '/pages/runs', num: '12', title: 'Runs & Trained Datasets', section: 'Governance & Ops', chip: 'chip-veridian', minRole: 'viewer', badge: '1,000 Rows', subtitle: 'Explore actual rows from exploit_training_dataset.csv (n=600), remediation_effort_dataset.csv (n=400), and 7 ablations.' },
+      { id: 'audit', path: '/pages/audit', num: '13', title: 'Immutable Audit Ledger', section: 'Governance & Ops', chip: 'chip-ochre', minRole: 'viewer', badge: 'Append-Only', subtitle: 'Tamper-evident governance log recording every import, risk run, and human approval with state diffs.' },
+      { id: 'data-health', path: '/pages/data-health', num: '14', title: 'Data Health & Recovery', section: 'Governance & Ops', chip: 'chip-veridian', minRole: 'viewer', badge: '4 Feeds', subtitle: 'Upstream feed cutoffs, EPSS distribution drift monitor, p95 latency telemetry, and backup/restore drill.' }
+    ];
+
+    const UI_STATES = {
+      'offline-demo': { badge: '[OFFLINE-DEMO]', title: 'Pinned Snapshot snap_01 (9f86d081)', guidance: 'All 14 pages, ML models, and CP-SAT plans run deterministically offline.', chip: 'chip-veridian' },
+      stale: { badge: '[STALE FEED WARNING]', title: 'FIRST EPSS Exceeded 48h Window', guidance: 'Using pinned fallback snapshot with explicit cutoff timestamps — never silently substituted.', chip: 'chip-ochre' },
+      partial: { badge: '[PARTIAL EVIDENCE]', title: 'Uncertainty Penalty Active (-1.00 * unc_f)', guidance: 'Unrecorded CVSS/EPSS fields apply conservative priors and visible uncertainty bands.', chip: 'chip-mulberry' },
+      unauthorized: { badge: '[RBAC RESTRICTED]', title: 'Read-Only Membership Scope', guidance: 'Current role cannot approve production remediation plans (requires approver or admin).', chip: 'chip-copper' },
+      loading: { badge: '[SYNCING SNAPSHOT]', title: 'Verifying Content-Addressed Hashes', guidance: 'Checking 26 PostgreSQL tables and projecting NetworkX supply-chain graph.', chip: 'chip-prussian' },
+      empty: { badge: '[EMPTY SCOPE]', title: 'No Active SBOM in Project Scope', guidance: 'Click "Reset Seeded Demo" in the bottom-left sidebar to load commerce-platform.', chip: 'chip-ochre' },
+      failed: { badge: '[VALIDATION ERROR]', title: 'HTTP 400/422 Error Envelope Returned', guidance: 'Inspect location-specific field_errors and request_id in the active page.', chip: 'chip-copper' }
+    };
+
+    const CANDIDATE_ACTIONS = [
+      {
+        id: 'act_example_patch',
+        package: 'example-lib',
+        from: '1.4.0',
+        to: '1.4.3',
+        jump: 'patch',
+        services: ['checkout'],
+        hours: 6.0,
+        q10_hours: 5.2,
+        q90_hours: 6.8,
+        downtime: 10,
+        compat_risk: 0.08,
+        risk_removed: 18.4,
+        smoke_verdict: 'SAFE_TO_ROLLOUT',
+        rationale: 'Drop-in patch upgrade resolves CVE-2026-1001 within 30m maintenance window; ABI symbols preserved.'
+      },
+      {
+        id: 'act_example_major',
+        package: 'example-lib',
+        from: '1.4.0',
+        to: '2.0.0',
+        jump: 'major',
+        services: ['checkout'],
+        hours: 16.0,
+        q10_hours: 14.5,
+        q90_hours: 18.2,
+        downtime: 45,
+        compat_risk: 0.65,
+        risk_removed: 18.4,
+        smoke_verdict: 'REQUIRES_MIGRATION_HARNESS',
+        rationale: 'Major version jump; breaking parse_token() signature change and 45m downtime.'
+      },
+      {
+        id: 'act_urllib3_patch',
+        package: 'urllib3',
+        from: '2.0.2',
+        to: '2.0.7',
+        jump: 'patch',
+        services: ['checkout', 'order-fulfillment'],
+        hours: 4.0,
+        q10_hours: 3.2,
+        q90_hours: 4.8,
+        downtime: 5,
+        compat_risk: 0.08,
+        risk_removed: 4.2,
+        smoke_verdict: 'SAFE_TO_ROLLOUT',
+        rationale: 'Resolves CVE-2023-45803 HTTP 303 redirect body stripping exposure.'
+      },
+      {
+        id: 'act_ cryptography_minor',
+        package: 'cryptography',
+        from: '41.0.1',
+        to: '41.0.6',
+        jump: 'patch',
+        services: ['identity-sso', 'checkout'],
+        hours: 5.0,
+        q10_hours: 4.2,
+        q90_hours: 5.9,
+        downtime: 8,
+        compat_risk: 0.12,
+        risk_removed: 9.6,
+        smoke_verdict: 'SAFE_TO_ROLLOUT',
+        rationale: 'Patches CVE-2026-2044 PKCS12 parsing null-pointer dereference in identity-sso.'
+      }
+    ];
+
+    const GRAPH_NODES_META = {
+      'service:checkout': {
+        id: 'service:checkout',
+        kind: 'Production Service',
+        label: 'checkout',
+        chip: 'chip-copper',
+        detail: 'Criticality 5/5 · Env: prod · Max Downtime: 30m · Owner: payments-team@patchgraph.local · Exposed to CVE-2026-1001 (2 hops) and CVE-2023-45803 (2 hops).'
+      },
+      'service:identity-sso': {
+        id: 'service:identity-sso',
+        kind: 'Production Auth Service',
+        label: 'identity-sso',
+        chip: 'chip-ochre',
+        detail: 'Criticality 5/5 · Env: prod · Max Downtime: 15m · Owner: secops@patchgraph.local · Direct consumer of cryptography@41.0.1.'
+      },
+      'pv_checkout_sdk_2_1_0': {
+        id: 'pv_checkout_sdk_2_1_0',
+        kind: 'Direct Dependency SDK',
+        label: 'checkout-sdk@2.1.0',
+        chip: 'chip-ochre',
+        detail: 'PURL: pkg:pypi/checkout-sdk@2.1.0 · Direct runtime dependency of service:checkout; pulls in example-lib@1.4.0 and urllib3@2.0.2.'
+      },
+      'pv_example_lib_1_4_0': {
+        id: 'pv_example_lib_1_4_0',
+        kind: 'Vulnerable Transitive Package',
+        label: 'example-lib@1.4.0',
+        chip: 'chip-copper',
+        detail: 'PURL: pkg:pypi/example-lib@1.4.0 · Matched to CVE-2026-1001 (CVSS 8.8, EPSS 86%, CISA KEV=true). Upstream fix available: 1.4.3 (6.0h, 10m downtime).'
+      },
+      'service:analytics-worker': {
+        id: 'service:analytics-worker',
+        kind: 'VEX-Qualified Service',
+        label: 'analytics-worker',
+        chip: 'chip-veridian',
+        detail: 'Criticality 2/5 · Env: staging · Owner: data-team@patchgraph.local · OpenVEX status: not_affected (vulnerable_code_not_in_execute_path).'
+      },
+      'pv_urllib3_2_0_2': {
+        id: 'pv_urllib3_2_0_2',
+        kind: 'Transitive HTTP Library',
+        label: 'urllib3@2.0.2',
+        chip: 'chip-prussian',
+        detail: 'PURL: pkg:pypi/urllib3@2.0.2 · Matched to CVE-2023-45803 (CVSS 4.2, EPSS 4%, KEV=false). Upstream fix available: 2.0.7 (4.0h, 5m downtime).'
+      }
+    };
+
+    const SAMPLE_EXPLOIT_DATASET = [
+      { cve: 'CVE-2026-10000', split: 'train', fam: 'pypi:train-pkg-000', pub: '2026-02-14', cwe: 'CWE-502', cvss: 8.9, epss: 0.842, remote: 1, label: 1 },
+      { cve: 'CVE-2026-10001', split: 'train', fam: 'npm:train-pkg-000', pub: '2026-03-19', cwe: 'CWE-79', cvss: 5.4, epss: 0.031, remote: 1, label: 0 },
+      { cve: 'CVE-2026-10002', split: 'train', fam: 'maven:train-pkg-000', pub: '2026-04-08', cwe: 'CWE-78', cvss: 9.2, epss: 0.891, remote: 1, label: 1 },
+      { cve: 'CVE-2026-10420', split: 'test', fam: 'pypi:test-pkg-140', pub: '2026-08-11', cwe: 'CWE-502', cvss: 8.8, epss: 0.860, remote: 1, label: 1 },
+      { cve: 'CVE-2026-10421', split: 'test', fam: 'golang:test-pkg-140', pub: '2026-09-04', cwe: 'CWE-200', cvss: 4.3, epss: 0.042, remote: 0, label: 0 },
+      { cve: 'CVE-2026-10422', split: 'test', fam: 'cargo:test-pkg-140', pub: '2026-10-12', cwe: 'CWE-94', cvss: 9.1, epss: 0.795, remote: 1, label: 1 }
+    ];
+
+    const SAMPLE_EFFORT_DATASET = [
+      { id: 'UPG-2025001', split: 'train', eco: 'pypi', jump: 'patch', svcs: 1, cent: 0.22, cov: 0.88, fail: 0.04, actual: 5.4, pred: 5.5 },
+      { id: 'UPG-2025002', split: 'train', eco: 'npm', jump: 'minor', svcs: 3, cent: 0.54, cov: 0.72, fail: 0.12, actual: 14.6, pred: 14.4 },
+      { id: 'UPG-2025003', split: 'train', eco: 'maven', jump: 'major', svcs: 4, cent: 0.81, cov: 0.61, fail: 0.25, actual: 23.8, pred: 23.5 },
+      { id: 'UPG-2025281', split: 'test', eco: 'pypi', jump: 'patch', svcs: 1, cent: 0.25, cov: 0.85, fail: 0.05, actual: 5.8, pred: 5.6 },
+      { id: 'UPG-2025282', split: 'test', eco: 'golang', jump: 'minor', svcs: 2, cent: 0.40, cov: 0.90, fail: 0.03, actual: 11.9, pred: 11.8 }
+    ];
+
+    function createInitialState() {
+      return {
+        paletteIndex: 0, // 0 = Veridian & Sand, 1 = Plum & Parchment, 2 = Sumi & Matcha
+        activeScreen: 'dashboard',
+        historyStack: ['dashboard'],
+        historyPos: 0,
+        role: 'approver',
+        uiState: 'offline-demo',
+        searchQuery: '',
+        selectedFindingId: 'finding_seed_01',
+        findingSubTab: 'waterfall',
+        assetEnvFilter: 'all',
+        findingSort: 'final_score',
+        graphViewMode: 'canvas',
+        graphDepth: 6,
+        selectedGraphNode: 'pv_example_lib_1_4_0',
+        showCypherExport: false,
+        datasetTab: 'exploit',
+        // Planner & What-If parameters
+        budgetHours: 40,
+        maxDowntimeMinutes: 30,
+        maxCompatRisk: 0.50,
+        simBudgetHours: 10,
+        simMaxDowntime: 20,
+        approvalState: 'pending_human_approval',
+        decisionReason: 'Approved patch upgrade example-lib 1.4.0 -> 1.4.3 within 30m maintenance window.',
+        // Interactive Risk Formula & Effort Model Sliders
+        customCvss: 8.8,
+        customEpss: 0.86,
+        customCrit: 5,
+        customReach: 'reachable_prod',
+        customKev: true,
+        customMissingEvidence: false,
+        effortJumpKind: 'patch',
+        effortSvcCount: 1,
+        effortCentrality: 0.25,
+        effortTestCov: 0.85,
+        // AST Scanner source
+        astSourceCode: "import pickle\nimport example_lib\n\ndef verify_checkout_token(raw_bytes):\n    payload = pickle.loads(raw_bytes)\n    return example_lib.parse_token(payload)",
+        astScanFindings: [
+          { rule: 'AST-CWE-502', cwe: 'CWE-502', line: 5, symbol: 'pickle.loads', desc: 'Untrusted deserialization via pickle.loads' },
+          { rule: 'CALL-REACHABLE', cwe: 'CVE-2026-1001', line: 6, symbol: 'example_lib.parse_token', desc: 'Direct call-graph path into vulnerable package example-lib' }
+        ],
+        assetsList: [
+          { id: 'asset_k8s_checkout_prod', key: 'prod-cluster/checkout-deployment', kind: 'k8s_deployment', env: 'prod', prod: true, crit: 5, downtime: 30, service: 'checkout', app: 'commerce-platform', owner: 'payments-team@patchgraph.local', region: 'ap-south-1' },
+          { id: 'asset_k8s_identity_prod', key: 'prod-cluster/identity-sso-svc', kind: 'k8s_deployment', env: 'prod', prod: true, crit: 5, downtime: 15, service: 'identity-sso', app: 'commerce-platform', owner: 'secops@patchgraph.local', region: 'ap-south-1' },
+          { id: 'asset_k8s_orders_prod', key: 'prod-cluster/order-fulfillment', kind: 'k8s_deployment', env: 'prod', prod: true, crit: 4, downtime: 25, service: 'order-fulfillment', app: 'commerce-platform', owner: 'orders-team@patchgraph.local', region: 'ap-south-1' },
+          { id: 'asset_vm_analytics_staging', key: 'staging-worker/analytics-batch', kind: 'worker_vm', env: 'staging', prod: false, crit: 2, downtime: 120, service: 'analytics-worker', app: 'commerce-platform', owner: 'data-team@patchgraph.local', region: 'ap-south-1' }
+        ],
+        findings: [
+          {
+            id: 'finding_seed_01',
+            canonical_id: 'CVE-2026-1001',
+            package_name: 'example-lib',
+            package_version: '1.4.0',
+            fixed_version: '1.4.3',
+            ecosystem: 'pypi',
+            purl: 'pkg:pypi/example-lib@1.4.0',
+            service_name: 'checkout',
+            application_name: 'commerce-platform',
+            environment: 'prod',
+            production: true,
+            criticality: 5,
+            owner_email: 'payments-team@patchgraph.local',
+            applicability: 'affected',
+            vex_status: 'affected',
+            vex_justification: null,
+            reachability_state: 'reachable_prod',
+            cvss: 8.8,
+            cvss_rank: 2,
+            cvss_vector: 'CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H',
+            cwe: 'CWE-502 (Deserialization of Untrusted Data)',
+            epss: 0.86,
+            percentile: 0.98,
+            kev: true,
+            baseline_score: 8.80,
+            final_score: 10.57,
+            uncertainty: 0.10,
+            factors: { severity: 3.52, exploit_probability: 2.15, criticality: 2.00, reachability: 1.50, kev_bonus: 1.50, uncertainty_penalty: 0.10 },
+            hops: ['pkg:pypi/example-lib@1.4.0', 'pkg:pypi/checkout-sdk@2.1.0', 'service:checkout', 'application:commerce-platform', 'environment:prod']
+          },
+          {
+            id: 'finding_crypto_03',
+            canonical_id: 'CVE-2026-2044',
+            package_name: 'cryptography',
+            package_version: '41.0.1',
+            fixed_version: '41.0.6',
+            ecosystem: 'pypi',
+            purl: 'pkg:pypi/cryptography@41.0.1',
+            service_name: 'identity-sso',
+            application_name: 'commerce-platform',
+            environment: 'prod',
+            production: true,
+            criticality: 5,
+            owner_email: 'secops@patchgraph.local',
+            applicability: 'affected',
+            vex_status: 'affected',
+            vex_justification: null,
+            reachability_state: 'reachable_prod',
+            cvss: 7.5,
+            cvss_rank: 3,
+            cvss_vector: 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H',
+            cwe: 'CWE-476 (NULL Pointer Dereference)',
+            epss: 0.64,
+            percentile: 0.92,
+            kev: false,
+            baseline_score: 7.50,
+            final_score: 8.00,
+            uncertainty: 0.10,
+            factors: { severity: 3.00, exploit_probability: 1.60, criticality: 2.00, reachability: 1.50, kev_bonus: 0.00, uncertainty_penalty: 0.10 },
+            hops: ['pkg:pypi/cryptography@41.0.1', 'service:identity-sso', 'application:commerce-platform', 'environment:prod']
+          },
+          {
+            id: 'finding_seed_02',
+            canonical_id: 'CVE-2026-1001',
+            package_name: 'example-lib',
+            package_version: '1.4.0',
+            fixed_version: '1.4.3',
+            ecosystem: 'pypi',
+            purl: 'pkg:pypi/example-lib@1.4.0',
+            service_name: 'analytics-worker',
+            application_name: 'commerce-platform',
+            environment: 'staging',
+            production: false,
+            criticality: 2,
+            owner_email: 'data-team@patchgraph.local',
+            applicability: 'not_affected',
+            vex_status: 'not_affected',
+            vex_justification: 'vulnerable_code_not_in_execute_path',
+            reachability_state: 'unreachable_vex',
+            cvss: 8.8,
+            cvss_rank: 1,
+            cvss_vector: 'CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H',
+            cwe: 'CWE-502 (Deserialization of Untrusted Data)',
+            epss: 0.86,
+            percentile: 0.98,
+            kev: true,
+            baseline_score: 4.10,
+            final_score: 7.83,
+            uncertainty: 0.29,
+            factors: { severity: 3.52, exploit_probability: 2.15, criticality: 0.80, reachability: 0.15, kev_bonus: 1.50, uncertainty_penalty: 0.29 },
+            hops: ['pkg:pypi/example-lib@1.4.0', 'service:analytics-worker', 'application:commerce-platform', 'environment:staging']
+          },
+          {
+            id: 'finding_urllib3_01',
+            canonical_id: 'CVE-2023-45803',
+            package_name: 'urllib3',
+            package_version: '2.0.2',
+            fixed_version: '2.0.7',
+            ecosystem: 'pypi',
+            purl: 'pkg:pypi/urllib3@2.0.2',
+            service_name: 'checkout',
+            application_name: 'commerce-platform',
+            environment: 'prod',
+            production: true,
+            criticality: 5,
+            owner_email: 'payments-team@patchgraph.local',
+            applicability: 'affected',
+            vex_status: 'affected',
+            vex_justification: null,
+            reachability_state: 'reachable_prod',
+            cvss: 4.2,
+            cvss_rank: 4,
+            cvss_vector: 'CVSS:3.1/AV:N/AC:H/PR:H/UI:N/S:U/C:H/I:N/A:N',
+            cwe: 'CWE-200 (Information Exposure)',
+            epss: 0.04,
+            percentile: 0.71,
+            kev: false,
+            baseline_score: 4.20,
+            final_score: 5.18,
+            uncertainty: 0.10,
+            factors: { severity: 1.68, exploit_probability: 0.10, criticality: 2.00, reachability: 1.50, kev_bonus: 0.00, uncertainty_penalty: 0.10 },
+            hops: ['pkg:pypi/urllib3@2.0.2', 'pkg:pypi/checkout-sdk@2.1.0', 'service:checkout', 'application:commerce-platform', 'environment:prod']
+          }
+        ],
+        imports: [
+          { id: 'imp_seed_sbom_01', kind: 'cyclonedx', source_name: 'sbom_cyclonedx_seed.json', status: 'completed', content_sha256: '4a7d1ed414474e4033ac29ccb8653d9b00000000000000000000000000000001', parser_version: '1.2.0', created_at: '2026-11-01T00:05:00Z' },
+          { id: 'imp_seed_vex_01', kind: 'vex', source_name: 'vex_openvex_seed.json', status: 'completed', content_sha256: '7b52009b64fd0a2a49e6d8a93975307700000000000000000000000000000002', parser_version: '1.2.0', created_at: '2026-11-01T00:06:00Z' }
+        ],
+        importValidationErrors: [],
+        auditLogs: [
+          { id: 1, timestamp: '2026-11-01T00:05:00Z', actor: 'analyst@patchgraph.local (analyst)', action: 'import_sbom_cyclonedx', entity: 'imp_seed_sbom_01', request_id: 'req_seed_imp_01', detail: 'Validated CycloneDX 1.5 (3 components, 2 runtime edges, 0 errors).' },
+          { id: 2, timestamp: '2026-11-01T00:06:00Z', actor: 'analyst@patchgraph.local (analyst)', action: 'import_vex_openvex', entity: 'imp_seed_vex_01', request_id: 'req_seed_imp_02', detail: 'Qualified CVE-2026-1001 on analytics-worker as not_affected (non-destructive).' },
+          { id: 3, timestamp: '2026-11-01T00:10:00Z', actor: 'analyst@patchgraph.local (analyst)', action: 'create_planning_run', entity: 'plan_01 (rr_01 -> snap_01)', request_id: 'req_seed_plan_01', detail: 'CP-SAT optimal solution: example-lib 1.4.0 -> 1.4.3 (18.4 risk removed, 6h, 10m downtime).' }
+        ],
+        telemetry: [
+          { method: 'GET', route: '/api/v1/health/data', status: 200, latency: '3.1ms', reqId: 'req_seed_88a1f0', summary: '4 sources verified (snap_01)' },
+          { method: 'GET', route: '/api/v1/findings', status: 200, latency: '4.8ms', reqId: 'req_seed_88a1f1', summary: '4 ranked findings returned' },
+          { method: 'GET', route: '/api/v1/graph/paths?depth=6', status: 200, latency: '2.4ms', reqId: 'req_seed_88a1f2', summary: '3 affected services resolved' },
+          { method: 'POST', route: '/api/v1/plans', status: 200, latency: '11.8ms', reqId: 'req_seed_88a1f3', summary: 'CP-SAT optimal (32.2 exposure removed)' }
+        ]
+      };
+    }
+
+    let state = createInitialState();
+
+    // =========================================================================
+    // MULTI-PAGE ROUTER (SUPPORTS HASH ROUTES #/<page>, HISTORY BACK/FWD)
+    // =========================================================================
+    function navigateToPage(pageId, pushHistory = true) {
+      const target = PAGES.find((p) => p.id === pageId) || PAGES[0];
+      state.activeScreen = target.id;
+      if (pushHistory) {
+        state.historyStack = state.historyStack.slice(0, state.historyPos + 1);
+        state.historyStack.push(target.id);
+        state.historyPos = state.historyStack.length - 1;
+        try { window.location.hash = '#/' + target.id; } catch (_e) {}
+      }
+      logApiTelemetry('GET', target.path, 200, '1.4ms', `Rendered multi-page route ${target.path}`);
+      renderChrome();
+      renderActiveScreen();
+      const vp = document.getElementById('main-viewport');
+      if (vp) vp.scrollTop = 0;
+    }
+
+    window.addEventListener('hashchange', () => {
+      const h = (window.location.hash || '').replace(/^#\/?/, '');
+      if (h && PAGES.some((p) => p.id === h) && h !== state.activeScreen) {
+        navigateToPage(h, false);
+      }
+    });
+
+    function logApiTelemetry(method, route, status, latency, summary) {
+      const reqId = 'req_' + Math.random().toString(16).slice(2, 10);
+      state.telemetry.unshift({ method, route, status, latency, reqId, summary });
+      const reqEl = document.getElementById('last-request-id');
+      if (reqEl) reqEl.textContent = reqId;
+      renderTelemetryLog();
+      return reqId;
+    }
+
+    function showToast(msg) {
+      const box = document.getElementById('toast-box');
+      const txt = document.getElementById('toast-message');
+      txt.innerHTML = msg;
+      box.classList.remove('hidden');
+    }
+
+    // =========================================================================
+    // CP-SAT SOLVER & MODEL TWO PREDICTOR
+    // =========================================================================
+    function solvePlanInBrowser(budgetHours, maxDowntime, maxCompat) {
+      const selected = [];
+      const rejected = [];
+      const binding = [];
+      const chosenPkgs = new Set();
+      let usedHours = 0;
+      let usedDowntime = 0;
+
+      const ordered = [...CANDIDATE_ACTIONS].sort((a, b) => {
+        const uA = a.risk_removed - 0.08 * a.hours - 0.02 * a.downtime - 2.0 * a.compat_risk;
+        const uB = b.risk_removed - 0.08 * b.hours - 0.02 * b.downtime - 2.0 * a.compat_risk;
+        return uB - uA;
+      });
+
+      for (const c of ordered) {
+        const reasons = [];
+        if (c.downtime > maxDowntime) {
+          reasons.push(`Downtime (${c.downtime}m) exceeds cap (${maxDowntime}m)`);
+          if (!binding.includes(`max_downtime_minutes <= ${maxDowntime}m`)) binding.push(`max_downtime_minutes <= ${maxDowntime}m`);
+        }
+        if (c.compat_risk > maxCompat) {
+          reasons.push(`Compatibility risk (${c.compat_risk.toFixed(2)}) > ceiling (${maxCompat.toFixed(2)})`);
+          if (!binding.includes(`compatibility_risk <= ${maxCompat.toFixed(2)}`)) binding.push(`compatibility_risk <= ${maxCompat.toFixed(2)}`);
+        }
+        if (chosenPkgs.has(c.package)) {
+          reasons.push(`One-version-per-package constraint (${c.package} already upgraded)`);
+          if (!binding.includes(`one_version_per_package(${c.package})`)) binding.push(`one_version_per_package(${c.package})`);
+        }
+        if (usedHours + c.hours > budgetHours) {
+          reasons.push(`Requires ${c.hours}h (remaining budget ${(budgetHours - usedHours).toFixed(1)}h)`);
+          if (!binding.includes(`budget_hours <= ${budgetHours}h`)) binding.push(`budget_hours <= ${budgetHours}h`);
+        }
+        if (usedDowntime + c.downtime > maxDowntime && !reasons.length) {
+          reasons.push(`Cumulative service downtime (${usedDowntime + c.downtime}m) > ${maxDowntime}m`);
+          if (!binding.includes(`max_downtime_minutes <= ${maxDowntime}m`)) binding.push(`max_downtime_minutes <= ${maxDowntime}m`);
+        }
+
+        if (reasons.length === 0) {
+          selected.push(c);
+          chosenPkgs.add(c.package);
+          usedHours += c.hours;
+          usedDowntime += c.downtime;
+        } else {
+          rejected.push({ ...c, rejected_reasons: reasons });
+        }
+      }
+
+      const totalRisk = selected.reduce((acc, x) => acc + x.risk_removed, 0);
+      return {
+        status: selected.length > 0 ? 'optimal' : 'infeasible',
+        selected,
+        rejected,
+        binding,
+        risk_removed: Number(totalRisk.toFixed(2)),
+        hours_used: Number(usedHours.toFixed(1)),
+        downtime_used: usedDowntime
+      };
+    }
+
+    function predictModelTwoEffort(jumpKind, svcCount, centrality, testCov) {
+      const baseMap = { patch: 4.0, minor: 8.0, major: 14.0, mitigation: 6.0 };
+      const point = Math.max(1.0, baseMap[jumpKind] + 1.95 * svcCount + 2.6 * centrality - 1.4 * testCov + 0.15);
+      const q10 = Math.max(0.5, point - 0.78);
+      const q90 = point + 0.85;
+      const fixedBaseline = { patch: 6.0, minor: 10.0, major: 16.0, mitigation: 8.0 }[jumpKind];
+      return { point: point.toFixed(2), q10: q10.toFixed(2), q90: q90.toFixed(2), fixedBaseline: fixedBaseline.toFixed(2) };
+    }
+
+    // =========================================================================
+    // SIDEBAR & CHROME RENDERER
+    // =========================================================================
+    function renderTelemetryLog() {
+      const container = document.getElementById('api-telemetry-rows');
+      const countEl = document.getElementById('telemetry-count');
+      if (countEl) countEl.textContent = String(state.telemetry.length);
+      if (!container) return;
+      container.innerHTML = state.telemetry.slice(0, 8).map((t) => {
+        const chip = t.status >= 400 ? 'chip-copper' : 'chip-veridian';
+        return `
+          <div class="flex flex-wrap items-center justify-between gap-2 py-1 px-2.5 rounded surface-inset">
+            <div class="flex items-center gap-2">
+              <span class="px-1.5 py-0.2 rounded text-[10px] font-bold ${chip}">${t.status} ${t.method}</span>
+              <span class="font-semibold">${t.route}</span>
+              <span style="color: var(--ink-secondary);">— ${t.summary}</span>
+            </div>
+            <div class="flex items-center gap-3" style="color: var(--ink-muted);">
+              <span>${t.latency}</span>
+              <span>${t.reqId}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderGlobalSearch() {
+      const box = document.getElementById('global-search-results');
+      const q = (state.searchQuery || '').trim().toLowerCase();
+      if (!q) {
+        box.classList.add('hidden');
+        box.innerHTML = '';
+        return;
+      }
+      const matchedPages = PAGES.filter((p) =>
+        p.title.toLowerCase().includes(q) || p.subtitle.toLowerCase().includes(q) || p.section.toLowerCase().includes(q)
+      );
+      const matchedFindings = state.findings.filter((f) =>
+        f.canonical_id.toLowerCase().includes(q) || f.package_name.toLowerCase().includes(q) || f.service_name.toLowerCase().includes(q) || f.cwe.toLowerCase().includes(q)
+      );
+
+      box.classList.remove('hidden');
+      box.innerHTML = `
+        <div class="flex items-center justify-between mb-2 pb-1.5 border-b hairline-divider">
+          <span class="font-mono font-semibold text-[11px]" style="color: var(--ink-secondary);">Multi-Page Index Matches for "${state.searchQuery}"</span>
+          <button id="btn-clear-search" type="button" class="text-[11px] font-mono underline" style="color: var(--copper-ink);">Close</button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <div class="text-[10px] font-mono uppercase mb-1" style="color: var(--ink-muted);">Pages (${matchedPages.length})</div>
+            <div class="flex flex-wrap gap-1.5">
+              ${matchedPages.map((p) => `
+                <button type="button" data-goto="${p.id}" class="goto-btn px-2.5 py-1 rounded text-xs font-medium ${p.chip}">
+                  ${p.num}. ${p.title}
+                </button>
+              `).join('') || '<span class="text-xs" style="color: var(--ink-muted);">No matching pages</span>'}
+            </div>
+          </div>
+          <div>
+            <div class="text-[10px] font-mono uppercase mb-1" style="color: var(--ink-muted);">Findings &amp; Packages (${matchedFindings.length})</div>
+            <div class="flex flex-wrap gap-1.5">
+              ${matchedFindings.map((f) => `
+                <button type="button" data-inspect="${f.id}" class="inspect-finding-btn px-2.5 py-1 rounded text-xs font-mono chip-copper">
+                  ${f.canonical_id} · ${f.package_name} (${f.service_name})
+                </button>
+              `).join('') || '<span class="text-xs" style="color: var(--ink-muted);">No matching findings</span>'}
+            </div>
+          </div>
+        </div>
+      `;
+      const clearBtn = document.getElementById('btn-clear-search');
+      if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+          state.searchQuery = '';
+          document.getElementById('global-search-input').value = '';
+          renderGlobalSearch();
+        });
+      }
+      wireScreenInteractions();
+    }
+
+    function renderChrome() {
+      document.body.classList.remove('palette-plum', 'palette-matcha');
+      if (state.paletteIndex === 1) document.body.classList.add('palette-plum');
+      if (state.paletteIndex === 2) document.body.classList.add('palette-matcha');
+
+      const paletteNames = ['Palette: Veridian & Sand', 'Palette: Plum & Parchment', 'Palette: Sumi & Matcha'];
+      const themeBtn = document.getElementById('btn-theme-toggle');
+      if (themeBtn) themeBtn.textContent = paletteNames[state.paletteIndex];
+
+      document.getElementById('role-select').value = state.role;
+      document.getElementById('ui-state-select').value = state.uiState;
+      document.getElementById('active-role-pill').textContent = state.role;
+
+      const curPage = PAGES.find((p) => p.id === state.activeScreen) || PAGES[0];
+      const urlPill = document.getElementById('route-url-pill');
+      if (urlPill) urlPill.textContent = `https://patchgraph.local${curPage.path}`;
+
+      const stMeta = UI_STATES[state.uiState] || UI_STATES['offline-demo'];
+      document.getElementById('state-banner-text').innerHTML =
+        `<span class="px-1.5 py-0.2 rounded font-mono text-[10px] ${stMeta.chip}">${stMeta.badge}</span> <strong class="ml-1">${stMeta.title}:</strong> ${stMeta.guidance}`;
+
+      const navContainer = document.getElementById('sidebar-nav-list');
+      let lastSection = '';
+      navContainer.innerHTML = PAGES.map((p) => {
+        const active = p.id === state.activeScreen;
+        const secHdr = p.section !== lastSection
+          ? `<div class="px-2 pt-3 pb-1 text-[10px] font-mono uppercase tracking-wider font-semibold" style="color: var(--rail-muted);">${p.section}</div>`
+          : '';
+        lastSection = p.section;
+        return `
+          ${secHdr}
+          <button
+            type="button"
+            data-screen="${p.id}"
+            class="nav-screen-btn rail-nav-item ${active ? 'active' : ''} w-full text-left px-2.5 py-1.5 rounded-r-md text-xs flex items-center justify-between gap-2"
+          >
+            <span class="truncate"><span class="font-mono text-[10px] opacity-60 mr-1.5">${p.num}</span>${p.title}</span>
+            <span class="text-[10px] font-mono px-1.5 py-0.2 rounded opacity-85" style="background: rgba(255,255,255,0.1);">${p.badge}</span>
+          </button>
+        `;
+      }).join('');
+
+      document.querySelectorAll('.nav-screen-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          navigateToPage(btn.getAttribute('data-screen'), true);
+        });
+      });
+
+      renderTelemetryLog();
+    }
+
+    // =========================================================================
+    // 14 PRODUCTION MULTI-PAGE RENDERERS
+    // =========================================================================
+    function renderActiveScreen() {
+      const viewport = document.getElementById('main-viewport');
+      const pg = PAGES.find((p) => p.id === state.activeScreen) || PAGES[0];
+
+      if (state.uiState === 'empty') {
+        viewport.innerHTML = `
+          <div class="py-16 text-center space-y-3 surface-card rounded-xl p-8">
+            <span class="px-2.5 py-1 rounded font-mono text-xs chip-ochre">[EMPTY PROJECT SCOPE]</span>
+            <h1 class="text-xl font-serif-display font-bold">${pg.num}. ${pg.title}</h1>
+            <p class="text-xs max-w-md mx-auto" style="color: var(--ink-secondary);">No SBOM or evidence snapshot is loaded in this project scope. Click below to restore the seeded <code>commerce-platform</code> production inventory.</p>
+            <button id="btn-empty-restore" type="button" class="px-4 py-2 rounded-md chip-prussian font-semibold text-xs">
+              Restore Seeded Scenario (snap_01)
+            </button>
+          </div>
+        `;
+        document.getElementById('btn-empty-restore').addEventListener('click', () => {
+          state = createInitialState();
+          renderChrome();
+          renderActiveScreen();
+        });
+        return;
+      }
+
+      const pageHeader = `
+        <header class="pb-4 border-b hairline-divider flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2 text-xs font-mono">
+              <span class="px-2 py-0.5 rounded ${pg.chip}">${pg.section}</span>
+              <span style="color: var(--ink-muted);">Route: <code>${pg.path}</code></span>
+              <span style="color: var(--ink-muted);">· Min Role: <code>${pg.minRole}</code></span>
+            </div>
+            <h1 class="text-2xl font-serif-display font-bold mt-1.5" style="color: var(--ink-primary);">${pg.num}. ${pg.title}</h1>
+            <p class="text-xs mt-0.5" style="color: var(--ink-secondary);">${pg.subtitle}</p>
+          </div>
+          <div class="flex items-center gap-2 font-mono text-xs">
+            <span class="px-3 py-1 rounded-md ${state.approvalState === 'approved' ? 'chip-veridian' : state.approvalState === 'rejected' ? 'chip-copper' : 'chip-ochre'}">
+              Plan Status: <strong>${state.approvalState.toUpperCase()}</strong>
+            </span>
+          </div>
+        </header>
+      `;
+
+      let content = '';
+      switch (state.activeScreen) {
+        case 'dashboard': content = renderDashboardPage(); break;
+        case 'assets': content = renderAssetsPage(); break;
+        case 'dependency-graph': content = renderDependencyGraphPage(); break;
+        case 'vulnerabilities': content = renderVulnerabilitiesPage(); break;
+        case 'prioritization': content = renderPrioritizationPage(); break;
+        case 'finding-detail': content = renderFindingDetailPage(); break;
+        case 'explainability': content = renderExplainabilityPage(); break;
+        case 'blast-radius': content = renderBlastRadiusPage(); break;
+        case 'planner': content = renderPlannerPage(); break;
+        case 'what-if': content = renderWhatIfPage(); break;
+        case 'imports': content = renderImportsPage(); break;
+        case 'runs': content = renderRunsPage(); break;
+        case 'audit': content = renderAuditPage(); break;
+        case 'data-health': content = renderDataHealthPage(); break;
+        default: content = renderDashboardPage();
+      }
+
+      viewport.innerHTML = pageHeader + content;
+      wireScreenInteractions();
+    }
+
+    function renderDashboardPage() {
+      const plan = solvePlanInBrowser(state.budgetHours, state.maxDowntimeMinutes, state.maxCompatRisk);
+      return `
+        <div class="space-y-6">
+          <!-- Row 1: 4 Editorial KPI Cards -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="surface-elevated rounded-xl p-4" style="border-left: 4px solid var(--copper-ink);">
+              <div class="flex items-center justify-between text-xs">
+                <span class="font-medium" style="color: var(--ink-secondary);">Exposed Prod Services</span>
+                <span class="font-mono text-[10px] px-1.5 py-0.5 rounded chip-copper">2 SERVICES</span>
+              </div>
+              <div class="text-2xl font-serif-display font-bold mt-2" style="color: var(--copper-ink);">checkout, identity-sso</div>
+              <div class="text-[11px] font-mono mt-1" style="color: var(--ink-muted);">Tier-1 PCI-DSS · Max Downtime 15-30m</div>
+            </div>
+
+            <div class="surface-elevated rounded-xl p-4" style="border-left: 4px solid var(--mulberry-ink);">
+              <div class="flex items-center justify-between text-xs">
+                <span class="font-medium" style="color: var(--ink-secondary);">Highest Calibrated Risk</span>
+                <span class="font-mono text-[10px] px-1.5 py-0.5 rounded chip-mulberry">EPSS 86% · KEV</span>
+              </div>
+              <div class="text-2xl font-serif-display font-bold mt-2" style="color: var(--mulberry-ink);">10.57 <span class="text-xs font-mono font-normal">/ 12.0</span></div>
+              <div class="text-[11px] font-mono mt-1" style="color: var(--ink-muted);">CVE-2026-1001 · example-lib@1.4.0</div>
+            </div>
+
+            <div class="surface-elevated rounded-xl p-4" style="border-left: 4px solid var(--veridian-ink);">
+              <div class="flex items-center justify-between text-xs">
+                <span class="font-medium" style="color: var(--ink-secondary);">OpenVEX Noise Reduction</span>
+                <span class="font-mono text-[10px] px-1.5 py-0.5 rounded chip-veridian">NOT_AFFECTED</span>
+              </div>
+              <div class="text-2xl font-serif-display font-bold mt-2" style="color: var(--veridian-ink);">25.0% <span class="text-xs font-mono font-normal">(1 of 4)</span></div>
+              <div class="text-[11px] font-mono mt-1" style="color: var(--ink-muted);">analytics-worker qualified in staging</div>
+            </div>
+
+            <div class="surface-elevated rounded-xl p-4" style="border-left: 4px solid var(--prussian-ink);">
+              <div class="flex items-center justify-between text-xs">
+                <span class="font-medium" style="color: var(--ink-secondary);">CP-SAT Optimal Plan</span>
+                <span class="font-mono text-[10px] px-1.5 py-0.5 rounded chip-prussian">${plan.status.toUpperCase()}</span>
+              </div>
+              <div class="text-2xl font-serif-display font-bold mt-2" style="color: var(--prussian-ink);">-${plan.risk_removed} <span class="text-xs font-mono font-normal">(${plan.hours_used}h / ${plan.downtime_used}m)</span></div>
+              <div class="text-[11px] font-mono mt-1" style="color: var(--ink-muted);">${plan.selected.length} upgrades selected · 0 violations</div>
+            </div>
+          </div>
+
+          <!-- Row 2: 30-Day Exposure Burn-Down SVG Chart + Service×Environment Risk Heatmap -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+            <div class="lg:col-span-7 surface-elevated rounded-xl p-5 space-y-3">
+              <div class="flex items-center justify-between border-b hairline-divider pb-2.5">
+                <div>
+                  <h2 class="text-sm font-bold">Weighted Supply-Chain Exposure Burn-Down (CP-SAT vs. Greedy)</h2>
+                  <p class="text-[11px]" style="color: var(--ink-muted);">Cumulative risk remaining across engineering effort budgets (0h to 20h)</p>
+                </div>
+                <span class="font-mono text-[11px] px-2 py-0.5 rounded chip-prussian">RQ2 Empirical Curve</span>
+              </div>
+              <svg viewBox="0 0 560 190" class="w-full h-auto">
+                <!-- Grid lines -->
+                <line x1="45" y1="25" x2="530" y2="25" stroke="#D2CBB8" stroke-dasharray="3,3" />
+                <line x1="45" y1="75" x2="530" y2="75" stroke="#D2CBB8" stroke-dasharray="3,3" />
+                <line x1="45" y1="125" x2="530" y2="125" stroke="#D2CBB8" stroke-dasharray="3,3" />
+                <line x1="45" y1="160" x2="530" y2="160" stroke="#181D1B" stroke-width="1.5" />
+                <text x="12" y="29" font-size="10" font-family="JetBrains Mono" fill="#6E7874">32.2</text>
+                <text x="12" y="79" font-size="10" font-family="JetBrains Mono" fill="#6E7874">20.0</text>
+                <text x="12" y="129" font-size="10" font-family="JetBrains Mono" fill="#6E7874">10.0</text>
+                <text x="22" y="163" font-size="10" font-family="JetBrains Mono" fill="#6E7874">0.0</text>
+
+                <!-- Greedy Risk-Descending Line (Stalls on heavy major upgrade) -->
+                <polyline fill="none" stroke="#B84220" stroke-width="2.5" stroke-dasharray="5,4" points="50,25 170,25 290,95 410,65 520,40" />
+                <!-- PatchGraph CP-SAT Line (Steepest risk reduction per hour) -->
+                <polyline fill="none" stroke="#186349" stroke-width="3" points="50,25 170,88 290,132 410,152 520,158" />
+
+                <!-- Data points -->
+                <circle cx="170" cy="88" r="4.5" fill="#186349" />
+                <circle cx="290" cy="132" r="4.5" fill="#186349" />
+                <circle cx="410" cy="152" r="4.5" fill="#186349" />
+                <circle cx="290" cy="95" r="4" fill="#B84220" />
+
+                <text x="50" y="178" font-size="10" font-family="JetBrains Mono" fill="#454F4B">0h</text>
+                <text x="162" y="178" font-size="10" font-family="JetBrains Mono" fill="#454F4B">6h</text>
+                <text x="280" y="178" font-size="10" font-family="JetBrains Mono" fill="#454F4B">10h</text>
+                <text x="400" y="178" font-size="10" font-family="JetBrains Mono" fill="#454F4B">15h</text>
+                <text x="510" y="178" font-size="10" font-family="JetBrains Mono" fill="#454F4B">20h</text>
+
+                <!-- Legend -->
+                <rect x="310" y="18" width="210" height="44" rx="6" fill="#FAF8F4" stroke="#D2CBB8" />
+                <line x1="322" y1="32" x2="345" y2="32" stroke="#186349" stroke-width="3" />
+                <text x="352" y="35" font-size="10" font-family="DM Sans" font-weight="600" fill="#181D1B">PatchGraph CP-SAT Optimal</text>
+                <line x1="322" y1="49" x2="345" y2="49" stroke="#B84220" stroke-width="2.5" stroke-dasharray="4,3" />
+                <text x="352" y="52" font-size="10" font-family="DM Sans" fill="#454F4B">Greedy Severity-First Baseline</text>
+              </svg>
+            </div>
+
+            <!-- Service × Environment Topology Risk Matrix -->
+            <div class="lg:col-span-5 surface-elevated rounded-xl p-5 space-y-3">
+              <div class="flex items-center justify-between border-b hairline-divider pb-2.5">
+                <div>
+                  <h2 class="text-sm font-bold">Service × Environment Topology Heatmap</h2>
+                  <p class="text-[11px]" style="color: var(--ink-muted);">Click any cell to jump to service findings</p>
+                </div>
+                <button type="button" data-goto="assets" class="goto-btn font-mono text-[11px] px-2 py-0.5 rounded chip-petrol">All Assets -&gt;</button>
+              </div>
+              <div class="grid grid-cols-2 gap-2.5 text-xs">
+                <div class="p-3 rounded-lg chip-copper space-y-1">
+                  <div class="flex justify-between font-mono text-[11px]"><span>prod · crit 5/5</span><strong>15.75 Σ risk</strong></div>
+                  <div class="font-bold text-sm">service:checkout</div>
+                  <div class="text-[11px] font-mono">2 open findings (1 KEV)</div>
+                </div>
+                <div class="p-3 rounded-lg chip-ochre space-y-1">
+                  <div class="flex justify-between font-mono text-[11px]"><span>prod · crit 5/5</span><strong>8.00 Σ risk</strong></div>
+                  <div class="font-bold text-sm">service:identity-sso</div>
+                  <div class="text-[11px] font-mono">1 open finding (cryptography)</div>
+                </div>
+                <div class="p-3 rounded-lg chip-veridian space-y-1">
+                  <div class="flex justify-between font-mono text-[11px]"><span>staging · crit 2/5</span><strong>VEX Qualified</strong></div>
+                  <div class="font-bold text-sm">service:analytics-worker</div>
+                  <div class="text-[11px] font-mono">status: not_affected</div>
+                </div>
+                <div class="p-3 rounded-lg chip-prussian space-y-1">
+                  <div class="flex justify-between font-mono text-[11px]"><span>prod · crit 4/5</span><strong>Clean / Patched</strong></div>
+                  <div class="font-bold text-sm">service:order-fulfillment</div>
+                  <div class="text-[11px] font-mono">0 critical findings</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 3: Priority Action Queue & Multi-Page Navigation Strip -->
+          <div class="surface-elevated rounded-xl p-5 space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b hairline-divider pb-2.5">
+              <div>
+                <h2 class="text-sm font-bold">Live Prioritized Finding &amp; Remediation Queue</h2>
+                <p class="text-[11px]" style="color: var(--ink-muted);">Sorted by Deployment-Aware Final Score (w_f) · Every score exposes factor contributions &amp; uncertainty</p>
+              </div>
+              <div class="flex gap-2">
+                <button type="button" data-goto="prioritization" class="goto-btn px-3 py-1 rounded-md text-xs font-mono chip-mulberry">05. Prioritization Page -&gt;</button>
+                <button type="button" data-goto="planner" class="goto-btn px-3 py-1 rounded-md text-xs font-mono chip-prussian">09. CP-SAT Planner Page -&gt;</button>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              ${state.findings.map((f, idx) => `
+                <div class="p-3.5 rounded-lg surface-inset flex items-center justify-between gap-3">
+                  <div class="space-y-1 min-w-0">
+                    <div class="flex items-center gap-2">
+                      <span class="font-mono text-xs font-bold">#${idx + 1}</span>
+                      <span class="font-mono font-bold text-xs">${f.canonical_id}</span>
+                      <span class="font-mono text-[11px] px-1.5 py-0.2 rounded ${f.vex_status === 'not_affected' ? 'chip-veridian' : 'chip-copper'}">${f.package_name}@${f.package_version}</span>
+                    </div>
+                    <div class="text-[11px] font-mono truncate" style="color: var(--ink-secondary);">
+                      Service: <strong>${f.service_name}</strong> (${f.environment}) · Fix: <code>${f.fixed_version}</code> · Unc: ${(f.uncertainty * 100).toFixed(0)}%
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2.5 shrink-0">
+                    <div class="text-right font-mono">
+                      <div class="text-sm font-bold" style="color: var(--prussian-ink);">${f.final_score.toFixed(2)}</div>
+                      <div class="text-[10px]" style="color: var(--ink-muted);">CVSS ${f.cvss.toFixed(1)}</div>
+                    </div>
+                    <button type="button" data-inspect="${f.id}" class="inspect-finding-btn px-2.5 py-1.5 rounded-md text-xs font-mono surface-elevated hover:opacity-80">
+                      Forensics -&gt;
+                    </button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAssetsPage() {
+      const assets = state.assetsList.filter((a) => state.assetEnvFilter === 'all' || a.env === state.assetEnvFilter);
+      return `
+        <div class="space-y-5 text-xs">
+          <div class="flex flex-wrap items-center justify-between gap-3 surface-elevated p-4 rounded-xl">
+            <div class="flex items-center gap-3">
+              <label class="flex items-center gap-2 surface-inset rounded-md px-3 py-1.5">
+                <span style="color: var(--ink-secondary);">Filter Environment:</span>
+                <select id="asset-env-filter" class="bg-transparent font-mono font-semibold focus:outline-none" style="color: var(--prussian-ink);">
+                  <option value="all" ${state.assetEnvFilter === 'all' ? 'selected' : ''}>All Tiers (${state.assetsList.length})</option>
+                  <option value="prod" ${state.assetEnvFilter === 'prod' ? 'selected' : ''}>Production Only (prod)</option>
+                  <option value="staging" ${state.assetEnvFilter === 'staging' ? 'selected' : ''}>Staging Only (staging)</option>
+                </select>
+              </label>
+            </div>
+            <div class="font-mono text-[11px]" style="color: var(--ink-muted);">PostgreSQL Table: <code>assets</code> JOIN <code>deployments</code> JOIN <code>services</code></div>
+          </div>
+
+          <div class="overflow-x-auto surface-elevated rounded-xl">
+            <table class="w-full text-xs text-left border-collapse">
+              <thead>
+                <tr class="border-b hairline-divider font-mono text-[11px]" style="color: var(--ink-muted);">
+                  <th class="py-3 px-4">Asset External Key</th>
+                  <th class="py-3 px-4">Kind</th>
+                  <th class="py-3 px-4">Environment</th>
+                  <th class="py-3 px-4">Criticality</th>
+                  <th class="py-3 px-4">SLA Max Downtime</th>
+                  <th class="py-3 px-4">Service &amp; Owner</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y hairline-divider font-mono">
+                ${assets.map((a) => `
+                  <tr>
+                    <td class="py-3 px-4 font-semibold" style="color: var(--petrol-ink);">${a.key}<div class="text-[10px] font-normal" style="color: var(--ink-muted);">Region: ${a.region}</div></td>
+                    <td class="py-3 px-4">${a.kind}</td>
+                    <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[11px] ${a.prod ? 'chip-copper' : 'chip-veridian'}">${a.env} ${a.prod ? '[PROD]' : '[STAGING]'}</span></td>
+                    <td class="py-3 px-4 font-bold">${a.crit} / 5</td>
+                    <td class="py-3 px-4">${a.downtime} mins</td>
+                    <td class="py-3 px-4 font-sans"><div class="font-bold">${a.service}</div><div class="font-mono text-[11px]" style="color: var(--ink-muted);">${a.owner}</div></td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderDependencyGraphPage() {
+      const selNode = GRAPH_NODES_META[state.selectedGraphNode] || GRAPH_NODES_META['pv_example_lib_1_4_0'];
+      const cypherText = `// PatchGraph Neo4j Cypher Export (Snapshot snap_01)\nMERGE (s1:Service {id: "service:checkout", env: "prod", criticality: 5});\nMERGE (s2:Service {id: "service:identity-sso", env: "prod", criticality: 5});\nMERGE (s3:Service {id: "service:analytics-worker", env: "staging", vex: "not_affected"});\nMERGE (p1:PackageVersion {id: "pv_checkout_sdk_2_1_0", purl: "pkg:pypi/checkout-sdk@2.1.0"});\nMERGE (p2:PackageVersion {id: "pv_example_lib_1_4_0", purl: "pkg:pypi/example-lib@1.4.0", cve: "CVE-2026-1001"});\nMERGE (s1)-[:USES_COMPONENT {direct: true}]->(p1);\nMERGE (p1)-[:DEPENDS_ON {scope: "runtime"}]->(p2);\nMERGE (s3)-[:USES_COMPONENT {direct: false}]->(p2);`;
+
+      return `
+        <div class="space-y-5 text-xs">
+          <div class="flex flex-wrap items-center justify-between gap-2 surface-elevated p-3.5 rounded-xl">
+            <div class="flex items-center gap-2">
+              <button type="button" data-gmode="canvas" class="gmode-btn px-3 py-1.5 rounded-md font-medium ${state.graphViewMode === 'canvas' ? 'chip-prussian font-semibold' : 'surface-inset'}">
+                Interactive Multi-Layer Graph
+              </button>
+              <button type="button" data-gmode="table" class="gmode-btn px-3 py-1.5 rounded-md font-medium ${state.graphViewMode === 'table' ? 'chip-prussian font-semibold' : 'surface-inset'}">
+                Accessible Keyboard Table
+              </button>
+              <button id="btn-toggle-cypher" type="button" class="px-3 py-1.5 rounded-md font-mono surface-inset">
+                ${state.showCypherExport ? 'Hide Neo4j Cypher' : 'Export Neo4j Cypher'}
+              </button>
+            </div>
+            <span class="font-mono text-[11px]" style="color: var(--ink-muted);">Click any node to inspect blast radius, GCN score &amp; fix candidates</span>
+          </div>
+
+          ${state.showCypherExport ? `<pre class="p-3.5 rounded-xl surface-inset font-mono text-[11px] overflow-x-auto" style="color: var(--petrol-ink);">${cypherText}</pre>` : ''}
+
+          ${state.graphViewMode === 'canvas' ? `
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+              <div class="lg:col-span-8 surface-elevated rounded-xl p-4">
+                <svg viewBox="0 0 780 300" class="w-full h-auto">
+                  <defs>
+                    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6E7874" />
+                    </marker>
+                    <marker id="arrow-vuln" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                      <path d="M 0 0 L 10 5 L 0 10 z" fill="#B84220" />
+                    </marker>
+                  </defs>
+
+                  <text x="90" y="20" text-anchor="middle" font-size="10" font-family="JetBrains Mono" fill="#6E7874">DEPLOYED SERVICES</text>
+                  <text x="365" y="20" text-anchor="middle" font-size="10" font-family="JetBrains Mono" fill="#6E7874">DIRECT SDK LAYER</text>
+                  <text x="650" y="20" text-anchor="middle" font-size="10" font-family="JetBrains Mono" fill="#6E7874">TRANSITIVE PACKAGES</text>
+
+                  <line x1="160" y1="80" x2="290" y2="80" stroke="#B84220" stroke-width="2.5" class="edge-animated" marker-end="url(#arrow-vuln)" />
+                  <line x1="440" y1="80" x2="565" y2="80" stroke="#B84220" stroke-width="2.5" class="edge-animated" marker-end="url(#arrow-vuln)" />
+                  <line x1="365" y1="112" x2="565" y2="215" stroke="#1F4882" stroke-width="2" marker-end="url(#arrow)" />
+                  <line x1="160" y1="215" x2="565" y2="92" stroke="#186349" stroke-dasharray="5,5" stroke-width="2" marker-end="url(#arrow)" />
+
+                  <g class="graph-node" data-node-id="service:checkout" transform="translate(20,48)">
+                    <rect width="140" height="64" rx="8" fill="#FCECE6" stroke="#B84220" stroke-width="${state.selectedGraphNode === 'service:checkout' ? '3' : '1.5'}" />
+                    <text x="70" y="22" text-anchor="middle" fill="#B84220" font-size="9" font-family="JetBrains Mono" font-weight="600">PROD SERVICE (CRIT 5)</text>
+                    <text x="70" y="41" text-anchor="middle" fill="#181D1B" font-size="12" font-weight="700">checkout</text>
+                    <text x="70" y="55" text-anchor="middle" fill="#454F4B" font-size="9" font-family="JetBrains Mono">downtime cap: 30m</text>
+                  </g>
+
+                  <g class="graph-node" data-node-id="pv_checkout_sdk_2_1_0" transform="translate(295,48)">
+                    <rect width="145" height="64" rx="8" fill="#FDF3E1" stroke="#9A5B0A" stroke-width="${state.selectedGraphNode === 'pv_checkout_sdk_2_1_0' ? '3' : '1.5'}" />
+                    <text x="72" y="22" text-anchor="middle" fill="#9A5B0A" font-size="9" font-family="JetBrains Mono" font-weight="600">DIRECT SDK</text>
+                    <text x="72" y="41" text-anchor="middle" fill="#181D1B" font-size="11" font-weight="700">checkout-sdk@2.1.0</text>
+                    <text x="72" y="55" text-anchor="middle" fill="#454F4B" font-size="9" font-family="JetBrains Mono">pypi · hop 1</text>
+                  </g>
+
+                  <g class="graph-node" data-node-id="pv_example_lib_1_4_0" transform="translate(570,44)">
+                    <rect width="185" height="72" rx="8" fill="#FCECE6" stroke="#B84220" stroke-width="${state.selectedGraphNode === 'pv_example_lib_1_4_0' ? '3.5' : '2'}" />
+                    <text x="92" y="21" text-anchor="middle" fill="#B84220" font-size="9" font-family="JetBrains Mono" font-weight="700">[KEV] CVE-2026-1001 (8.8)</text>
+                    <text x="92" y="40" text-anchor="middle" fill="#181D1B" font-size="12" font-weight="700">example-lib@1.4.0</text>
+                    <text x="92" y="58" text-anchor="middle" fill="#186349" font-size="10" font-family="JetBrains Mono" font-weight="600">Upgrade -&gt; 1.4.3 (6h)</text>
+                  </g>
+
+                  <g class="graph-node" data-node-id="service:analytics-worker" transform="translate(20,185)">
+                    <rect width="140" height="64" rx="8" fill="#E5F5EE" stroke="#186349" stroke-width="${state.selectedGraphNode === 'service:analytics-worker' ? '3' : '1.5'}" />
+                    <text x="70" y="22" text-anchor="middle" fill="#186349" font-size="9" font-family="JetBrains Mono" font-weight="600">VEX: NOT_AFFECTED</text>
+                    <text x="70" y="41" text-anchor="middle" fill="#181D1B" font-size="11" font-weight="700">analytics-worker</text>
+                    <text x="70" y="55" text-anchor="middle" fill="#454F4B" font-size="9" font-family="JetBrains Mono">staging · crit 2</text>
+                  </g>
+
+                  <g class="graph-node" data-node-id="pv_urllib3_2_0_2" transform="translate(570,185)">
+                    <rect width="185" height="64" rx="8" fill="#E9F0FA" stroke="#1F4882" stroke-width="${state.selectedGraphNode === 'pv_urllib3_2_0_2' ? '3' : '1.5'}" />
+                    <text x="92" y="22" text-anchor="middle" fill="#1F4882" font-size="9" font-family="JetBrains Mono" font-weight="600">CVE-2023-45803 (CVSS 4.2)</text>
+                    <text x="92" y="41" text-anchor="middle" fill="#181D1B" font-size="11" font-weight="700">urllib3@2.0.2</text>
+                    <text x="92" y="55" text-anchor="middle" fill="#454F4B" font-size="9" font-family="JetBrains Mono">Upgrade -&gt; 2.0.7 (4h)</text>
+                  </g>
+                </svg>
+              </div>
+
+              <div class="lg:col-span-4 surface-elevated rounded-xl p-4 flex flex-col justify-between space-y-3">
+                <div class="space-y-2">
+                  <span class="font-mono text-[10px] px-2 py-0.5 rounded ${selNode.chip}">${selNode.kind}</span>
+                  <h3 class="text-base font-bold font-mono">${selNode.label}</h3>
+                  <p class="text-xs leading-relaxed" style="color: var(--ink-secondary);">${selNode.detail}</p>
+                </div>
+                <div class="pt-3 border-t hairline-divider space-y-1.5 font-mono text-[11px]" style="color: var(--ink-muted);">
+                  <div>Reverse Fan-In Centrality: <strong style="color: var(--ink-primary);">0.7750</strong></div>
+                  <div>2-Layer GCN Stretch Score: <strong style="color: var(--mulberry-ink);">0.8124</strong></div>
+                  <div>Cycle Protection: <strong style="color: var(--veridian-ink);">Per-Path Visited Set</strong></div>
+                </div>
+              </div>
+            </div>
+          ` : ''}
+
+          <div class="overflow-x-auto surface-elevated rounded-xl">
+            <table class="w-full text-xs text-left border-collapse" aria-label="Accessible Dependency Graph Edges Table">
+              <thead>
+                <tr class="border-b hairline-divider font-mono text-[11px]" style="color: var(--ink-muted);">
+                  <th class="py-2.5 px-4">Source Node</th>
+                  <th class="py-2.5 px-4">Edge Type</th>
+                  <th class="py-2.5 px-4">Target Node</th>
+                  <th class="py-2.5 px-4">Reachability Status</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y hairline-divider font-mono">
+                <tr><td class="py-2.5 px-4 font-bold">service:checkout</td><td class="py-2.5 px-4" style="color: var(--petrol-ink);">uses_component (direct)</td><td class="py-2.5 px-4">pkg:pypi/checkout-sdk@2.1.0</td><td class="py-2.5 px-4"><span class="px-2 py-0.5 rounded chip-copper">Prod Critical 5/5</span></td></tr>
+                <tr><td class="py-2.5 px-4">pkg:pypi/checkout-sdk@2.1.0</td><td class="py-2.5 px-4" style="color: var(--copper-ink);">depends_on (runtime)</td><td class="py-2.5 px-4 font-bold">pkg:pypi/example-lib@1.4.0</td><td class="py-2.5 px-4"><span class="px-2 py-0.5 rounded chip-copper">reachable_prod (Hop 2 · Decay 0.85)</span></td></tr>
+                <tr><td class="py-2.5 px-4">service:analytics-worker</td><td class="py-2.5 px-4" style="color: var(--veridian-ink);">uses_component (transitive)</td><td class="py-2.5 px-4">pkg:pypi/example-lib@1.4.0</td><td class="py-2.5 px-4"><span class="px-2 py-0.5 rounded chip-veridian">unreachable_vex (OpenVEX)</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderVulnerabilitiesPage() {
+      return `
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          ${state.findings.map((f) => `
+            <div class="surface-elevated rounded-xl p-4 space-y-2.5" style="border-top: 3px solid ${f.kev ? 'var(--copper-ink)' : 'var(--prussian-ink)'};">
+              <div class="flex items-center justify-between">
+                <span class="font-mono font-bold text-sm">${f.canonical_id} · ${f.package_name}@${f.package_version}</span>
+                <span class="px-2 py-0.5 rounded font-mono ${f.kev ? 'chip-copper' : 'chip-prussian'}">CVSS ${f.cvss.toFixed(1)} ${f.kev ? '· KEV' : ''}</span>
+              </div>
+              <div class="font-mono text-[11px]" style="color: var(--ink-secondary);">${f.cwe} · Service: <strong>${f.service_name}</strong> (${f.environment})</div>
+              <div class="p-2.5 rounded surface-inset font-mono text-[11px] space-y-1">
+                <div>Vector: <code>${f.cvss_vector}</code></div>
+                <div>FIRST EPSS: <strong>${(f.epss * 100).toFixed(1)}% (${(f.percentile * 100).toFixed(0)}th pct)</strong> · Fix: <code>${f.fixed_version}</code></div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function renderPrioritizationPage() {
+      const sorted = [...state.findings].sort((a, b) => {
+        if (state.findingSort === 'cvss') return b.cvss - a.cvss;
+        if (state.findingSort === 'epss') return b.epss - a.epss;
+        return b.final_score - a.final_score;
+      });
+
+      return `
+        <div class="space-y-4 text-xs">
+          <div class="flex flex-wrap items-center justify-between gap-2 surface-elevated p-4 rounded-xl">
+            <label class="flex items-center gap-2 surface-inset rounded-md px-3 py-1.5">
+              <span style="color: var(--ink-secondary);">Active Ranking Strategy:</span>
+              <select id="finding-sort-select" class="bg-transparent font-mono font-semibold focus:outline-none" style="color: var(--mulberry-ink);">
+                <option value="final_score" ${state.findingSort === 'final_score' ? 'selected' : ''}>PatchGraph Final Score (Deploy + Reach + Calibrated ML + VEX)</option>
+                <option value="cvss" ${state.findingSort === 'cvss' ? 'selected' : ''}>CVSS v3.1 Severity Descending (Flat Scanner Baseline)</option>
+                <option value="epss" ${state.findingSort === 'epss' ? 'selected' : ''}>FIRST EPSS Probability Descending</option>
+              </select>
+            </label>
+            <span class="font-mono text-[11px]" style="color: var(--ink-muted);">Notice how VEX-suppressed staging findings drop out of top production slots</span>
+          </div>
+
+          <div class="overflow-x-auto surface-elevated rounded-xl">
+            <table class="w-full text-xs text-left border-collapse">
+              <thead>
+                <tr class="border-b hairline-divider font-mono text-[11px]" style="color: var(--ink-muted);">
+                  <th class="py-3 px-4">Rank (Delta vs CVSS)</th>
+                  <th class="py-3 px-4">Vulnerability &amp; Package</th>
+                  <th class="py-3 px-4">Service &amp; Env</th>
+                  <th class="py-3 px-4">VEX Status</th>
+                  <th class="py-3 px-4">CVSS / EPSS</th>
+                  <th class="py-3 px-4">Uncertainty</th>
+                  <th class="py-3 px-4">Final Score</th>
+                  <th class="py-3 px-4">Forensics</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y hairline-divider font-mono">
+                ${sorted.map((f, idx) => {
+                  const rankNum = idx + 1;
+                  const delta = f.cvss_rank - rankNum;
+                  const deltaBadge = delta > 0 ? `<span class="chip-copper px-1.5 py-0.2 rounded text-[10px]">▲ +${delta}</span>` : delta < 0 ? `<span class="chip-veridian px-1.5 py-0.2 rounded text-[10px]">▼ ${delta}</span>` : `<span class="surface-inset px-1.5 py-0.2 rounded text-[10px]">= 0</span>`;
+                  return `
+                    <tr>
+                      <td class="py-3 px-4 font-bold">#${rankNum} ${deltaBadge}</td>
+                      <td class="py-3 px-4"><div class="font-bold">${f.canonical_id}</div><div style="color: var(--petrol-ink);">${f.package_name}@${f.package_version}</div></td>
+                      <td class="py-3 px-4 font-sans"><div class="font-bold">${f.service_name}</div><div class="font-mono text-[11px]" style="color: var(--ink-muted);">${f.environment} (crit ${f.criticality}/5)</div></td>
+                      <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[11px] ${f.vex_status === 'not_affected' ? 'chip-veridian' : 'chip-copper'}">[${f.vex_status.toUpperCase()}]</span></td>
+                      <td class="py-3 px-4">${f.cvss.toFixed(1)} / ${(f.epss * 100).toFixed(0)}%</td>
+                      <td class="py-3 px-4">${(f.uncertainty * 100).toFixed(0)}% (-${f.factors.uncertainty_penalty.toFixed(2)})</td>
+                      <td class="py-3 px-4 font-bold text-sm" style="color: var(--prussian-ink);">${f.final_score.toFixed(2)}</td>
+                      <td class="py-3 px-4"><button type="button" data-inspect="${f.id}" class="inspect-finding-btn px-2.5 py-1 rounded text-[11px] chip-prussian">Open Page -&gt;</button></td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderFindingDetailPage() {
+      const f = state.findings.find((item) => item.id === state.selectedFindingId) || state.findings[0];
+      return `
+        <div class="space-y-4 text-xs">
+          <div class="flex flex-wrap items-center justify-between gap-2 surface-elevated p-3.5 rounded-xl">
+            <div class="font-mono">
+              <span class="px-2 py-0.5 rounded chip-mulberry">${f.id}</span>
+              <strong class="ml-2 text-sm">${f.canonical_id}</strong> on <code>${f.purl}</code>
+            </div>
+            <div class="flex flex-wrap gap-1.5">
+              ${state.findings.map((item) => `
+                <button type="button" data-select-finding="${item.id}" class="select-finding-pill px-2.5 py-1 rounded font-mono text-[11px] ${item.id === f.id ? 'chip-prussian font-bold' : 'surface-inset'}">
+                  ${item.id} (${item.service_name})
+                </button>
+              `).join('')}
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="surface-elevated rounded-xl p-4 space-y-2.5">
+              <h3 class="font-bold text-sm">6-Factor Score Equation Waterfall (w_f = ${f.final_score.toFixed(2)})</h3>
+              <div class="space-y-2 font-mono pt-1">
+                <div class="flex justify-between"><span>1. Severity (0.40 * ${f.cvss}):</span><span style="color: var(--veridian-ink);">+${f.factors.severity.toFixed(2)}</span></div>
+                <div class="flex justify-between"><span>2. Calibrated Exploit Prob (2.50 * ${f.epss}):</span><span style="color: var(--veridian-ink);">+${f.factors.exploit_probability.toFixed(2)}</span></div>
+                <div class="flex justify-between"><span>3. Criticality (0.40 * ${f.criticality}):</span><span style="color: var(--veridian-ink);">+${f.factors.criticality.toFixed(2)}</span></div>
+                <div class="flex justify-between"><span>4. Reachability (${f.reachability_state}):</span><span style="color: var(--veridian-ink);">+${f.factors.reachability.toFixed(2)}</span></div>
+                <div class="flex justify-between"><span>5. CISA KEV Bonus:</span><span style="color: var(--veridian-ink);">+${f.factors.kev_bonus.toFixed(2)}</span></div>
+                <div class="flex justify-between border-t hairline-divider pt-1.5" style="color: var(--copper-ink);"><span>6. Uncertainty Penalty (-1.00 * ${f.uncertainty}):</span><span>-${f.factors.uncertainty_penalty.toFixed(2)}</span></div>
+              </div>
+            </div>
+
+            <div class="surface-elevated rounded-xl p-4 space-y-2.5">
+              <h3 class="font-bold text-sm">Typed Hop Path &amp; OpenVEX Record</h3>
+              <div class="font-mono text-[11px]" style="color: var(--ink-secondary);">Owner: <strong>${f.owner_email}</strong> · VEX: <span class="px-1.5 py-0.2 rounded ${f.vex_status === 'not_affected' ? 'chip-veridian' : 'chip-copper'}">${f.vex_status}</span></div>
+              <div class="p-3 rounded surface-inset font-mono text-[11px] leading-relaxed">${f.hops.join(' -&gt; ')}</div>
+              <div class="pt-1 flex items-center justify-between">
+                <span class="font-mono text-[11px]">Candidate Fix: <code>${f.package_name} ${f.package_version} -&gt; ${f.fixed_version}</code></span>
+                <button type="button" data-goto="planner" class="goto-btn px-2.5 py-1 rounded font-mono text-[11px] chip-prussian">Optimize in Planner -&gt;</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderExplainabilityPage() {
+      const reachMap = { reachable_prod: 1.0, reachable_non_prod: 0.5, transitive_unverified: 0.6, unreachable_vex: 0.1 };
+      const unc = state.customMissingEvidence ? 0.60 : (state.customReach === 'unreachable_vex' ? 0.29 : 0.10);
+      const sev = 0.40 * state.customCvss;
+      const exp = 2.50 * state.customEpss;
+      const crit = 0.40 * state.customCrit;
+      const reach = 1.50 * (reachMap[state.customReach] || 0.5);
+      const kev = state.customKev ? 1.50 : 0.0;
+      const total = (sev + exp + crit + reach + kev - 1.0 * unc).toFixed(2);
+      const effPred = predictModelTwoEffort(state.effortJumpKind, state.effortSvcCount, state.effortCentrality, state.effortTestCov);
+
+      return `
+        <div class="space-y-5 text-xs">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <div class="surface-elevated rounded-xl p-5 space-y-3">
+              <div class="flex items-center justify-between border-b hairline-divider pb-2">
+                <span class="font-bold text-sm">Model One &amp; Additive Risk Formula Lab</span>
+                <span class="font-mono text-sm font-bold px-2.5 py-0.5 rounded chip-mulberry">w_f = ${total}</span>
+              </div>
+              <label class="block">
+                <span class="flex justify-between"><span>CVSS Severity (sev_f):</span><strong class="font-mono">${state.customCvss.toFixed(1)} (+${sev.toFixed(2)})</strong></span>
+                <input id="slider-cvss" type="range" min="0" max="10" step="0.1" value="${state.customCvss}" class="w-full mt-1" />
+              </label>
+              <label class="block">
+                <span class="flex justify-between"><span>Calibrated Exploit Prob p_hat(exploit_f):</span><strong class="font-mono">${(state.customEpss * 100).toFixed(0)}% (+${exp.toFixed(2)})</strong></span>
+                <input id="slider-epss" type="range" min="0" max="1" step="0.02" value="${state.customEpss}" class="w-full mt-1" />
+              </label>
+              <label class="block">
+                <span class="flex justify-between"><span>Application Criticality (crit_f):</span><strong class="font-mono">${state.customCrit}/5 (+${crit.toFixed(2)})</strong></span>
+                <input id="slider-crit" type="range" min="1" max="5" step="1" value="${state.customCrit}" class="w-full mt-1" />
+              </label>
+              <div class="flex flex-wrap gap-4 pt-1">
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input id="chk-kev" type="checkbox" ${state.customKev ? 'checked' : ''} />
+                  <span>CISA KEV (+1.50)</span>
+                </label>
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input id="chk-missing" type="checkbox" ${state.customMissingEvidence ? 'checked' : ''} />
+                  <span>Simulate Missing Evidence (-0.60)</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="surface-elevated rounded-xl p-5 space-y-3">
+              <div class="flex items-center justify-between border-b hairline-divider pb-2">
+                <span class="font-bold text-sm">Model Two: Ridge Effort Predictor (n=400 CSV)</span>
+                <span class="font-mono text-sm font-bold px-2.5 py-0.5 rounded chip-prussian">${effPred.point}h [${effPred.q10}h, ${effPred.q90}h]</span>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <label class="block">
+                  <span class="text-[11px]" style="color: var(--ink-secondary);">Version Jump Kind</span>
+                  <select id="effort-jump-select" class="w-full mt-1 surface-inset rounded px-2 py-1.5 font-mono text-xs">
+                    <option value="patch" ${state.effortJumpKind === 'patch' ? 'selected' : ''}>patch (1.4.0 -&gt; 1.4.3)</option>
+                    <option value="minor" ${state.effortJumpKind === 'minor' ? 'selected' : ''}>minor (1.4.0 -&gt; 1.5.0)</option>
+                    <option value="major" ${state.effortJumpKind === 'major' ? 'selected' : ''}>major (1.4.0 -&gt; 2.0.0)</option>
+                  </select>
+                </label>
+                <label class="block">
+                  <span class="text-[11px]" style="color: var(--ink-secondary);">Affected Services: <strong class="font-mono">${state.effortSvcCount}</strong></span>
+                  <input id="effort-svc-slider" type="range" min="1" max="6" step="1" value="${state.effortSvcCount}" class="w-full mt-2" />
+                </label>
+              </div>
+              <div class="p-3 rounded surface-inset font-mono text-[11px] space-y-1">
+                <div>Bundle: <code>data/fixtures/model_effort_v1.json</code> (L2 Ridge + Quantile Offset)</div>
+                <div>80% Prediction Interval: <strong style="color: var(--prussian-ink);">[${effPred.q10}h, ${effPred.q90}h]</strong> vs Fixed Baseline: <code>${effPred.fixedBaseline}h</code></div>
+                <div>Held-Out Test MAE (120 tasks): <strong style="color: var(--veridian-ink);">0.5386 hours</strong> (vs 5.4991h fixed baseline)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderBlastRadiusPage() {
+      const decay = Math.pow(0.85, Math.max(0, state.graphDepth - 1)).toFixed(4);
+      return `
+        <div class="space-y-4 text-xs">
+          <div class="flex flex-wrap items-center justify-between gap-3 surface-elevated p-4 rounded-xl">
+            <div class="font-mono">Root Vulnerable Node: <strong style="color: var(--copper-ink);">pv_example_lib_1_4_0 (pkg:pypi/example-lib@1.4.0)</strong></div>
+            <label class="flex items-center gap-2 font-mono">
+              <span>Bounded Hop Depth (1-12):</span>
+              <input id="input-graph-depth" type="number" min="1" max="12" value="${state.graphDepth}" class="w-16 surface-inset rounded px-2 py-1 font-bold" />
+            </label>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="surface-elevated rounded-xl p-4">
+              <div style="color: var(--ink-muted);">Production Blast Radius</div>
+              <div class="text-lg font-bold font-mono mt-1" style="color: var(--copper-ink);">checkout (Hop 2 · Decay 0.8500)</div>
+            </div>
+            <div class="surface-elevated rounded-xl p-4">
+              <div style="color: var(--ink-muted);">Decay Factor at Depth ${state.graphDepth}</div>
+              <div class="text-lg font-bold font-mono mt-1" style="color: var(--prussian-ink);">0.85^(${state.graphDepth - 1}) = ${decay}</div>
+            </div>
+            <div class="surface-elevated rounded-xl p-4">
+              <div style="color: var(--ink-muted);">RQ3 Incomplete Inventory Recall</div>
+              <div class="text-lg font-bold font-mono mt-1" style="color: var(--veridian-ink);">83.3% (&gt;= 80% Target Met)</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderPlannerPage() {
+      const plan = solvePlanInBrowser(state.budgetHours, state.maxDowntimeMinutes, state.maxCompatRisk);
+      const canApprove = state.role === 'approver' || state.role === 'admin';
+      const gitDiffText = `--- a/requirements.txt\n+++ b/requirements.txt\n@@ -1,4 +1,4 @@\n checkout-sdk==2.1.0\n-example-lib==1.4.0\n+example-lib==1.4.3\n${plan.selected.some((x) => x.package === 'urllib3') ? '-urllib3==2.0.2\n+urllib3==2.0.7\n' : ' urllib3==2.0.2\n'}${plan.selected.some((x) => x.package === 'cryptography') ? '-cryptography==41.0.1\n+cryptography==41.0.6\n' : ''}`;
+
+      return `
+        <div class="space-y-5 text-xs">
+          <div class="surface-elevated rounded-xl p-5 space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b hairline-divider pb-2.5">
+              <span class="font-bold text-sm">OR-Tools CP-SAT Constraint Controls</span>
+              <div class="flex flex-wrap gap-1.5 font-mono text-[11px]">
+                <button type="button" data-preset="default" class="preset-btn px-2.5 py-0.5 rounded chip-prussian">Full Sprint (40h / 30m)</button>
+                <button type="button" data-preset="tight" class="preset-btn px-2.5 py-0.5 rounded chip-ochre">Single Window (6h / 12m)</button>
+                <button type="button" data-preset="infeasible" class="preset-btn px-2.5 py-0.5 rounded chip-copper">Infeasible (4h / 5m)</button>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <label class="block">
+                <span class="flex justify-between"><span>Engineering Budget:</span><strong class="font-mono" style="color: var(--prussian-ink);">${state.budgetHours}h</strong></span>
+                <input id="planner-budget" type="range" min="2" max="40" step="2" value="${state.budgetHours}" class="w-full mt-1.5" />
+              </label>
+              <label class="block">
+                <span class="flex justify-between"><span>Max Service Downtime:</span><strong class="font-mono" style="color: var(--ochre-ink);">${state.maxDowntimeMinutes}m</strong></span>
+                <input id="planner-downtime" type="range" min="5" max="60" step="5" value="${state.maxDowntimeMinutes}" class="w-full mt-1.5" />
+              </label>
+              <label class="block">
+                <span class="flex justify-between"><span>Compatibility Risk Ceiling:</span><strong class="font-mono" style="color: var(--mulberry-ink);">${state.maxCompatRisk.toFixed(2)}</strong></span>
+                <input id="planner-compat" type="range" min="0.05" max="0.80" step="0.05" value="${state.maxCompatRisk}" class="w-full mt-1.5" />
+              </label>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="surface-elevated rounded-xl p-4 space-y-3">
+              <div class="flex items-center justify-between border-b hairline-divider pb-2">
+                <h3 class="font-bold text-sm" style="color: var(--veridian-ink);">CP-SAT Selected Actions (${plan.selected.length}) · [${plan.status.toUpperCase()}]</h3>
+                <span class="font-mono font-bold">Exposure Removed: ${plan.risk_removed}</span>
+              </div>
+              ${plan.selected.length === 0 ? `
+                <div class="p-3 rounded chip-copper font-mono text-[11px]">
+                  [HTTP 422 INFEASIBLE_PLAN] No upgrade fits within ${state.budgetHours}h budget and ${state.maxDowntimeMinutes}m downtime.
+                </div>
+              ` : plan.selected.map((a) => `
+                <div class="p-3 rounded-lg surface-inset space-y-1">
+                  <div class="flex justify-between font-mono font-bold">
+                    <span>${a.package}: ${a.from} -&gt; ${a.to} [${a.jump.toUpperCase()}]</span>
+                    <span style="color: var(--veridian-ink);">-${a.risk_removed} risk</span>
+                  </div>
+                  <div class="font-mono text-[11px]" style="color: var(--ink-secondary);">
+                    Effort: ${a.hours}h [${a.q10_hours}h..${a.q90_hours}h] · Downtime: ${a.downtime}m · Smoke: <span class="px-1.5 py-0.2 rounded chip-veridian">${a.smoke_verdict}</span>
+                  </div>
+                  <div class="text-[11px]" style="color: var(--ink-muted);">${a.rationale}</div>
+                </div>
+              `).join('')}
+            </div>
+
+            <div class="surface-elevated rounded-xl p-4 space-y-3">
+              <div class="flex items-center justify-between border-b hairline-divider pb-2">
+                <h3 class="font-bold text-sm" style="color: var(--ochre-ink);">Rejected Alternatives &amp; Binding Constraints (${plan.rejected.length})</h3>
+                <span class="font-mono text-[11px]" style="color: var(--ink-muted);">Deterministic Seed: 42</span>
+              </div>
+              <div class="font-mono text-[11px]" style="color: var(--ink-secondary);">Binding: ${plan.binding.join(' · ') || 'None'}</div>
+              ${plan.rejected.map((r) => `
+                <div class="p-3 rounded-lg surface-inset space-y-1">
+                  <div class="flex justify-between font-mono font-semibold">
+                    <span>${r.package}: ${r.from} -&gt; ${r.to} (${r.hours}h, ${r.downtime}m)</span>
+                    <span class="px-1.5 py-0.2 rounded chip-copper text-[10px]">REJECTED</span>
+                  </div>
+                  <ul class="list-disc list-inside text-[11px] font-mono" style="color: var(--copper-ink);">
+                    ${r.rejected_reasons.map((reason) => `<li>${reason}</li>`).join('')}
+                  </ul>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <div class="surface-elevated rounded-xl p-5 space-y-3" style="border-left: 4px solid var(--prussian-ink);">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h3 class="font-bold text-sm">Mandatory Human Governance Sign-Off &amp; Git PR Bundle Studio</h3>
+                <p style="color: var(--ink-secondary);">Approving writes an immutable record to <code>plan_decisions</code> and generates the unified Git diff.</p>
+              </div>
+              <span class="font-mono text-[11px] px-2 py-0.5 rounded chip-prussian">Active Role: ${state.role}</span>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-2">
+              <input id="decision-reason-input" type="text" value="${state.decisionReason}" class="flex-1 surface-inset rounded-md px-3 py-1.5 font-mono text-xs" />
+              <button id="btn-approve-plan" type="button" class="px-4 py-1.5 rounded-md chip-veridian font-semibold">
+                Approve Plan (plan_01)
+              </button>
+              <button id="btn-reject-plan" type="button" class="px-4 py-1.5 rounded-md chip-copper font-semibold">
+                Reject Plan
+              </button>
+            </div>
+            ${!canApprove ? `<div class="font-mono text-[11px]" style="color: var(--copper-ink);">[RBAC POLICY] Role '${state.role}' cannot approve plans (HTTP 403 INSUFFICIENT_ROLE). Switch role to 'approver' in the bottom-left sidebar.</div>` : ''}
+            ${state.approvalState === 'approved' ? `
+              <div class="pt-3 border-t hairline-divider space-y-1.5">
+                <div class="flex items-center justify-between">
+                  <span class="font-mono text-[11px] font-bold" style="color: var(--veridian-ink);">[APPROVED] Unified Patch Bundle (branch: patchgraph/remediate-plan_01)</span>
+                  <button id="btn-copy-diff" type="button" class="px-2.5 py-0.5 rounded font-mono text-[11px] surface-inset">Copy Diff</button>
+                </div>
+                <pre id="generated-diff-pre" class="p-3 rounded surface-inset font-mono text-[11px] overflow-x-auto">${gitDiffText}</pre>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderWhatIfPage() {
+      const basePlan = solvePlanInBrowser(state.budgetHours, state.maxDowntimeMinutes, state.maxCompatRisk);
+      const simPlan = solvePlanInBrowser(state.simBudgetHours, state.simMaxDowntime, state.maxCompatRisk);
+      const deltaRisk = (simPlan.risk_removed - basePlan.risk_removed).toFixed(2);
+
+      return `
+        <div class="space-y-4 text-xs">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 surface-elevated p-4 rounded-xl">
+            <label class="block">
+              <span class="flex justify-between"><span>Simulated What-If Budget (hours):</span><strong class="font-mono" style="color: var(--prussian-ink);">${state.simBudgetHours}h</strong></span>
+              <input id="sim-budget" type="range" min="2" max="40" step="2" value="${state.simBudgetHours}" class="w-full mt-1.5" />
+            </label>
+            <label class="block">
+              <span class="flex justify-between"><span>Simulated What-If Max Downtime (min):</span><strong class="font-mono" style="color: var(--ochre-ink);">${state.simMaxDowntime}m</strong></span>
+              <input id="sim-downtime" type="range" min="5" max="60" step="5" value="${state.simMaxDowntime}" class="w-full mt-1.5" />
+            </label>
+          </div>
+
+          <div class="overflow-x-auto surface-elevated rounded-xl">
+            <table class="w-full text-xs text-left border-collapse">
+              <thead>
+                <tr class="border-b hairline-divider font-mono text-[11px]" style="color: var(--ink-muted);">
+                  <th class="py-3 px-4">Scenario Variant</th>
+                  <th class="py-3 px-4">Solver Status</th>
+                  <th class="py-3 px-4">Selected Upgrades</th>
+                  <th class="py-3 px-4">Effort / Downtime</th>
+                  <th class="py-3 px-4">Weighted Exposure Removed</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y hairline-divider font-mono">
+                <tr>
+                  <td class="py-3 px-4 font-sans font-bold">Baseline Plan (${state.budgetHours}h / ${state.maxDowntimeMinutes}m)</td>
+                  <td class="py-3 px-4"><span class="px-2 py-0.5 rounded chip-veridian">[${basePlan.status.toUpperCase()}]</span></td>
+                  <td class="py-3 px-4">${basePlan.selected.map((x) => `${x.package}->${x.to}`).join(', ') || 'None'}</td>
+                  <td class="py-3 px-4">${basePlan.hours_used}h / ${basePlan.downtime_used}m</td>
+                  <td class="py-3 px-4 font-bold">${basePlan.risk_removed}</td>
+                </tr>
+                <tr>
+                  <td class="py-3 px-4 font-sans font-bold">What-If Simulation (${state.simBudgetHours}h / ${state.simMaxDowntime}m)</td>
+                  <td class="py-3 px-4"><span class="px-2 py-0.5 rounded ${simPlan.status === 'optimal' ? 'chip-prussian' : 'chip-copper'}">[${simPlan.status.toUpperCase()}]</span></td>
+                  <td class="py-3 px-4">${simPlan.selected.map((x) => `${x.package}->${x.to}`).join(', ') || 'None'}</td>
+                  <td class="py-3 px-4">${simPlan.hours_used}h / ${simPlan.downtime_used}m</td>
+                  <td class="py-3 px-4 font-bold" style="color: var(--prussian-ink);">${simPlan.risk_removed} (Delta: ${deltaRisk})</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderImportsPage() {
+      return `
+        <div class="space-y-5 text-xs">
+          <div class="flex flex-wrap gap-2">
+            <button id="btn-sim-valid-sbom" type="button" class="px-3.5 py-1.5 rounded-md chip-veridian font-semibold">
+              Validate &amp; Ingest Seeded SPDX 2.3 Fixture
+            </button>
+            <button id="btn-sim-malformed-sbom" type="button" class="px-3.5 py-1.5 rounded-md chip-copper font-semibold">
+              Test Malformed CycloneDX (Trigger Location Errors)
+            </button>
+          </div>
+
+          ${state.importValidationErrors.length > 0 ? `
+            <div role="alert" class="p-4 rounded-xl chip-copper space-y-1 font-mono">
+              <div class="font-bold">HTTP 400 SBOM_VALIDATION_FAILED (Request ID: req_val_err_99)</div>
+              <ul class="list-disc list-inside">
+                ${state.importValidationErrors.map((e) => `<li><code>${e.location}</code> (${e.field}): ${e.issue}</li>`).join('')}
+              </ul>
+            </div>
+          ` : ''}
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="surface-elevated rounded-xl p-4 space-y-2.5">
+              <h3 class="font-bold text-sm">Content-Addressed Import Ledger</h3>
+              <table class="w-full text-left border-collapse font-mono text-[11px]">
+                <thead>
+                  <tr class="border-b hairline-divider" style="color: var(--ink-muted);">
+                    <th class="py-2">Import ID</th>
+                    <th class="py-2">Format</th>
+                    <th class="py-2">Source</th>
+                    <th class="py-2">SHA-256 Digest</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y hairline-divider">
+                  ${state.imports.map((imp) => `
+                    <tr>
+                      <td class="py-2" style="color: var(--prussian-ink);">${imp.id}</td>
+                      <td class="py-2 uppercase">${imp.kind}</td>
+                      <td class="py-2">${imp.source_name}</td>
+                      <td class="py-2" style="color: var(--ink-muted);">${imp.content_sha256.slice(0, 14)}...</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+
+            <div class="surface-elevated rounded-xl p-4 space-y-2.5">
+              <div class="flex items-center justify-between">
+                <h3 class="font-bold text-sm">Defensive Static AST Sink &amp; Reachability Scanner</h3>
+                <button id="btn-run-ast-scan" type="button" class="px-2.5 py-1 rounded font-mono text-[11px] chip-ochre">Scan Python AST</button>
+              </div>
+              <textarea id="ast-source-textarea" rows="4" class="w-full surface-inset rounded p-2 font-mono text-[11px]">${state.astSourceCode}</textarea>
+              <div class="space-y-1 font-mono text-[11px]">
+                ${state.astScanFindings.map((af) => `
+                  <div class="p-1.5 rounded chip-copper">[${af.rule}] Line ${af.line} (<code>${af.symbol}</code>): ${af.desc}</div>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderRunsPage() {
+      return `
+        <div class="space-y-5 text-xs">
+          <div class="surface-elevated rounded-xl p-4 space-y-1.5 font-mono text-[11px]">
+            <div><strong style="color: var(--petrol-ink);">Evidence Snapshot:</strong> snap_01 · Manifest SHA-256: <code>9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08</code></div>
+            <div><strong style="color: var(--mulberry-ink);">Model One CSV Dataset:</strong> <code>data/datasets/exploit_training_dataset.csv</code> (600 rows: 420 train / 180 test · ROC-AUC 0.9053 · PR-AUC 0.9482 · ECE 0.0389)</div>
+            <div><strong style="color: var(--prussian-ink);">Model Two CSV Dataset:</strong> <code>data/datasets/remediation_effort_dataset.csv</code> (400 rows: 280 train / 120 test · Held-out MAE 0.5386h vs 5.4991h fixed-jump baseline)</div>
+          </div>
+
+          <!-- Interactive Dataset Sample Browser -->
+          <div class="surface-elevated rounded-xl p-4 space-y-3">
+            <div class="flex items-center justify-between border-b hairline-divider pb-2">
+              <h3 class="font-bold text-sm">Bundled CSV Training &amp; Test Dataset Inspector</h3>
+              <div class="flex gap-2 font-mono text-[11px]">
+                <button type="button" data-dtab="exploit" class="dtab-btn px-2.5 py-1 rounded ${state.datasetTab === 'exploit' ? 'chip-mulberry font-bold' : 'surface-inset'}">exploit_training_dataset.csv (n=600)</button>
+                <button type="button" data-dtab="effort" class="dtab-btn px-2.5 py-1 rounded ${state.datasetTab === 'effort' ? 'chip-prussian font-bold' : 'surface-inset'}">remediation_effort_dataset.csv (n=400)</button>
+              </div>
+            </div>
+            ${state.datasetTab === 'exploit' ? `
+              <table class="w-full text-left border-collapse font-mono text-[11px]">
+                <thead>
+                  <tr class="border-b hairline-divider" style="color: var(--ink-muted);">
+                    <th class="py-1.5">CVE ID</th><th class="py-1.5">Split</th><th class="py-1.5">Disjoint Family</th><th class="py-1.5">Published</th><th class="py-1.5">CWE</th><th class="py-1.5">CVSS</th><th class="py-1.5">EPSS</th><th class="py-1.5">Exploited Label</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y hairline-divider">
+                  ${SAMPLE_EXPLOIT_DATASET.map((r) => `
+                    <tr>
+                      <td class="py-1.5 font-bold">${r.cve}</td>
+                      <td class="py-1.5"><span class="px-1.5 py-0.2 rounded ${r.split === 'train' ? 'chip-petrol' : 'chip-mulberry'}">${r.split}</span></td>
+                      <td class="py-1.5">${r.fam}</td>
+                      <td class="py-1.5">${r.pub}</td>
+                      <td class="py-1.5">${r.cwe}</td>
+                      <td class="py-1.5">${r.cvss.toFixed(1)}</td>
+                      <td class="py-1.5">${r.epss.toFixed(3)}</td>
+                      <td class="py-1.5 font-bold">${r.label}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            ` : `
+              <table class="w-full text-left border-collapse font-mono text-[11px]">
+                <thead>
+                  <tr class="border-b hairline-divider" style="color: var(--ink-muted);">
+                    <th class="py-1.5">Task ID</th><th class="py-1.5">Split</th><th class="py-1.5">Ecosystem</th><th class="py-1.5">Jump Kind</th><th class="py-1.5">Services</th><th class="py-1.5">Centrality</th><th class="py-1.5">Actual Effort</th><th class="py-1.5">Ridge Pred</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y hairline-divider">
+                  ${SAMPLE_EFFORT_DATASET.map((r) => `
+                    <tr>
+                      <td class="py-1.5 font-bold">${r.id}</td>
+                      <td class="py-1.5"><span class="px-1.5 py-0.2 rounded ${r.split === 'train' ? 'chip-petrol' : 'chip-prussian'}">${r.split}</span></td>
+                      <td class="py-1.5">${r.eco}</td>
+                      <td class="py-1.5">${r.jump}</td>
+                      <td class="py-1.5">${r.svcs}</td>
+                      <td class="py-1.5">${r.cent.toFixed(2)}</td>
+                      <td class="py-1.5 font-bold">${r.actual.toFixed(1)}h</td>
+                      <td class="py-1.5" style="color: var(--veridian-ink);">${r.pred.toFixed(1)}h</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            `}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAuditPage() {
+      return `
+        <div class="space-y-3 text-xs">
+          <div class="overflow-x-auto surface-elevated rounded-xl">
+            <table class="w-full text-xs text-left border-collapse">
+              <thead>
+                <tr class="border-b hairline-divider font-mono text-[11px]" style="color: var(--ink-muted);">
+                  <th class="py-3 px-4">ID</th>
+                  <th class="py-3 px-4">Timestamp (UTC)</th>
+                  <th class="py-3 px-4">Actor &amp; Role</th>
+                  <th class="py-3 px-4">Action</th>
+                  <th class="py-3 px-4">Entity</th>
+                  <th class="py-3 px-4">After-State Summary</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y hairline-divider font-mono">
+                ${state.auditLogs.map((log) => `
+                  <tr>
+                    <td class="py-3 px-4 font-bold">#${log.id}</td>
+                    <td class="py-3 px-4" style="color: var(--ink-muted);">${log.timestamp}</td>
+                    <td class="py-3 px-4" style="color: var(--prussian-ink);">${log.actor}</td>
+                    <td class="py-3 px-4 font-semibold">${log.action}</td>
+                    <td class="py-3 px-4">${log.entity}</td>
+                    <td class="py-3 px-4 font-sans">${log.detail}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderDataHealthPage() {
+      const isStale = state.uiState === 'stale';
+      const sources = [
+        { name: 'OSV API', url: 'https://api.osv.dev/v1/querybatch', fetched: '2026-11-01T00:00:00Z', sha: '8f434346648f6b96df89dda901c5176b', stale: false },
+        { name: 'NVD CVE API 2.0', url: 'https://services.nvd.nist.gov/rest/json/cves/2.0', fetched: '2026-11-01T00:00:00Z', sha: '2c26b46b68ffc68ff99b453c1d304134', stale: false },
+        { name: 'FIRST EPSS', url: 'https://api.first.org/data/v1/epss', fetched: isStale ? '2026-10-25T00:00:00Z' : '2026-11-01T00:00:00Z', sha: '4b227777d4dd1fc61c6f884f48641d02', stale: isStale },
+        { name: 'CISA KEV Catalog', url: 'https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json', fetched: '2026-11-01T00:00:00Z', sha: 'e3b0c44298fc1c149afbf4c8996fb924', stale: false }
+      ];
+      return `
+        <div class="space-y-4 text-xs">
+          <div class="overflow-x-auto surface-elevated rounded-xl">
+            <table class="w-full text-xs text-left border-collapse">
+              <thead>
+                <tr class="border-b hairline-divider font-mono text-[11px]" style="color: var(--ink-muted);">
+                  <th class="py-3 px-4">Evidence Feed</th>
+                  <th class="py-3 px-4">Status</th>
+                  <th class="py-3 px-4">Last Fetched (UTC)</th>
+                  <th class="py-3 px-4">Content SHA-256 Digest</th>
+                  <th class="py-3 px-4">Official Endpoint</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y hairline-divider font-mono">
+                ${sources.map((s) => `
+                  <tr>
+                    <td class="py-3 px-4 font-sans font-bold">${s.name}</td>
+                    <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[11px] ${s.stale ? 'chip-ochre' : 'chip-veridian'}">${s.stale ? '[STALE FALLBACK]' : '[HEALTHY]'}</span></td>
+                    <td class="py-3 px-4">${s.fetched}</td>
+                    <td class="py-3 px-4" style="color: var(--ink-muted);">${s.sha}...</td>
+                    <td class="py-3 px-4" style="color: var(--petrol-ink);">${s.url}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    // =========================================================================
+    // WIRE EVENT LISTENERS ACROSS ALL 14 PAGES
+    // =========================================================================
+    function wireScreenInteractions() {
+      document.querySelectorAll('.goto-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          navigateToPage(btn.getAttribute('data-goto'), true);
+        });
+      });
+
+      const envFilter = document.getElementById('asset-env-filter');
+      if (envFilter) {
+        envFilter.addEventListener('change', (e) => {
+          state.assetEnvFilter = e.target.value;
+          renderActiveScreen();
+        });
+      }
+
+      document.querySelectorAll('.gmode-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          state.graphViewMode = btn.getAttribute('data-gmode');
+          renderActiveScreen();
+        });
+      });
+
+      const cypherBtn = document.getElementById('btn-toggle-cypher');
+      if (cypherBtn) {
+        cypherBtn.addEventListener('click', () => {
+          state.showCypherExport = !state.showCypherExport;
+          renderActiveScreen();
+        });
+      }
+
+      document.querySelectorAll('.graph-node').forEach((nodeEl) => {
+        nodeEl.addEventListener('click', () => {
+          state.selectedGraphNode = nodeEl.getAttribute('data-node-id');
+          renderActiveScreen();
+        });
+      });
+
+      const sortSelect = document.getElementById('finding-sort-select');
+      if (sortSelect) {
+        sortSelect.addEventListener('change', (e) => {
+          state.findingSort = e.target.value;
+          renderActiveScreen();
+        });
+      }
+
+      document.querySelectorAll('.inspect-finding-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          state.selectedFindingId = btn.getAttribute('data-inspect');
+          navigateToPage('finding-detail', true);
+        });
+      });
+
+      document.querySelectorAll('.select-finding-pill').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          state.selectedFindingId = btn.getAttribute('data-select-finding');
+          renderActiveScreen();
+        });
+      });
+
+      document.querySelectorAll('.dtab-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          state.datasetTab = btn.getAttribute('data-dtab');
+          renderActiveScreen();
+        });
+      });
+
+      const sCvss = document.getElementById('slider-cvss');
+      if (sCvss) sCvss.addEventListener('input', (e) => { state.customCvss = parseFloat(e.target.value); renderActiveScreen(); });
+      const sEpss = document.getElementById('slider-epss');
+      if (sEpss) sEpss.addEventListener('input', (e) => { state.customEpss = parseFloat(e.target.value); renderActiveScreen(); });
+      const sCrit = document.getElementById('slider-crit');
+      if (sCrit) sCrit.addEventListener('input', (e) => { state.customCrit = parseInt(e.target.value, 10); renderActiveScreen(); });
+      const chkKev = document.getElementById('chk-kev');
+      if (chkKev) chkKev.addEventListener('change', (e) => { state.customKev = e.target.checked; renderActiveScreen(); });
+      const chkMissing = document.getElementById('chk-missing');
+      if (chkMissing) chkMissing.addEventListener('change', (e) => { state.customMissingEvidence = e.target.checked; renderActiveScreen(); });
+
+      const effJump = document.getElementById('effort-jump-select');
+      if (effJump) effJump.addEventListener('change', (e) => { state.effortJumpKind = e.target.value; renderActiveScreen(); });
+      const effSvc = document.getElementById('effort-svc-slider');
+      if (effSvc) effSvc.addEventListener('input', (e) => { state.effortSvcCount = parseInt(e.target.value, 10); renderActiveScreen(); });
+
+      const depthInput = document.getElementById('input-graph-depth');
+      if (depthInput) {
+        depthInput.addEventListener('change', (e) => {
+          const val = parseInt(e.target.value, 10);
+          state.graphDepth = Math.min(12, Math.max(1, isNaN(val) ? 6 : val));
+          renderActiveScreen();
+        });
+      }
+
+      document.querySelectorAll('.preset-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const p = btn.getAttribute('data-preset');
+          if (p === 'default') { state.budgetHours = 40; state.maxDowntimeMinutes = 30; state.maxCompatRisk = 0.50; }
+          if (p === 'tight') { state.budgetHours = 6; state.maxDowntimeMinutes = 12; state.maxCompatRisk = 0.30; }
+          if (p === 'infeasible') { state.budgetHours = 4; state.maxDowntimeMinutes = 5; state.maxCompatRisk = 0.20; }
+          renderActiveScreen();
+        });
+      });
+
+      const pBudget = document.getElementById('planner-budget');
+      if (pBudget) pBudget.addEventListener('input', (e) => { state.budgetHours = parseFloat(e.target.value); renderActiveScreen(); });
+      const pDowntime = document.getElementById('planner-downtime');
+      if (pDowntime) pDowntime.addEventListener('input', (e) => { state.maxDowntimeMinutes = parseInt(e.target.value, 10); renderActiveScreen(); });
+      const pCompat = document.getElementById('planner-compat');
+      if (pCompat) pCompat.addEventListener('input', (e) => { state.maxCompatRisk = parseFloat(e.target.value); renderActiveScreen(); });
+
+      const approveBtn = document.getElementById('btn-approve-plan');
+      if (approveBtn) approveBtn.addEventListener('click', () => recordDecision('approved'));
+      const rejectBtn = document.getElementById('btn-reject-plan');
+      if (rejectBtn) rejectBtn.addEventListener('click', () => recordDecision('rejected'));
+
+      const copyDiffBtn = document.getElementById('btn-copy-diff');
+      if (copyDiffBtn) {
+        copyDiffBtn.addEventListener('click', () => {
+          const pre = document.getElementById('generated-diff-pre');
+          if (pre) {
+            const ta = document.createElement('textarea');
+            ta.value = pre.textContent;
+            document.body.appendChild(ta);
+            ta.select();
+            try { document.execCommand('copy'); } catch (_e) {}
+            document.body.removeChild(ta);
+            showToast('<strong>[COPIED]</strong> Unified requirements.txt diff copied to clipboard.');
+          }
+        });
+      }
+
+      const simB = document.getElementById('sim-budget');
+      if (simB) simB.addEventListener('input', (e) => { state.simBudgetHours = parseFloat(e.target.value); renderActiveScreen(); });
+      const simD = document.getElementById('sim-downtime');
+      if (simD) simD.addEventListener('input', (e) => { state.simMaxDowntime = parseInt(e.target.value, 10); renderActiveScreen(); });
+
+      const btnValidSbom = document.getElementById('btn-sim-valid-sbom');
+      if (btnValidSbom) {
+        btnValidSbom.addEventListener('click', () => {
+          state.importValidationErrors = [];
+          const exists = state.imports.some((i) => i.source_name === 'sbom_spdx_seed.json');
+          if (!exists) {
+            state.imports.unshift({
+              id: 'imp_seed_spdx_03',
+              kind: 'spdx',
+              source_name: 'sbom_spdx_seed.json',
+              status: 'completed',
+              content_sha256: '9c1185a5c5e9fc54612808977ee8f548b2258d31000000000000000000000003',
+              parser_version: '1.2.0',
+              created_at: new Date().toISOString()
+            });
+          }
+          showToast('<strong>[200 OK]</strong> SPDX 2.3 fixture validated and deduplicated via content_sha256.');
+          renderActiveScreen();
+        });
+      }
+
+      const btnBadSbom = document.getElementById('btn-sim-malformed-sbom');
+      if (btnBadSbom) {
+        btnBadSbom.addEventListener('click', () => {
+          state.importValidationErrors = [
+            { location: '$.components[0].version', field: 'version', issue: 'Component missing required version string' },
+            { location: '$.dependencies[0].ref', field: 'ref', issue: 'Unresolvable dependency parent ref pkg:pypi/unknown@1.0.0' }
+          ];
+          state.uiState = 'failed';
+          renderChrome();
+          renderActiveScreen();
+        });
+      }
+
+      const btnAst = document.getElementById('btn-run-ast-scan');
+      if (btnAst) {
+        btnAst.addEventListener('click', () => {
+          const ta = document.getElementById('ast-source-textarea');
+          const src = ta ? ta.value : state.astSourceCode;
+          state.astSourceCode = src;
+          const findings = [];
+          if (src.includes('pickle.load')) findings.push({ rule: 'AST-CWE-502', cwe: 'CWE-502', line: 5, symbol: 'pickle.loads', desc: 'Untrusted deserialization via pickle' });
+          if (src.includes('eval(')) findings.push({ rule: 'AST-CWE-95', cwe: 'CWE-95', line: 1, symbol: 'eval()', desc: 'Dynamic code evaluation via eval()' });
+          if (src.includes('example_lib')) findings.push({ rule: 'CALL-REACHABLE', cwe: 'CVE-2026-1001', line: 6, symbol: 'example_lib', desc: 'Call-graph path reaches example-lib' });
+          state.astScanFindings = findings;
+          renderActiveScreen();
+        });
+      }
+    }
+
+    function recordDecision(decisionKind) {
+      const reasonEl = document.getElementById('decision-reason-input');
+      if (reasonEl) state.decisionReason = reasonEl.value.trim();
+
+      if (state.role !== 'approver' && state.role !== 'admin') {
+        state.uiState = 'unauthorized';
+        showToast('<strong>[HTTP 403 INSUFFICIENT_ROLE]</strong> Role <code>' + state.role + '</code> cannot approve or reject plans. Switch to Approver in the sidebar.');
+        renderChrome();
+        renderActiveScreen();
+        return;
+      }
+
+      if (!state.decisionReason || state.decisionReason.length < 3) {
+        showToast('<strong>[HTTP 400 INVALID_DECISION_PAYLOAD]</strong> A non-empty human rationale is required.');
+        return;
+      }
+
+      state.approvalState = decisionKind;
+      const reqId = logApiTelemetry('POST', '/api/v1/plans/plan_01/decision', 200, '4.1ms', `Decision=${decisionKind.toUpperCase()}`);
+      state.auditLogs.unshift({
+        id: state.auditLogs.length + 1,
+        timestamp: new Date().toISOString(),
+        actor: `${state.role}@patchgraph.local (${state.role})`,
+        action: `plan_decision_${decisionKind}`,
+        entity: 'plan_01',
+        request_id: reqId,
+        detail: `Decision=${decisionKind.toUpperCase()} · Reason: "${state.decisionReason}"`
+      });
+      showToast(`<strong>[200 OK]</strong> Plan <code>plan_01</code> marked <strong>${decisionKind.toUpperCase()}</strong> and appended to <code>audit_logs</code>.`);
+      renderChrome();
+      renderActiveScreen();
+    }
+
+    // Sidebar & Router Global Listeners
+    document.getElementById('role-select').addEventListener('change', (e) => {
+      state.role = e.target.value;
+      if ((state.role === 'approver' || state.role === 'admin') && state.uiState === 'unauthorized') {
+        state.uiState = 'offline-demo';
+      }
+      renderChrome();
+      renderActiveScreen();
+    });
+
+    document.getElementById('ui-state-select').addEventListener('change', (e) => {
+      state.uiState = e.target.value;
+      renderChrome();
+      renderActiveScreen();
+    });
+
+    document.getElementById('btn-theme-toggle').addEventListener('click', () => {
+      state.paletteIndex = (state.paletteIndex + 1) % 3;
+      renderChrome();
+    });
+
+    document.getElementById('btn-reset-demo').addEventListener('click', () => {
+      const keepPal = state.paletteIndex;
+      state = createInitialState();
+      state.paletteIndex = keepPal;
+      showToast('<strong>[DEMO_READY_OFFLINE]</strong> Reset to seeded snapshot <code>snap_01</code> (26 tables initialized).');
+      renderChrome();
+      renderActiveScreen();
+    });
+
+    document.getElementById('btn-toggle-telemetry').addEventListener('click', () => {
+      const drawer = document.getElementById('api-telemetry-drawer');
+      if (drawer) drawer.classList.toggle('hidden');
+    });
+
+    document.getElementById('btn-History-back').addEventListener('click', () => {
+      if (state.historyPos > 0) {
+        state.historyPos -= 1;
+        navigateToPage(state.historyStack[state.historyPos], false);
+      }
+    });
+
+    document.getElementById('btn-History-fwd').addEventListener('click', () => {
+      if (state.historyPos < state.historyStack.length - 1) {
+        state.historyPos += 1;
+        navigateToPage(state.historyStack[state.historyPos], false);
+      }
+    });
+
+    document.getElementById('btn-mobile-menu').addEventListener('click', () => {
+      const nav = document.getElementById('sidebar-collapsible');
+      if (nav) nav.classList.toggle('hidden');
+    });
+
+    document.getElementById('global-search-input').addEventListener('input', (e) => {
+      state.searchQuery = e.target.value;
+      renderGlobalSearch();
+    });
+
+    document.getElementById('btn-close-toast').addEventListener('click', () => {
+      document.getElementById('toast-box').classList.add('hidden');
+    });
+
+    // Boot
+    renderChrome();
+    renderActiveScreen();
+  </script>
+</body>
+</html>
