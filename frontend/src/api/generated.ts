@@ -251,6 +251,124 @@ export interface PatchGraphClientOptions {
   userRole?: 'viewer' | 'analyst' | 'approver' | 'admin';
 }
 
+
+export interface AuditLogEntry {
+  id: number;
+  project_id: string;
+  actor_id: string;
+  actor_email?: string;
+  action: string;
+  entity_type: string;
+  entity_id: string;
+  request_id?: string;
+  before_state?: Record<string, unknown> | null;
+  after_state?: Record<string, unknown> | null;
+  created_at: string;
+  is_demo?: boolean;
+}
+
+export interface AuditListResponse {
+  items: AuditLogEntry[];
+  total: number;
+  limit: number;
+  offset: number;
+  request_id: string;
+}
+
+export interface FindingExplainResponse {
+  finding_id: string;
+  canonical_id: string;
+  baseline_score: number;
+  final_score: number;
+  probability: number;
+  uncertainty: number;
+  factors: FactorBreakdown & {
+    raw_inputs?: Record<string, unknown>;
+    weights?: Record<string, number>;
+  };
+  formula: string;
+  calibration_notes: string;
+  request_id: string;
+  is_demo?: boolean;
+}
+
+export interface GraphNode {
+  id: string;
+  label: string;
+  kind: 'package_version' | 'service' | 'application' | 'environment';
+  cvss?: number;
+  severity?: 'critical' | 'high' | 'medium' | 'low' | 'safe';
+  color?: string;
+  in_kev?: boolean;
+  reachability?: string;
+  owner?: string;
+  environment?: string;
+  pos_3d?: [number, number, number];
+}
+
+export interface GraphEdge {
+  source: string;
+  target: string;
+  kind: string;
+  scope: string;
+  is_patch_path?: boolean;
+}
+
+export interface FullGraphResponse {
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+  stats: {
+    total_nodes: number;
+    total_edges: number;
+    vulnerable_nodes: number;
+  };
+  request_id: string;
+  is_demo?: boolean;
+}
+
+export interface GraphNodeDetailResponse {
+  id: string;
+  label: string;
+  kind: string;
+  cvss: number;
+  severity: string;
+  reachability: string;
+  in_kev: boolean;
+  epss_percentile: number;
+  owner: string;
+  affected_services: string[];
+  blast_radius_score: number;
+  upstream_callers: string[];
+  downstream_dependencies: string[];
+  vex_statement?: {
+    status: string;
+    justification: string;
+    statement_time: string;
+  };
+  request_id: string;
+  is_demo?: boolean;
+}
+
+export interface SourcesStatusResponse {
+  sources: Record<string, {
+    status: string;
+    last_sync: string;
+    stale: boolean;
+    records: number;
+    parser_version: string;
+  }>;
+  snapshot_sha256: string;
+  offline_demo_mode: boolean;
+  request_id: string;
+}
+
+export interface SystemHealthResponse {
+  status: string;
+  service: string;
+  version: string;
+  timestamp: string;
+}
+
 export class PatchGraphApiClient {
   private readonly baseUrl: string;
   private readonly headers: Record<string, string>;
@@ -352,5 +470,64 @@ export class PatchGraphApiClient {
 
   getDataHealth() {
     return this.request<DataHealthResponse>('/health/data');
+  }
+
+  listAuditLogs(params?: { action?: string; entity_type?: string; limit?: number; offset?: number }) {
+    const qs = new URLSearchParams(
+      Object.entries(params || {}).reduce<Record<string, string>>((acc, [k, v]) => {
+        if (v !== undefined) acc[k] = String(v);
+        return acc;
+      }, {})
+    ).toString();
+    return this.request<AuditListResponse>(`/audit${qs ? `?${qs}` : ''}`);
+  }
+
+  exportAuditLogs(format: 'json' | 'csv' = 'json') {
+    return this.request<Blob>(`/audit/export?format=${format}`);
+  }
+
+  explainFinding(id: string) {
+    return this.request<FindingExplainResponse>(`/findings/${encodeURIComponent(id)}/explain`);
+  }
+
+  listPlans() {
+    return this.request<{ items: PlanResponse[]; total: number; request_id: string }>('/plans');
+  }
+
+  getPlan(id: string) {
+    return this.request<PlanResponse>(`/plans/${encodeURIComponent(id)}`);
+  }
+
+  getFullGraph(params?: { environment?: string; owner?: string; in_kev?: boolean }) {
+    const qs = new URLSearchParams(
+      Object.entries(params || {}).reduce<Record<string, string>>((acc, [k, v]) => {
+        if (v !== undefined) acc[k] = String(v);
+        return acc;
+      }, {})
+    ).toString();
+    return this.request<FullGraphResponse>(`/graph${qs ? `?${qs}` : ''}`);
+  }
+
+  getGraphNode(id: string) {
+    return this.request<GraphNodeDetailResponse>(`/graph/nodes/${encodeURIComponent(id)}`);
+  }
+
+  importTopology(payload: Record<string, unknown>) {
+    return this.request<{ id: string; status: string; source_name: string; services_registered: number }>('/imports/topology', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  getJobStatus(id: string) {
+    return this.request<{ id: string; status: string; progress: number; stage: string }>('/jobs/' + encodeURIComponent(id));
+  }
+
+  getSourcesStatus() {
+    return this.request<SourcesStatusResponse>('/sources/status');
+  }
+
+  getHealth() {
+    return this.request<SystemHealthResponse>('/health');
   }
 }

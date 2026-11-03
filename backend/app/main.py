@@ -1,11 +1,12 @@
 """FastAPI application entrypoint for PatchGraph.
 
 Wires request ID middleware, CORS middleware, structured error handlers matching
-`{code, message, field_errors, request_id}`, and the `/api/v1` router.
+`{code, message, field_errors, request_id}`, top-level health check, and the `/api/v1` router.
 """
 from __future__ import annotations
 
 import uuid
+from datetime import datetime, timezone
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -72,6 +73,15 @@ def create_app() -> FastAPI:
             },
             headers={"X-Request-Id": req_id},
         )
+
+    @app.get("/health")
+    async def top_level_health() -> dict:
+        return {
+            "status": "ok",
+            "service": "PatchGraph",
+            "version": "1.0.0",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
 
     app.include_router(api_v1_router)
     return app
