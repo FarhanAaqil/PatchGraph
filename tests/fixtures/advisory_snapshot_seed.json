@@ -1,0 +1,85 @@
+{
+  "snapshot_id": "snap_01",
+  "manifest_sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+  "fetched_at": "2026-11-01T00:00:00Z",
+  "parser_version": "1.0.0",
+  "sources": {
+    "osv": {
+      "source_url": "https://api.osv.dev/v1/querybatch",
+      "fetched_at": "2026-11-01T00:00:00Z",
+      "content_sha256": "8f434346648f6b96df89dda901c5176b10a6d83961dd3c1ac88b59b2dc327aa4",
+      "license": "CC-BY-4.0",
+      "records": [
+        {
+          "id": "OSV-2026-1001",
+          "cve_id": "CVE-2026-1001",
+          "package": "example-lib",
+          "ecosystem": "pypi",
+          "introduced": "1.0.0",
+          "fixed": "1.4.3",
+          "summary": "Remote token deserialization bypass in example-lib transitive handler."
+        },
+        {
+          "id": "GHSA-34jh-p97f-mpxf",
+          "cve_id": "CVE-2023-45803",
+          "package": "urllib3",
+          "ecosystem": "pypi",
+          "introduced": "2.0.0",
+          "fixed": "2.0.7",
+          "summary": "Request body not stripped after redirect from 303 status changes."
+        }
+      ]
+    },
+    "nvd": {
+      "source_url": "https://services.nvd.nist.gov/rest/json/cves/2.0",
+      "fetched_at": "2026-11-01T00:00:00Z",
+      "content_sha256": "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae",
+      "license": "Public Domain (NIST)",
+      "records": [
+        {
+          "cve_id": "CVE-2026-1001",
+          "cvss_v3_score": 8.8,
+          "cvss_v3_vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H",
+          "cwe": "CWE-502"
+        },
+        {
+          "cve_id": "CVE-2023-45803",
+          "cvss_v3_score": 4.2,
+          "cvss_v3_vector": "CVSS:3.1/AV:N/AC:H/PR:H/UI:N/S:U/C:H/I:N/A:N",
+          "cwe": "CWE-200"
+        }
+      ]
+    },
+    "epss": {
+      "source_url": "https://api.first.org/data/v1/epss",
+      "fetched_at": "2026-11-01T00:00:00Z",
+      "content_sha256": "4b227777d4dd1fc61c6f884f48641d02b4d121d3fd328cb08b5531fcacdabf8a",
+      "license": "FIRST EPSS Public Feed",
+      "records": [
+        {
+          "cve_id": "CVE-2026-1001",
+          "epss": 0.86,
+          "percentile": 0.98
+        },
+        {
+          "cve_id": "CVE-2023-45803",
+          "epss": 0.04,
+          "percentile": 0.71
+        }
+      ]
+    },
+    "kev": {
+      "source_url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
+      "fetched_at": "2026-11-01T00:00:00Z",
+      "content_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "license": "CISA Public Domain",
+      "records": [
+        {
+          "cve_id": "CVE-2026-1001",
+          "known_exploited": true,
+          "date_added": "2026-10-15"
+        }
+      ]
+    }
+  }
+}
