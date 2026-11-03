@@ -1,0 +1,204 @@
+{
+  "gate": "Gate 7 \u2014 Evidence Ready",
+  "ranking": {
+    "manifest": {
+      "snapshot_id": "snap_01",
+      "manifest_sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+      "dataset_date": "2026-11-01",
+      "seed": 42,
+      "code_revision": "v1.0.0-rc1",
+      "model_version": "calibrated-logreg-v1",
+      "solver": "OR-Tools CP-SAT (single-worker deterministic)"
+    },
+    "sample_size": 12,
+    "strategies": {
+      "patchgraph_deployment_aware": {
+        "ndcg_at_6": 1.0,
+        "precision_at_6": {
+          "point": 1.0,
+          "ci_low": 1.0,
+          "ci_high": 1.0
+        },
+        "recall_at_6": 1.0,
+        "pr_auc": 1.0,
+        "roc_auc": 1.0
+      },
+      "cvss_descending": {
+        "ndcg_at_6": 0.1078,
+        "precision_at_6": {
+          "point": 0.1667,
+          "ci_low": 0.0,
+          "ci_high": 0.5
+        },
+        "recall_at_6": 0.1667,
+        "pr_auc": 0.3862,
+        "roc_auc": 0.1667
+      },
+      "epss_descending": {
+        "ndcg_at_6": 1.0,
+        "precision_at_6": {
+          "point": 1.0,
+          "ci_low": 1.0,
+          "ci_high": 1.0
+        },
+        "recall_at_6": 1.0,
+        "pr_auc": 1.0,
+        "roc_auc": 1.0
+      },
+      "kev_first_then_cvss": {
+        "ndcg_at_6": 0.6448,
+        "precision_at_6": {
+          "point": 0.5,
+          "ci_low": 0.1667,
+          "ci_high": 0.8333
+        },
+        "recall_at_6": 0.5,
+        "pr_auc": 0.7946,
+        "roc_auc": 0.75
+      }
+    },
+    "per_ecosystem_top1_precision": {
+      "pypi": 1.0,
+      "npm": 1.0,
+      "maven": 1.0,
+      "golang": 1.0
+    }
+  },
+  "graph": {
+    "manifest": {
+      "snapshot_id": "snap_01",
+      "manifest_sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+      "dataset_date": "2026-11-01",
+      "seed": 42,
+      "code_revision": "v1.0.0-rc1",
+      "model_version": "calibrated-logreg-v1",
+      "solver": "OR-Tools CP-SAT (single-worker deterministic)"
+    },
+    "complete_inventory": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "path_agreement": 1.0
+    },
+    "incomplete_inventory_85pct": {
+      "precision": 1.0,
+      "recall": 0.8333,
+      "target_threshold": 0.8
+    }
+  },
+  "planner": {
+    "manifest": {
+      "snapshot_id": "snap_01",
+      "manifest_sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+      "dataset_date": "2026-11-01",
+      "seed": 42,
+      "code_revision": "v1.0.0-rc1",
+      "model_version": "calibrated-logreg-v1",
+      "solver": "OR-Tools CP-SAT (single-worker deterministic)"
+    },
+    "budget_hours": 10.0,
+    "cpsat_optimal": {
+      "risk_removed": 16.7,
+      "effort_hours": 10.0,
+      "downtime_minutes": 20,
+      "compatibility_penalty": 0.1,
+      "optimality_gap": 0.0,
+      "runtime_ms": 4
+    },
+    "greedy_risk_descending": {
+      "strategy": "greedy_risk_descending",
+      "selected_action_ids": [
+        "act_1"
+      ],
+      "risk_removed": 12.0,
+      "effort_hours_used": 10.0,
+      "downtime_minutes_used": 10,
+      "compatibility_penalty": 0.08
+    },
+    "greedy_risk_per_hour": {
+      "strategy": "greedy_risk_per_hour",
+      "selected_action_ids": [
+        "act_2",
+        "act_3"
+      ],
+      "risk_removed": 16.7,
+      "effort_hours_used": 10.0,
+      "downtime_minutes_used": 20,
+      "compatibility_penalty": 0.1
+    },
+    "no_compatibility_constraints": {
+      "risk_removed": 16.7,
+      "compatibility_penalty": 0.1
+    }
+  },
+  "ablations": {
+    "manifest": {
+      "snapshot_id": "snap_01",
+      "manifest_sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+      "dataset_date": "2026-11-01",
+      "seed": 42,
+      "code_revision": "v1.0.0-rc1",
+      "model_version": "calibrated-logreg-v1",
+      "solver": "OR-Tools CP-SAT (single-worker deterministic)"
+    },
+    "ablations": [
+      {
+        "variant": "Full PatchGraph System",
+        "ndcg_at_6": 1.0,
+        "exposure_removed": 16.7,
+        "brier_score": 0.0085
+      },
+      {
+        "variant": "1. Remove Deployment Context (gamma=0)",
+        "ndcg_at_6": 1.0,
+        "exposure_removed": 16.7,
+        "brier_score": 0.0085
+      },
+      {
+        "variant": "2. Remove Reachability (delta=0)",
+        "ndcg_at_6": 1.0,
+        "exposure_removed": 16.7,
+        "brier_score": 0.0085
+      },
+      {
+        "variant": "3. Remove Graph Centrality",
+        "ndcg_at_6": 1.0,
+        "exposure_removed": 16.7,
+        "brier_score": 0.0085
+      },
+      {
+        "variant": "4. Remove EPSS Signal (beta=0)",
+        "ndcg_at_6": 1.0,
+        "exposure_removed": 16.7,
+        "brier_score": 0.0085
+      },
+      {
+        "variant": "5. Remove Probability Calibration",
+        "ndcg_at_6": 1.0,
+        "exposure_removed": 16.7,
+        "brier_score": 0.0214
+      },
+      {
+        "variant": "6. Replace CP-SAT Optimizer with Greedy",
+        "ndcg_at_6": 1.0,
+        "exposure_removed": 12.0,
+        "brier_score": 0.0085
+      },
+      {
+        "variant": "7. Remove VEX Qualification",
+        "ndcg_at_6": 1.0,
+        "exposure_removed": 16.7,
+        "brier_score": 0.0085
+      }
+    ]
+  },
+  "stress": {
+    "edges_generated": 530,
+    "queries_executed": 15,
+    "p50_ms": 0.19,
+    "p95_ms": 0.21,
+    "target_p95_ms": 2000.0,
+    "passes_latency_target": true,
+    "cycle_handled_safely": true
+  },
+  "result_manifest_sha256": "5d5112f2ede415e41e8e56c5177516b031701b7d8beffeba04ff415f8a6aa3e9"
+}
