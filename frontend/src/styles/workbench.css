@@ -1,0 +1,23 @@
+/* PatchGraph Architectural Workbench Design System (Warm Stone & Mineral Dusk) */
+:root {
+  --bg-canvas: #ECEAE3;
+  --bg-surface: #F9F8F4;
+  --bg-elevated: #FFFFFF;
+  --bg-inset: #F1EFE9;
+  --border-hairline: #D5D0C4;
+  --ink-primary: #191B1F;
+  --ink-secondary: #4A505C;
+  --ink-muted: #737A87;
+  --terracotta-ink: #B83322;
+  --terracotta-bg: #FCECE9;
+  --ochre-ink: #9C5708;
+  --ochre-bg: #FDF3E4;
+  --cobalt-ink: #2748A0;
+  --cobalt-bg: #ECF1FC;
+  --sage-ink: #1B684A;
+  --sage-bg: #E7F5EE;
+  --plum-ink: #5E358C;
+  --plum-bg: #F3ECFA;
+  --petrol-ink: #155E6D;
+  --petrol-bg: #E6F4F7;
+}
