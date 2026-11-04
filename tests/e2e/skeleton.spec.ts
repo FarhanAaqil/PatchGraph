@@ -9,7 +9,7 @@ test.describe('PatchGraph Gate 1 — Architecture Skeleton E2E', () => {
   test('renders primary navigation, offline-demo provenance badge, and seeded transitive finding', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByTestId('active-snapshot-badge')).toContainText('snap_01');
-    await expect(page.getByTestId('global-state-banner')).toContainText('[OFFLINE-DEMO]');
+    await expect(page.getByTestId('global-state-banner')).toContainText('Data Freshness');
     await expect(page.getByTestId('seeded-scenario-summary')).toContainText('example-lib@1.4.0');
     await expect(page.getByTestId('seeded-scenario-summary')).toContainText('plan_01');
   });

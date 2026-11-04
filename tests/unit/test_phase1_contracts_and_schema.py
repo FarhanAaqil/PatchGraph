@@ -84,6 +84,7 @@ class TestPhase1SchemaAndContracts(unittest.TestCase):
             "/sources/status": "get",
             "/health": "get",
             "/health/data": "get",
+            "/demo/load-sample": "post",
         }
         self.assertEqual(set(parsed["paths"].keys()), set(expected_paths.keys()))
         for route, method in expected_paths.items():

@@ -122,12 +122,17 @@ class DatabaseManager:
         ).fetchall()
         return [r["name"] for r in rows]
 
-    def seed_phase1_scenario(self) -> None:
+    def seed_phase1_scenario(self, force: bool = False) -> None:
         """Seed the deterministic Phase 1 Architecture Skeleton scenario."""
         cur = self.conn.cursor()
-        existing = cur.execute("SELECT COUNT(*) AS c FROM projects").fetchone()["c"]
-        if existing > 0:
-            return
+        if force:
+            for tbl in reversed(CANONICAL_TABLES):
+                cur.execute(f"DELETE FROM {tbl}")
+            self.conn.commit()
+        else:
+            existing = cur.execute("SELECT COUNT(*) AS c FROM projects").fetchone()["c"]
+            if existing > 0:
+                return
 
         now = "2026-11-01T00:00:00Z"
         project_id = "00000000-0000-0000-0000-000000000001"

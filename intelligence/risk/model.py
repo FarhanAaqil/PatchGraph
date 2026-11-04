@@ -1,9 +1,9 @@
-"""Calibrated Exploit-Likelihood Model with Temporal & Package-Family Leakage Controls (Days 19-20).
+"""Calibrated Exploit-Likelihood Model with Temporal and Package-Family Leakage Controls (Days 19-20).
 
 Implements:
-- Time-based disclosure split (`published_at <= cutoff_date`) and package-family grouping
+- Time-based disclosure split (published_at <= cutoff_date) and package-family grouping
   so no package family spans both train and test sets and no post-cutoff label leaks into training.
-- L2-regularized Logistic Regression + Gradient Boosted Stump ensemble comparator
+- L2-regularized Logistic Regression + Gradient Boosted Tree comparator
 - Platt sigmoid calibration + reliability bin evaluation (Brier score, ECE, PR-AUC, ROC-AUC)
 - Factor-level log-odds contribution breakdown for explainability.
 """
@@ -13,6 +13,7 @@ import hashlib
 import json
 import math
 from dataclasses import asdict, dataclass
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -194,6 +195,76 @@ class CalibratedExploitModel:
         return m
 
 
+class CalibratedGradientBoostingComparator:
+    """Gradient Boosted decision tree ensemble comparator with Platt calibration."""
+
+    def __init__(self, n_estimators: int = 40, max_depth: int = 3, learning_rate: float = 0.08, seed: int = 42) -> None:
+        self.n_estimators = n_estimators
+        self.max_depth = max_depth
+        self.learning_rate = learning_rate
+        self.seed = seed
+        self.model_version = "calibrated-gb-v1"
+        self._clf: Any = None
+        self.feature_importances_: List[float] = []
+
+    def fit(self, rows: List[VulnerabilityFeatureRow]) -> "CalibratedGradientBoostingComparator":
+        from sklearn.ensemble import GradientBoostingClassifier
+        from sklearn.calibration import CalibratedClassifierCV
+        X = np.vstack([extract_feature_vector(r) for r in rows])
+        y = np.array([float(r.exploited_within_horizon) for r in rows], dtype=np.float64)
+
+        base = GradientBoostingClassifier(
+            n_estimators=self.n_estimators,
+            max_depth=self.max_depth,
+            learning_rate=self.learning_rate,
+            random_state=self.seed,
+        )
+        base.fit(X, y)
+        self.feature_importances_ = [round(float(v), 4) for v in base.feature_importances_]
+
+        self._clf = CalibratedClassifierCV(estimator=base, method="sigmoid", cv=3)
+        self._clf.fit(X, y)
+        return self
+
+    def predict_proba(self, rows: List[VulnerabilityFeatureRow]) -> np.ndarray:
+        if self._clf is None:
+            raise RuntimeError("Model is not fitted.")
+        X = np.vstack([extract_feature_vector(r) for r in rows])
+        return self._clf.predict_proba(X)[:, 1]
+
+    def to_bundle_dict(self) -> Dict[str, Any]:
+        return {
+            "model_version": self.model_version,
+            "feature_names": FEATURE_NAMES,
+            "feature_importances": self.feature_importances_,
+            "n_estimators": self.n_estimators,
+            "max_depth": self.max_depth,
+            "learning_rate": self.learning_rate,
+            "seed": self.seed,
+        }
+
+
+@dataclass(frozen=True)
+class EffortEstimate:
+    action_type: str
+    hours: float
+    downtime_minutes: int
+    is_baseline_model: bool = True
+    methodology: str = "Empirical fixed-hours maintenance baseline"
+
+
+EFFORT_BASELINE_CATALOG: Dict[str, EffortEstimate] = {
+    "upgrade": EffortEstimate(action_type="upgrade", hours=6.0, downtime_minutes=10),
+    "minor_upgrade": EffortEstimate(action_type="minor_upgrade", hours=6.0, downtime_minutes=10),
+    "major_upgrade": EffortEstimate(action_type="major_upgrade", hours=16.0, downtime_minutes=45),
+    "config_change": EffortEstimate(action_type="config_change", hours=3.0, downtime_minutes=5),
+}
+
+
+def get_effort_estimate(action_type: str = "upgrade") -> EffortEstimate:
+    return EFFORT_BASELINE_CATALOG.get(action_type, EFFORT_BASELINE_CATALOG["upgrade"])
+
+
 def compute_binary_classification_metrics(y_true: np.ndarray, y_prob: np.ndarray, n_bins: int = 5) -> Dict[str, Any]:
     """Compute Brier score, Expected Calibration Error (ECE), ROC-AUC, and PR-AUC."""
     brier = float(np.mean((y_prob - y_true) ** 2))
@@ -257,12 +328,45 @@ def compute_binary_classification_metrics(y_true: np.ndarray, y_prob: np.ndarray
     }
 
 
-from pathlib import Path
-
 DEFAULT_EXPLOIT_BUNDLE_PATH = Path(__file__).resolve().parent.parent.parent / "data" / "fixtures" / "model_exploit_v1.json"
+_CACHED_EXPLOIT_MODEL: Optional[CalibratedExploitModel] = None
 
 
 def load_pretrained_exploit_model(bundle_path: Optional[Path] = None) -> CalibratedExploitModel:
+    global _CACHED_EXPLOIT_MODEL
     target = bundle_path or DEFAULT_EXPLOIT_BUNDLE_PATH
-    data = json.loads(target.read_text(encoding="utf-8"))
-    return CalibratedExploitModel.from_bundle_dict(data)
+    if _CACHED_EXPLOIT_MODEL is None or bundle_path is not None:
+        data = json.loads(target.read_text(encoding="utf-8"))
+        model = CalibratedExploitModel.from_bundle_dict(data)
+        if bundle_path is None:
+            _CACHED_EXPLOIT_MODEL = model
+        return model
+    return _CACHED_EXPLOIT_MODEL
+
+
+def predict_vulnerability_exploit_risk(
+    cve_id: str,
+    cvss_score: Optional[float] = None,
+    epss: Optional[float] = None,
+    age_days: int = 30,
+    is_remote_vector: bool = True,
+    is_deserialization_or_rce_cwe: bool = False,
+    reference_count: int = 5,
+    model: Optional[CalibratedExploitModel] = None,
+) -> Dict[str, Any]:
+    active_model = model or load_pretrained_exploit_model()
+    row = VulnerabilityFeatureRow(
+        cve_id=cve_id,
+        package_family="production_runtime",
+        ecosystem="generic",
+        published_date="2026-01-01",
+        as_of_date="2026-01-01",
+        cvss_score=cvss_score,
+        epss=epss,
+        age_days=age_days,
+        is_remote_vector=is_remote_vector,
+        is_deserialization_or_rce_cwe=is_deserialization_or_rce_cwe,
+        reference_count=reference_count,
+        exploited_within_horizon=0,
+    )
+    return active_model.predict_proba_one(row)

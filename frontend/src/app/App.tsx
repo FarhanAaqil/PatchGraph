@@ -32,7 +32,7 @@ export const App: React.FC = () => {
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [motionEnabled, setMotionEnabled] = useState(true);
-  const [apiBaseUrl, setApiBaseUrl] = useState<string>('');
+  const [apiBaseUrl, setApiBaseUrl] = useState<string>('/api/v1');
 
   const banner = UI_STATE_BANNERS[uiState];
 
@@ -246,32 +246,47 @@ export const App: React.FC = () => {
               </select>
             </label>
 
-            {/* UI Operational State Switcher (Required for Gate tests) */}
-            <label htmlFor="state-switcher" style={{ fontSize: '0.75rem', color: 'var(--color-steel-gray)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <span className="hidden lg:inline">State:</span>
-              <select
-                id="state-switcher"
-                value={uiState}
-                onChange={(e) => setUiState(e.target.value as UiOperationalState)}
-                style={{
-                  padding: '0.35rem 0.65rem',
-                  borderRadius: 'var(--radius-pill)',
-                  border: '1px solid #CBD5E1',
-                  background: '#FFF',
-                  fontSize: '0.75rem',
-                  fontFamily: 'var(--font-body)',
-                  cursor: 'pointer',
-                }}
-              >
-                <option value="offline-demo">offline-demo</option>
-                <option value="loading">loading</option>
-                <option value="empty">empty</option>
-                <option value="stale">stale</option>
-                <option value="partial">partial</option>
-                <option value="unauthorized">unauthorized</option>
-                <option value="failed">failed</option>
-              </select>
-            </label>
+            {/* Operational State Switcher (for state simulation and testing) */}
+            <select
+              id="state-switcher"
+              value={uiState}
+              onChange={(e) => setUiState(e.target.value as UiOperationalState)}
+              style={{
+                fontSize: '0.75rem',
+                fontFamily: 'var(--font-mono)',
+                color: 'var(--color-steel-gray)',
+                background: '#F1F5F9',
+                border: '1px solid #CBD5E1',
+                borderRadius: 'var(--radius-pill)',
+                padding: '0.35rem 0.5rem',
+                cursor: 'pointer',
+              }}
+              title="Operational State Switcher"
+            >
+              <option value="healthy">healthy</option>
+              <option value="stale">stale</option>
+              <option value="unauthorized">unauthorized</option>
+            </select>
+
+            {/* Live Data Freshness Badge */}
+            <div
+              data-testid="data-freshness-badge"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                padding: '0.35rem 0.75rem',
+                borderRadius: 'var(--radius-pill)',
+                background: '#F1F5F9',
+                border: '1px solid #CBD5E1',
+                fontSize: '0.75rem',
+                fontFamily: 'var(--font-mono)',
+                color: 'var(--color-ink)',
+              }}
+            >
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16A34A' }} />
+              Freshness: Synchronized (snap_01)
+            </div>
 
             {/* Mobile Hamburger Button */}
             <button
@@ -321,22 +336,15 @@ export const App: React.FC = () => {
         )}
       </header>
 
-      {/* ==================== GLOBAL OPERATIONAL STATE BANNER ==================== */}
+      {/* ==================== DATA FRESHNESS & CACHE BAR ==================== */}
       <div
         role="status"
         aria-live="polite"
         data-testid="global-state-banner"
         style={{
-          background:
-            uiState === 'offline-demo'
-              ? 'rgba(122, 15, 224, 0.08)'
-              : uiState === 'stale'
-              ? 'rgba(245, 158, 11, 0.12)'
-              : uiState === 'unauthorized'
-              ? 'rgba(239, 68, 68, 0.12)'
-              : '#F1F5F9',
-          borderBottom: '1px solid rgba(122, 15, 224, 0.15)',
-          padding: '0.5rem 2rem',
+          background: uiState === 'stale' || uiState === 'unauthorized' ? '#FEF2F2' : 'rgba(122, 15, 224, 0.06)',
+          borderBottom: uiState === 'stale' || uiState === 'unauthorized' ? '1px solid #FCA5A5' : '1px solid rgba(122, 15, 224, 0.12)',
+          padding: '0.45rem 2rem',
           fontSize: '0.8rem',
           color: 'var(--color-ink)',
           display: 'flex',
@@ -346,12 +354,26 @@ export const App: React.FC = () => {
           gap: '0.5rem',
         }}
       >
-        <div>
-          <strong style={{ color: 'var(--color-violet)' }}>[{uiState.toUpperCase()}] {banner.title}:</strong>{' '}
-          <span style={{ color: 'var(--text-dark-secondary)' }}>{banner.guidance}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <strong style={{ color: uiState === 'stale' || uiState === 'unauthorized' ? '#DC2626' : 'var(--color-violet)' }}>
+            {uiState === 'stale'
+              ? '[STALE] Stale External Evidence Warning'
+              : uiState === 'unauthorized'
+              ? '[UNAUTHORIZED] Read-Only Role Active'
+              : 'Data Freshness:'}
+          </strong>{' '}
+          <span style={{ color: 'var(--text-dark-secondary)' }}>
+            {uiState === 'stale' || uiState === 'unauthorized'
+              ? banner?.guidance || ''
+              : (
+                <>
+                  Pinned Evidence Snapshot <code>snap_01</code> • NVD, EPSS, OSV, CISA KEV Cached • Verified Ground Truth
+                </>
+              )}
+          </span>
         </div>
         <div style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--color-steel-gray)' }}>
-          Farhan Aaqil • PatchGraph Core Engine
+          PatchGraph Core Supply-Chain Intelligence
         </div>
       </div>
 

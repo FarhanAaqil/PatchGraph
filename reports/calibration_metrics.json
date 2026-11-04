@@ -1,0 +1,136 @@
+{
+  "generated_at": "2026-11-04T01:57:04.715679+00:00",
+  "temporal_cutoff": "2026-06-30",
+  "dataset": {
+    "path": "data/datasets/exploit_training_dataset.csv",
+    "train_samples": 420,
+    "test_samples": 180,
+    "sha256": "c8144cbc61fa8704d3e1b68367099d0aafd1ef6a7580b63fcd48c7b7c4b64f52",
+    "leakage_controls_passed": true
+  },
+  "active_model": {
+    "name": "Platt-Calibrated L2 Logistic Regression",
+    "version": "calibrated-logreg-v1",
+    "weights": [
+      0.339051,
+      0.671926,
+      0.07565,
+      0.622461,
+      1.079342,
+      0.273865
+    ],
+    "bias": -0.886421,
+    "platt_a": 1.845236,
+    "platt_b": -0.232433,
+    "metrics": {
+      "brier_score": 0.1194,
+      "ece": 0.0432,
+      "roc_auc": 0.9053,
+      "pr_auc": 0.9482,
+      "reliability_bins": [
+        {
+          "bin": "[0.00, 0.20]",
+          "count": 1,
+          "mean_predicted_prob": 0.1963,
+          "observed_positive_rate": 0.0
+        },
+        {
+          "bin": "[0.20, 0.40]",
+          "count": 47,
+          "mean_predicted_prob": 0.2419,
+          "observed_positive_rate": 0.234
+        },
+        {
+          "bin": "[0.40, 0.60]",
+          "count": 42,
+          "mean_predicted_prob": 0.5182,
+          "observed_positive_rate": 0.4524
+        },
+        {
+          "bin": "[0.60, 0.80]",
+          "count": 14,
+          "mean_predicted_prob": 0.7475,
+          "observed_positive_rate": 0.9286
+        },
+        {
+          "bin": "[0.80, 1.00]",
+          "count": 76,
+          "mean_predicted_prob": 0.9485,
+          "observed_positive_rate": 0.9737
+        }
+      ]
+    }
+  },
+  "comparator_model": {
+    "name": "Calibrated Gradient Boosting Classifier",
+    "version": "calibrated-gb-v1",
+    "feature_importances": [
+      0.073,
+      0.4116,
+      0.0994,
+      0.0532,
+      0.3309,
+      0.0318
+    ],
+    "metrics": {
+      "brier_score": 0.1303,
+      "ece": 0.0409,
+      "roc_auc": 0.8807,
+      "pr_auc": 0.9322,
+      "reliability_bins": [
+        {
+          "bin": "[0.00, 0.20]",
+          "count": 2,
+          "mean_predicted_prob": 0.1953,
+          "observed_positive_rate": 0.0
+        },
+        {
+          "bin": "[0.20, 0.40]",
+          "count": 51,
+          "mean_predicted_prob": 0.3077,
+          "observed_positive_rate": 0.2745
+        },
+        {
+          "bin": "[0.40, 0.60]",
+          "count": 31,
+          "mean_predicted_prob": 0.4849,
+          "observed_positive_rate": 0.4516
+        },
+        {
+          "bin": "[0.60, 0.80]",
+          "count": 19,
+          "mean_predicted_prob": 0.6696,
+          "observed_positive_rate": 0.7368
+        },
+        {
+          "bin": "[0.80, 1.00]",
+          "count": 77,
+          "mean_predicted_prob": 0.9355,
+          "observed_positive_rate": 0.974
+        }
+      ]
+    }
+  },
+  "effort_baseline_model": {
+    "status": "baseline_active",
+    "methodology": "Empirical fixed-hours maintenance baseline",
+    "action_baselines": {
+      "upgrade": {
+        "hours": 6.0,
+        "downtime_minutes": 10
+      },
+      "minor_upgrade": {
+        "hours": 6.0,
+        "downtime_minutes": 10
+      },
+      "major_upgrade": {
+        "hours": 16.0,
+        "downtime_minutes": 45
+      },
+      "config_change": {
+        "hours": 3.0,
+        "downtime_minutes": 5
+      }
+    }
+  }
+}

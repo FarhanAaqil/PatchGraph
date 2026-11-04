@@ -28,6 +28,16 @@ export const RiskPage: React.FC<RiskPageProps> = ({ apiBaseUrl }) => {
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const [selectedFindingId, setSelectedFindingId] = useState<string | null>(null);
 
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setSelectedFindingId(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const client = new PatchGraphApiClient({ baseUrl: apiBaseUrl || '' });
 
   const { data: findingsData, isLoading, error } = useQuery({
@@ -475,6 +485,8 @@ export const RiskPage: React.FC<RiskPageProps> = ({ apiBaseUrl }) => {
               </div>
               <button
                 onClick={() => setSelectedFindingId(null)}
+                aria-label="Close explain drawer"
+                data-testid="close-explain-drawer"
                 style={{
                   background: '#F1F5F9',
                   border: 'none',
