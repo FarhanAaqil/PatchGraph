@@ -103,6 +103,7 @@ export const REACHABILITY_LABELS: Record<ReachabilityState, { label: string; wei
 };
 
 export type UiOperationalState =
+  | 'healthy'
   | 'loading'
   | 'empty'
   | 'stale'
@@ -112,6 +113,10 @@ export type UiOperationalState =
   | 'offline-demo';
 
 export const UI_STATE_BANNERS: Record<UiOperationalState, { title: string; guidance: string }> = {
+  healthy: {
+    title: 'Operational Telemetry Synchronized',
+    guidance: 'All upstream security feeds, graph topology mappings, and ML scoring pipelines are operational and synchronized.',
+  },
   loading: {
     title: 'Loading Evidence Snapshot',
     guidance: 'Fetching project inventory, graph paths, and pinned snapshot metadata.',
