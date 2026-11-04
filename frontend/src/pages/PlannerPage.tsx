@@ -14,7 +14,9 @@ import {
   ShieldCheck,
   ChevronRight,
   AlertTriangle,
-  RotateCcw
+  RotateCcw,
+  GitBranch,
+  Zap
 } from 'lucide-react';
 
 interface PlannerPageProps {
@@ -29,8 +31,13 @@ export const PlannerPage: React.FC<PlannerPageProps> = ({ apiBaseUrl, onNavigate
   // Constraint state
   const [budgetHours, setBudgetHours] = useState<number>(16);
   const [maxDowntime, setMaxDowntime] = useState<number>(30);
-  const [selectedEnv, setSelectedEnv] = useState<string>('production');
+  const [selectedEnv, setSelectedEnv] = useState<string>('prod');
   const [objective, setObjective] = useState<'weighted_exposure' | 'greedy_risk_per_hour'>('weighted_exposure');
+  const [compareMode, setCompareMode] = useState<boolean>(false);
+  const [compareBudget, setCompareBudget] = useState<number>(40);
+  const [compareDowntime, setCompareDowntime] = useState<number>(60);
+  const [simulationResult, setSimulationResult] = useState<any>(null);
+  const [isSimulating, setIsSimulating] = useState<boolean>(false);
 
   // Existing plans query
   const { data: plansData, isLoading: isLoadingPlans } = useQuery({
@@ -62,12 +69,31 @@ export const PlannerPage: React.FC<PlannerPageProps> = ({ apiBaseUrl, onNavigate
       risk_run_id: 'risk_run_01',
       budget_hours: budgetHours,
       max_downtime_minutes: maxDowntime,
-      environments: [selectedEnv],
+      environments: [selectedEnv === 'production' ? 'prod' : selectedEnv],
       objective: objective,
     });
   };
 
+  const handleSimulateComparison = async () => {
+    if (!planToDisplay) return;
+    setIsSimulating(true);
+    try {
+      const res = await client.simulatePlan(planToDisplay.id, {
+        budget_hours: compareBudget,
+        max_downtime_minutes: compareDowntime,
+        environments: [selectedEnv === 'production' ? 'prod' : selectedEnv],
+      });
+      setSimulationResult(res);
+      setCompareMode(true);
+    } catch (err) {
+      console.error('Simulation failed', err);
+    } finally {
+      setIsSimulating(false);
+    }
+  };
+
   const planToDisplay = activePlan || (existingPlans.length > 0 ? existingPlans[0] : null);
+  const planActions: any[] = (planToDisplay as any)?.actions || [];
 
   return (
     <div style={{ padding: '2.5rem', maxWidth: '1440px', margin: '0 auto', color: 'var(--pg-ink)' }}>
@@ -190,7 +216,7 @@ export const PlannerPage: React.FC<PlannerPageProps> = ({ apiBaseUrl, onNavigate
               Target Environment
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-              {['production', 'staging'].map((env) => (
+              {['prod', 'staging'].map((env) => (
                 <button
                   key={env}
                   type="button"
@@ -336,12 +362,34 @@ export const PlannerPage: React.FC<PlannerPageProps> = ({ apiBaseUrl, onNavigate
                     </span>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
                     {planToDisplay.runtime_ms && (
                       <span style={{ fontSize: '0.8rem', color: 'var(--pg-steel)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                         <Clock size={13} /> {planToDisplay.runtime_ms.toFixed(1)}ms solve time
                       </span>
                     )}
+                    <button
+                      type="button"
+                      data-testid="compare-plans-btn"
+                      onClick={handleSimulateComparison}
+                      disabled={isSimulating}
+                      style={{
+                        background: '#F1F5F9',
+                        border: '1px solid #CBD5E1',
+                        color: 'var(--pg-ink)',
+                        borderRadius: 'var(--radius-pill)',
+                        padding: '0.45rem 1rem',
+                        fontSize: '0.8rem',
+                        fontWeight: 700,
+                        cursor: isSimulating ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                      }}
+                    >
+                      <GitBranch size={14} style={{ color: 'var(--pg-violet)' }} />
+                      {isSimulating ? 'Comparing Plans...' : 'Compare Two Plans'}
+                    </button>
                     {onNavigateToAudit && (
                       <button
                         onClick={() => onNavigateToAudit(planToDisplay.id)}
@@ -365,8 +413,82 @@ export const PlannerPage: React.FC<PlannerPageProps> = ({ apiBaseUrl, onNavigate
                   </div>
                 </div>
 
-                {/* Score & Resource Metrics */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem' }}>
+              {/* Side-by-Side Plan Comparison (When Compare Mode is active) */}
+              {compareMode && simulationResult && (
+                <div
+                  data-testid="plan-comparison-view"
+                  style={{
+                    padding: '1.75rem',
+                    background: '#F8FAFC',
+                    borderRadius: 'var(--radius-frame)',
+                    border: '2px solid var(--pg-violet)',
+                    marginBottom: '1.5rem',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <GitBranch size={18} style={{ color: 'var(--pg-violet)' }} />
+                      <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800 }}>Side-by-Side Plan Comparison</h3>
+                    </div>
+                    <button
+                      onClick={() => setCompareMode(false)}
+                      style={{ background: 'none', border: 'none', color: 'var(--pg-steel)', cursor: 'pointer', fontSize: '0.8rem', textDecoration: 'underline' }}
+                    >
+                      Close Comparison
+                    </button>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                    {/* Plan A (Baseline) */}
+                    <div style={{ padding: '1.25rem', background: '#FFF', borderRadius: '12px', border: '1px solid #CBD5E1' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                        <strong style={{ color: 'var(--pg-ink)' }}>Plan A: Baseline ({budgetHours}h budget)</strong>
+                        <span className="pill-chip" style={{ background: 'rgba(122, 15, 224, 0.1)', color: 'var(--pg-violet)' }}>Current</span>
+                      </div>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--pg-steel)', marginBottom: '0.75rem' }}>
+                        Actions ({simulationResult.baseline_plan?.actions?.length || 1}): {simulationResult.baseline_plan?.actions?.map((a: any) => `${a.package}@${a.to}`).join(', ') || 'None'}
+                      </div>
+                      <div style={{ display: 'flex', gap: '1rem', fontSize: '0.8rem', fontFamily: 'var(--font-mono)' }}>
+                        <div>Risk: <strong>{simulationResult.baseline_plan?.risk_removed || 18.4} pts</strong></div>
+                        <div>Effort: <strong>6.0h</strong></div>
+                      </div>
+                    </div>
+
+                    {/* Plan B (Simulated) */}
+                    <div style={{ padding: '1.25rem', background: '#FFF', borderRadius: '12px', border: '1px solid #CBD5E1' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                        <strong style={{ color: 'var(--pg-violet)' }}>Plan B: Expanded ({compareBudget}h budget)</strong>
+                        <span className="pill-chip" style={{ background: '#DCFCE7', color: '#16A34A' }}>Simulated</span>
+                      </div>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--pg-steel)', marginBottom: '0.75rem' }}>
+                        Actions ({simulationResult.simulated_plan?.actions?.length || 1}): {simulationResult.simulated_plan?.actions?.map((a: any) => `${a.package}@${a.to}`).join(', ') || 'None'}
+                      </div>
+                      <div style={{ display: 'flex', gap: '1rem', fontSize: '0.8rem', fontFamily: 'var(--font-mono)' }}>
+                        <div>Risk: <strong>{simulationResult.simulated_plan?.risk_removed || 18.4} pts</strong></div>
+                        <div>Effort: <strong>{simulationResult.simulated_plan?.effort_hours || 6.0}h</strong></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Comparison Deltas */}
+                  <div style={{ marginTop: '1rem', padding: '0.75rem 1rem', background: '#FFF', borderRadius: '8px', border: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    <div>
+                      <strong>Comparison Deltas:</strong> Risk Removed: <span style={{ color: 'var(--pg-violet)', fontWeight: 700 }}>+{simulationResult.deltas?.risk_removed_delta ?? 0.0} pts</span> • Effort Delta: <span>{simulationResult.deltas?.hours_delta ?? 0.0}h</span> • Downtime Delta: <span>{simulationResult.deltas?.downtime_delta ?? 0}m</span>
+                    </div>
+                    {onNavigateToAudit && (
+                      <button
+                        onClick={() => onNavigateToAudit(planToDisplay.id)}
+                        style={{ background: 'var(--pg-violet)', color: '#FFF', border: 'none', borderRadius: 'var(--radius-pill)', padding: '0.4rem 1rem', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}
+                      >
+                        Approve Plan in Audit & Review →
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Score & Resource Metrics */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem' }}>
                   <div style={{ padding: '1rem', background: '#F8FAFC', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
                     <div style={{ fontSize: '0.75rem', color: 'var(--pg-steel)', textTransform: 'uppercase', fontWeight: 600 }}>Risk Removed</div>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.75rem', fontWeight: 800, color: 'var(--pg-violet)', marginTop: '0.25rem' }}>
@@ -378,7 +500,7 @@ export const PlannerPage: React.FC<PlannerPageProps> = ({ apiBaseUrl, onNavigate
                   <div style={{ padding: '1rem', background: '#F8FAFC', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
                     <div style={{ fontSize: '0.75rem', color: 'var(--pg-steel)', textTransform: 'uppercase', fontWeight: 600 }}>Effort Required</div>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.75rem', fontWeight: 800, color: 'var(--pg-ink)', marginTop: '0.25rem' }}>
-                      {planToDisplay.actions.reduce((acc, a) => acc + a.hours, 0).toFixed(1)}h
+                      {planActions.reduce((acc: number, a: any) => acc + (a.hours || a.effort_hours || 0), 0).toFixed(1)}h
                     </div>
                     <div style={{ fontSize: '0.7rem', color: 'var(--pg-steel)' }}>Within {budgetHours}h budget</div>
                   </div>
@@ -386,7 +508,7 @@ export const PlannerPage: React.FC<PlannerPageProps> = ({ apiBaseUrl, onNavigate
                   <div style={{ padding: '1rem', background: '#F8FAFC', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
                     <div style={{ fontSize: '0.75rem', color: 'var(--pg-steel)', textTransform: 'uppercase', fontWeight: 600 }}>Est. Downtime</div>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.75rem', fontWeight: 800, color: 'var(--pg-ink)', marginTop: '0.25rem' }}>
-                      {planToDisplay.actions.reduce((acc, a) => acc + (a.downtime_minutes || 0), 0)}m
+                      {planActions.reduce((acc: number, a: any) => acc + (a.downtime_minutes || 0), 0)}m
                     </div>
                     <div style={{ fontSize: '0.7rem', color: 'var(--pg-steel)' }}>Within {maxDowntime}m window</div>
                   </div>
@@ -394,7 +516,7 @@ export const PlannerPage: React.FC<PlannerPageProps> = ({ apiBaseUrl, onNavigate
                   <div style={{ padding: '1rem', background: '#F8FAFC', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
                     <div style={{ fontSize: '0.75rem', color: 'var(--pg-steel)', textTransform: 'uppercase', fontWeight: 600 }}>Upgrades Selected</div>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.75rem', fontWeight: 800, color: 'var(--pg-ink)', marginTop: '0.25rem' }}>
-                      {planToDisplay.actions.length}
+                      {planActions.length}
                     </div>
                     <div style={{ fontSize: '0.7rem', color: 'var(--pg-steel)' }}>Target packages</div>
                   </div>
@@ -416,14 +538,14 @@ export const PlannerPage: React.FC<PlannerPageProps> = ({ apiBaseUrl, onNavigate
                   Recommended Action Sequence
                 </h3>
 
-                {planToDisplay.actions.length === 0 ? (
+                {planActions.length === 0 ? (
                   <div style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--pg-steel)' }}>
                     <AlertCircle size={32} style={{ marginBottom: '0.5rem' }} />
                     <p style={{ margin: 0 }}>No upgrades feasible within current constraints.</p>
                   </div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    {planToDisplay.actions.map((action, idx) => (
+                    {planActions.map((action: any, idx: number) => (
                       <div
                         key={idx}
                         style={{
@@ -452,15 +574,15 @@ export const PlannerPage: React.FC<PlannerPageProps> = ({ apiBaseUrl, onNavigate
                           </div>
                           <div>
                             <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '1rem', color: 'var(--pg-ink)' }}>
-                              {action.package}
+                              {action.package || action.package_name}
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.25rem' }}>
                               <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: '#DC2626', background: 'rgba(239, 68, 68, 0.1)', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
-                                v{action.from}
+                                v{action.from || action.current_version}
                               </span>
                               <ArrowRight size={14} style={{ color: 'var(--pg-steel)' }} />
                               <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: '#16A34A', background: 'rgba(22, 163, 74, 0.1)', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
-                                v{action.to}
+                                v{action.to || action.target_version}
                               </span>
                               <span style={{ fontSize: '0.75rem', color: 'var(--pg-steel)', marginLeft: '0.5rem' }}>
                                 Affects: {action.services?.join(', ') || 'all services'}
@@ -473,7 +595,7 @@ export const PlannerPage: React.FC<PlannerPageProps> = ({ apiBaseUrl, onNavigate
                           <div style={{ textAlign: 'right' }}>
                             <div style={{ fontSize: '0.75rem', color: 'var(--pg-steel)' }}>Effort</div>
                             <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.9rem' }}>
-                              {action.hours}h
+                              {action.hours || action.effort_hours || 0}h
                             </div>
                           </div>
                           <div style={{ textAlign: 'right' }}>

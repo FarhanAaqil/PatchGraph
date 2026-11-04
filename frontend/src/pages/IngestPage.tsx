@@ -57,6 +57,36 @@ export const IngestPage: React.FC = () => {
     },
   ]);
 
+  const handleLoadSampleData = async () => {
+    setIsUploading(true);
+    setProgress(35);
+    setUploadStatus('Loading seeded CycloneDX SBOM and deployment topology into supply chain database...');
+    try {
+      const res = await api.loadSampleData();
+      setProgress(100);
+      setUploadStatus(`Sample Data Loaded: ${res.packages_loaded} packages registered, ${res.findings_loaded} calibrated findings created. Pinned to snapshot ${res.snapshot_id}.`);
+      setHistory((prev) => [
+        {
+          id: 'imp_seed_sample',
+          kind: 'CycloneDX + Topology',
+          name: 'sbom_cyclonedx_seed.json',
+          sha256: '5d5112f2ede415e41e8e56c5177516b031701b7d8beffeba04ff415f8a6aa3e9',
+          status: 'completed',
+          date: new Date().toISOString(),
+          components: res.packages_loaded,
+        },
+        ...prev,
+      ]);
+    } catch (err: any) {
+      setUploadStatus(`Load failed: ${err.message || 'Error communicating with backend'}`);
+    } finally {
+      setTimeout(() => {
+        setIsUploading(false);
+        setProgress(0);
+      }, 3000);
+    }
+  };
+
   const handleSimulatedUpload = async (kind: string) => {
     setIsUploading(true);
     setProgress(25);
@@ -183,6 +213,28 @@ export const IngestPage: React.FC = () => {
 
         {/* 1-Click Fast Ingestion Buttons */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
+          <button
+            onClick={handleLoadSampleData}
+            disabled={isUploading}
+            data-testid="load-sample-data-btn"
+            style={{
+              padding: '0.7rem 1.4rem',
+              borderRadius: 'var(--radius-pill)',
+              border: 'none',
+              background: 'var(--color-violet)',
+              color: '#FFFFFF',
+              fontWeight: 800,
+              fontSize: '0.85rem',
+              cursor: isUploading ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              boxShadow: '0 4px 14px rgba(122, 15, 224, 0.3)',
+            }}
+          >
+            <Sparkles size={16} /> ⚡ Load Sample Data (CycloneDX + Topology)
+          </button>
+
           <button
             onClick={() => handleSimulatedUpload('CycloneDX SBOM')}
             disabled={isUploading}

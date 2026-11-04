@@ -250,14 +250,14 @@ export const AuditPage: React.FC<AuditPageProps> = ({ apiBaseUrl, initialPlanId 
                     Proposed Upgrade Action
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.35rem' }}>
-                    {currentPlan.actions.map((act, i) => (
+                    {((currentPlan as any).actions || []).map((act: any, i: number) => (
                       <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.95rem' }}>
-                          {act.package}
+                          {act.package || act.package_name}
                         </span>
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: '#DC2626' }}>v{act.from}</span>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: '#DC2626' }}>v{act.from || act.current_version}</span>
                         <ArrowRight size={13} style={{ color: 'var(--pg-steel)' }} />
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: '#16A34A', fontWeight: 700 }}>v{act.to}</span>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: '#16A34A', fontWeight: 700 }}>v{act.to || act.target_version}</span>
                       </div>
                     ))}
                   </div>
@@ -273,7 +273,7 @@ export const AuditPage: React.FC<AuditPageProps> = ({ apiBaseUrl, initialPlanId 
                   <div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--pg-steel)', textTransform: 'uppercase', fontWeight: 600 }}>Effort</div>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: 700 }}>
-                      {currentPlan.actions.reduce((a, b) => a + b.hours, 0).toFixed(1)}h
+                      {((currentPlan as any).actions || []).reduce((a: number, b: any) => a + (b.hours || b.effort_hours || 0), 0).toFixed(1)}h
                     </div>
                   </div>
                   <div>
@@ -292,7 +292,7 @@ export const AuditPage: React.FC<AuditPageProps> = ({ apiBaseUrl, initialPlanId 
                 </label>
                 <textarea
                   rows={3}
-                  placeholder="e.g. Verified compatibility with staging CI suite. Approved for execution during Sunday 02:00 UTC maintenance window."
+                  placeholder="Enter required justification (e.g. Verified compatibility with staging CI suite. Approved for deployment)."
                   value={decisionComment}
                   onChange={(e) => setDecisionComment(e.target.value)}
                   style={{
@@ -361,7 +361,7 @@ export const AuditPage: React.FC<AuditPageProps> = ({ apiBaseUrl, initialPlanId 
                     boxShadow: '0 4px 16px rgba(122, 15, 224, 0.3)',
                   }}
                 >
-                  <CheckCircle2 size={16} /> Approve & Sign Plan
+                  <CheckCircle2 size={16} /> Approve Plan
                 </button>
               </div>
             </div>

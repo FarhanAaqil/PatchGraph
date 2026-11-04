@@ -991,3 +991,28 @@ paths:
             application/json:
               schema:
                 type: object
+
+  /demo/load-sample:
+    post:
+      summary: Load sample dataset with CycloneDX SBOM and deployment topology
+      operationId: loadSampleDataset
+      responses:
+        '200':
+          description: Sample dataset loaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+                  snapshot_id:
+                    type: string
+                  packages_loaded:
+                    type: integer
+                  findings_loaded:
+                    type: integer
+                  is_demo:
+                    type: boolean

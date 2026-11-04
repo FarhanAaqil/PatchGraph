@@ -374,7 +374,7 @@ export class PatchGraphApiClient {
   private readonly headers: Record<string, string>;
 
   constructor(options: PatchGraphClientOptions = {}) {
-    this.baseUrl = options.baseUrl ?? '/api/v1';
+    this.baseUrl = options.baseUrl ? (options.baseUrl.endsWith('/api/v1') ? options.baseUrl : `${options.baseUrl}/api/v1`) : '/api/v1';
     this.headers = {
       'Content-Type': 'application/json',
       'X-Project-Id': options.projectId ?? '00000000-0000-0000-0000-000000000001',
@@ -529,5 +529,18 @@ export class PatchGraphApiClient {
 
   getHealth() {
     return this.request<SystemHealthResponse>('/health');
+  }
+
+  loadSampleData() {
+    return this.request<{
+      status: string;
+      message: string;
+      snapshot_id: string;
+      packages_loaded: number;
+      findings_loaded: number;
+      is_demo: boolean;
+    }>('/demo/load-sample', {
+      method: 'POST',
+    });
   }
 }
