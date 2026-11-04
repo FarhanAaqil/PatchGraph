@@ -346,3 +346,4 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
 };
 
 export default SettingsPage;
+

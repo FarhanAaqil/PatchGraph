@@ -1,4 +1,18 @@
 import React, { useEffect, useState } from 'react';
+import { 
+  Search, 
+  X, 
+  ChevronRight, 
+  ShieldAlert, 
+  Layers, 
+  GitBranch, 
+  FileCheck2, 
+  Cpu, 
+  Lock, 
+  Settings, 
+  Server, 
+  Terminal
+} from 'lucide-react';
 
 interface Props {
   isOpen: boolean;
@@ -8,6 +22,7 @@ interface Props {
 
 export const CommandPalette: React.FC<Props> = ({ isOpen, onClose, onNavigate }) => {
   const [query, setQuery] = useState('');
+  const [selectedIndex, setSelectedIndex] = useState(0);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -26,16 +41,15 @@ export const CommandPalette: React.FC<Props> = ({ isOpen, onClose, onNavigate })
   if (!isOpen) return null;
 
   const actions = [
-    { id: 'landing', label: 'Overview & 3D Hero Scene', category: 'Navigation', icon: 'view_carousel' },
-    { id: 'ingest', label: 'Ingest SBOM, VEX & Deployment Topology', category: 'Navigation', icon: 'upload_file' },
-    { id: 'graph', label: 'Interactive Dependency & Deployment Graph', category: 'Navigation', icon: 'account_tree' },
-    { id: 'risk', label: 'Risk Prioritization & Explainability Drawer', category: 'Navigation', icon: 'insights' },
-    { id: 'planner', label: 'CP-SAT Remediation Planner & Sensitivity Sliders', category: 'Navigation', icon: 'memory' },
-    { id: 'audit', label: 'Cryptographic Human Approval & Immutable Audit Log', category: 'Navigation', icon: 'verified' },
-    { id: 'settings', label: 'Threat Intelligence Feeds & Platform Settings', category: 'Navigation', icon: 'settings' },
-    { id: 'cve-1001', label: 'CVE-2026-1001 (example-lib @ 1.4.0 — CVSS 8.8 / Score 10.57)', category: 'Vulnerabilities', icon: 'warning' },
-    { id: 'cve-1002', label: 'CVE-2026-1002 (checkout-sdk @ 2.1.0 — CVSS 6.5 / VEX Not Affected)', category: 'Vulnerabilities', icon: 'verified_user' },
-    { id: 'svc-checkout', label: 'service:checkout (prod-cluster, PCI-DSS SLA 30m)', category: 'Services', icon: 'dns' },
+    { id: 'landing', label: 'Overview & 3D Topology HUD', category: 'Navigation', icon: <Layers size={16} /> },
+    { id: 'ingest', label: 'Ingest SBOM, VEX & Deployment Topology', category: 'Navigation', icon: <FileCheck2 size={16} /> },
+    { id: 'graph', label: 'Interactive Dependency & Deployment Graph', category: 'Navigation', icon: <GitBranch size={16} /> },
+    { id: 'risk', label: 'Prioritized Risk Register & Explainability', category: 'Navigation', icon: <ShieldAlert size={16} /> },
+    { id: 'planner', label: 'CP-SAT Remediation Planner & Sliders', category: 'Navigation', icon: <Cpu size={16} /> },
+    { id: 'audit', label: 'Human Review Gate & Append-Only Audit', category: 'Navigation', icon: <Lock size={16} /> },
+    { id: 'settings', label: 'Connector Freshness & Platform Settings', category: 'Navigation', icon: <Settings size={16} /> },
+    { id: 'cve-1001', label: 'CVE-2026-1001 (example-lib @ 1.4.0 — Score 10.57)', category: 'Vulnerabilities', icon: <ShieldAlert size={16} style={{ color: '#DC2626' }} /> },
+    { id: 'svc-checkout', label: 'service:checkout (PCI-DSS prod-cluster SLA 30m)', category: 'Services', icon: <Server size={16} style={{ color: 'var(--color-violet)' }} /> },
   ];
 
   const filtered = query.trim()
@@ -43,7 +57,7 @@ export const CommandPalette: React.FC<Props> = ({ isOpen, onClose, onNavigate })
     : actions;
 
   const handleSelect = (actionId: string) => {
-    if (['cve-1001', 'cve-1002'].includes(actionId)) {
+    if (['cve-1001'].includes(actionId)) {
       onNavigate('risk');
     } else if (actionId === 'svc-checkout') {
       onNavigate('graph');
@@ -54,52 +68,139 @@ export const CommandPalette: React.FC<Props> = ({ isOpen, onClose, onNavigate })
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 bg-[#1A1220]/60 backdrop-blur-md p-4 animate-in fade-in">
-      <div className="w-full max-w-xl rounded-[32px] bg-white border border-[#E6E9EE] shadow-2xl overflow-hidden flex flex-col">
-        {/* Search Input */}
-        <div className="flex items-center px-6 py-4 border-b border-[#E6E9EE] gap-3">
-          <span className="material-symbols-outlined text-[#7A0FE0] text-2xl">search</span>
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(26, 18, 32, 0.65)',
+        backdropFilter: 'blur(8px)',
+        zIndex: 1000,
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'center',
+        paddingTop: '6rem',
+        paddingLeft: '1rem',
+        paddingRight: '1rem',
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          width: '100%',
+          maxWidth: '620px',
+          borderRadius: '28px',
+          background: '#FFFFFF',
+          border: '1px solid #CBD5E1',
+          boxShadow: '0 32px 72px -12px rgba(26, 18, 32, 0.25)',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Search Bar */}
+        <div style={{ display: 'flex', alignItems: 'center', padding: '1rem 1.5rem', borderBottom: '1px solid #E2E8F0', gap: '0.75rem' }}>
+          <Search size={20} style={{ color: 'var(--color-violet)' }} />
           <input
             type="text"
-            placeholder="Type a command, CVE, package, or service..."
+            placeholder="Search commands, CVEs, packages, services..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             autoFocus
-            className="w-full text-base font-sans text-[#1A1220] placeholder-[#8A929C] focus:outline-none"
+            style={{
+              width: '100%',
+              fontSize: '1rem',
+              fontFamily: 'var(--font-body)',
+              color: 'var(--color-ink)',
+              border: 'none',
+              outline: 'none',
+              background: 'transparent',
+            }}
           />
-          <kbd className="px-2 py-0.5 rounded bg-[#E6E9EE] text-xs font-mono text-[#8A929C]">ESC</kbd>
+          <kbd
+            style={{
+              padding: '0.2rem 0.5rem',
+              borderRadius: '6px',
+              background: '#F1F5F9',
+              fontSize: '0.75rem',
+              fontFamily: 'var(--font-mono)',
+              color: 'var(--color-steel-gray)',
+              border: '1px solid #CBD5E1',
+            }}
+          >
+            ESC
+          </kbd>
         </div>
 
-        {/* Action Items List */}
-        <div className="max-h-80 overflow-y-auto p-3 space-y-1">
+        {/* Results List */}
+        <div style={{ maxHeight: '380px', overflowY: 'auto', padding: '0.5rem' }}>
           {filtered.length === 0 ? (
-            <div className="p-6 text-center text-sm font-mono text-[#8A929C]">No matching actions or assets found.</div>
+            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-steel-gray)', fontSize: '0.85rem' }}>
+              No matching assets or actions found.
+            </div>
           ) : (
-            filtered.map((item) => (
+            filtered.map((item, idx) => (
               <button
                 key={item.id}
+                type="button"
                 onClick={() => handleSelect(item.id)}
-                className="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-[#E6E9EE]/50 transition-colors text-left group"
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '0.75rem 1rem',
+                  borderRadius: '16px',
+                  border: 'none',
+                  background: selectedIndex === idx ? 'rgba(122, 15, 224, 0.08)' : 'transparent',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'background 0.15s ease',
+                }}
+                onMouseEnter={() => setSelectedIndex(idx)}
               >
-                <div className="flex items-center gap-3">
-                  <span className="w-8 h-8 rounded-full bg-[#7A0FE0]/10 text-[#7A0FE0] flex items-center justify-center material-symbols-outlined text-sm">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div
+                    style={{
+                      width: '34px',
+                      height: '34px',
+                      borderRadius: '10px',
+                      background: 'rgba(122, 15, 224, 0.1)',
+                      color: 'var(--color-violet)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
                     {item.icon}
-                  </span>
+                  </div>
                   <div>
-                    <div className="text-sm font-semibold text-[#1A1220] group-hover:text-[#7A0FE0] transition-colors">
+                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--color-ink)' }}>
                       {item.label}
                     </div>
-                    <div className="text-[11px] font-mono text-[#8A929C] uppercase">{item.category}</div>
+                    <div style={{ fontSize: '0.7rem', fontFamily: 'var(--font-mono)', color: 'var(--color-steel-gray)', textTransform: 'uppercase' }}>
+                      {item.category}
+                    </div>
                   </div>
                 </div>
-                <span className="material-symbols-outlined text-[#8A929C] text-sm group-hover:text-[#7A0FE0]">
-                  chevron_right
-                </span>
+
+                <ChevronRight size={16} style={{ color: 'var(--color-steel-gray)' }} />
               </button>
             ))
           )}
+        </div>
+
+        {/* Footer shortcuts */}
+        <div style={{ padding: '0.65rem 1.25rem', background: '#F8FAFC', borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', color: 'var(--color-steel-gray)', fontFamily: 'var(--font-mono)' }}>
+          <span>Navigate with arrows or click to select</span>
+          <span>PatchGraph v2.0</span>
         </div>
       </div>
     </div>
   );
 };
+
+export default CommandPalette;
