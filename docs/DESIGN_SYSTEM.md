@@ -90,3 +90,4 @@ Three typeface pairings deliver technical precision, commanding display hierarch
 - **Focus Indicators**: Every interactive control, button, input, and graph node features high-visibility focus rings (`outline: 2px solid #7A0FE0; outline-offset: 2px`).
 - **Screen Reader Support**: All icon-only buttons include explicit `aria-label` attributes.
 - **Dual Representation**: The 3D graph view is complemented by an accessible keyboard-navigable Cytoscape 2D view and tabular data grid.
+

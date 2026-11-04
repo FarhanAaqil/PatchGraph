@@ -102,7 +102,7 @@
       "downtime_minutes": 20,
       "compatibility_penalty": 0.1,
       "optimality_gap": 0.0,
-      "runtime_ms": 5
+      "runtime_ms": 32
     },
     "greedy_risk_descending": {
       "strategy": "greedy_risk_descending",
@@ -194,11 +194,11 @@
   "stress": {
     "edges_generated": 530,
     "queries_executed": 15,
-    "p50_ms": 0.2,
-    "p95_ms": 0.24,
+    "p50_ms": 0.17,
+    "p95_ms": 0.28,
     "target_p95_ms": 2000.0,
     "passes_latency_target": true,
     "cycle_handled_safely": true
   },
-  "result_manifest_sha256": "8c22306ae77284337b09e18739ed03c9293dc4a4d220c9c2dab9632830b7e5a6"
+  "result_manifest_sha256": "547523a3788d889e78bd1aafa8c0a08a27d79d98dc66d581f7001b13869c38af"
 }

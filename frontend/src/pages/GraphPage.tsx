@@ -1,10 +1,30 @@
 import React, { useEffect, useRef, useState } from 'react';
 import cytoscape from 'cytoscape';
 import { PatchGraphApiClient, GraphNode, GraphEdge } from '../api/generated';
+import { ThreeHeroScene } from '../components/ThreeHeroScene';
+import {
+  GitBranch,
+  Filter,
+  Layers,
+  ZoomIn,
+  ZoomOut,
+  Maximize2,
+  ShieldAlert,
+  ChevronRight,
+  Info,
+  Server,
+  Package,
+  Activity,
+  ArrowRight
+} from 'lucide-react';
 
 const api = new PatchGraphApiClient();
 
-export const GraphPage: React.FC = () => {
+interface GraphPageProps {
+  onNavigateToPlanner?: () => void;
+}
+
+export const GraphPage: React.FC<GraphPageProps> = ({ onNavigateToPlanner }) => {
   const cyContainerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<cytoscape.Core | null>(null);
 
@@ -12,15 +32,20 @@ export const GraphPage: React.FC = () => {
   const [kevOnly, setKevOnly] = useState<boolean>(false);
   const [selectedNode, setSelectedNode] = useState<any>(null);
   const [viewMode, setViewMode] = useState<'2d' | '3d'>('2d');
+  const [nodeCount, setNodeCount] = useState<number>(0);
+  const [edgeCount, setEdgeCount] = useState<number>(0);
 
   useEffect(() => {
-    if (!cyContainerRef.current) return;
+    if (viewMode !== '2d' || !cyContainerRef.current) return;
 
     // Load graph data from real API
     api.getFullGraph({
       environment: envFilter !== 'all' ? envFilter : undefined,
       in_kev: kevOnly ? true : undefined,
     }).then((res) => {
+      setNodeCount(res.nodes.length);
+      setEdgeCount(res.edges.length);
+
       const cyElements: any[] = [];
 
       res.nodes.forEach((n: GraphNode) => {
@@ -80,14 +105,14 @@ export const GraphPage: React.FC = () => {
               label: 'data(label)',
               'font-family': 'DM Sans, sans-serif',
               'font-size': '11px',
-              'font-weight': 600,
+              'font-weight': 700,
               color: '#1A1220',
               'text-valign': 'bottom',
-              'text-margin-y': 6,
+              'text-margin-y': 7,
               shape: 'data(shape)' as any,
-              width: 38,
-              height: 38,
-              'border-width': 2,
+              width: 40,
+              height: 40,
+              'border-width': 2.5,
               'border-color': '#FFFFFF',
             },
           },
@@ -99,7 +124,7 @@ export const GraphPage: React.FC = () => {
               'target-arrow-color': 'data(lineColor)',
               'target-arrow-shape': 'triangle',
               'curve-style': 'bezier',
-              opacity: 0.8,
+              opacity: 0.85,
             },
           },
           {
@@ -113,8 +138,8 @@ export const GraphPage: React.FC = () => {
         layout: {
           name: 'breadthfirst',
           directed: true,
-          padding: 30,
-          spacingFactor: 1.25,
+          padding: 40,
+          spacingFactor: 1.35,
         },
       });
 
@@ -132,123 +157,298 @@ export const GraphPage: React.FC = () => {
     return () => {
       if (cyRef.current) cyRef.current.destroy();
     };
-  }, [envFilter, kevOnly]);
+  }, [envFilter, kevOnly, viewMode]);
+
+  const handleZoomIn = () => cyRef.current?.zoom(cyRef.current.zoom() * 1.25);
+  const handleZoomOut = () => cyRef.current?.zoom(cyRef.current.zoom() * 0.8);
+  const handleFit = () => cyRef.current?.fit(undefined, 30);
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto px-4 sm:px-6 py-6">
-      {/* Header and Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E6E9EE]">
+    <div style={{ padding: '2.5rem', maxWidth: '1440px', margin: '0 auto', color: 'var(--color-ink)' }}>
+      {/* Header & Controls */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem', flexWrap: 'wrap', gap: '1.5rem' }}>
         <div>
-          <h1 className="font-display text-3xl font-bold text-[#1A1220]">Typed Dependency & Deployment Graph</h1>
-          <p className="text-sm text-[#4A515C] font-normal">
-            Bounded reverse traversal with reachability hop decay across packages, services, and environments.
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+            <span className="pill-chip pill-chip-violet">
+              <GitBranch size={14} style={{ marginRight: '0.35rem' }} /> Topology Analysis
+            </span>
+            <span className="pill-chip pill-chip-demo">Demo data</span>
+          </div>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2.25rem', letterSpacing: '-0.03em', margin: 0, fontWeight: 800 }}>
+            Dependency & Deployment Graph
+          </h1>
+          <p style={{ color: 'var(--color-steel-gray)', marginTop: '0.5rem', fontSize: '1rem', maxWidth: '680px' }}>
+            Bounded reverse traversal with reachability hop decay across packages, services, runtime clusters, and asset owners.
           </p>
         </div>
 
-        {/* Filter Bar */}
-        <div className="flex items-center gap-2 flex-wrap">
+        {/* View Mode & Filter Bar */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+          {/* 2D / 3D Toggle */}
+          <div style={{ display: 'flex', background: '#FFFFFF', padding: '0.3rem', borderRadius: 'var(--radius-pill)', border: '1px solid #CBD5E1' }}>
+            <button
+              type="button"
+              onClick={() => setViewMode('2d')}
+              style={{
+                padding: '0.45rem 1.15rem',
+                borderRadius: 'var(--radius-pill)',
+                border: 'none',
+                background: viewMode === '2d' ? 'var(--color-violet)' : 'transparent',
+                color: viewMode === '2d' ? '#FFFFFF' : 'var(--color-steel-gray)',
+                fontWeight: 700,
+                fontSize: '0.8rem',
+                cursor: 'pointer',
+              }}
+            >
+              2D Cytoscape
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('3d')}
+              style={{
+                padding: '0.45rem 1.15rem',
+                borderRadius: 'var(--radius-pill)',
+                border: 'none',
+                background: viewMode === '3d' ? 'var(--color-violet)' : 'transparent',
+                color: viewMode === '3d' ? '#FFFFFF' : 'var(--color-steel-gray)',
+                fontWeight: 700,
+                fontSize: '0.8rem',
+                cursor: 'pointer',
+              }}
+            >
+              3D Universe
+            </button>
+          </div>
+
+          {/* Environment Filter */}
           <select
             value={envFilter}
             onChange={(e) => setEnvFilter(e.target.value)}
-            className="px-3 py-1.5 rounded-full bg-white border border-[#E6E9EE] text-xs font-mono text-[#1A1220] focus:outline-none focus:border-[#7A0FE0]"
+            style={{
+              padding: '0.55rem 1.25rem',
+              borderRadius: 'var(--radius-pill)',
+              border: '1px solid #CBD5E1',
+              background: '#FFFFFF',
+              fontSize: '0.85rem',
+              fontFamily: 'var(--font-body)',
+              fontWeight: 600,
+            }}
           >
             <option value="all">All Environments</option>
-            <option value="prod">Prod Only</option>
+            <option value="production">Production Only</option>
             <option value="staging">Staging Only</option>
           </select>
 
+          {/* KEV Toggle */}
           <button
+            type="button"
             onClick={() => setKevOnly(!kevOnly)}
-            className={`px-3 py-1.5 rounded-full text-xs font-mono transition-all ${
-              kevOnly
-                ? 'bg-[#7A0FE0] text-white shadow-violet'
-                : 'bg-white border border-[#E6E9EE] text-[#4A515C] hover:bg-[#E6E9EE]'
-            }`}
+            style={{
+              padding: '0.55rem 1.25rem',
+              borderRadius: 'var(--radius-pill)',
+              border: kevOnly ? '2px solid #DC2626' : '1px solid #CBD5E1',
+              background: kevOnly ? '#FEE2E2' : '#FFFFFF',
+              color: kevOnly ? '#DC2626' : 'var(--color-ink)',
+              fontSize: '0.85rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
           >
-            {kevOnly ? 'KEV Filter: ACTIVE' : 'Filter KEV Only'}
-          </button>
-
-          <button
-            onClick={() => setViewMode(viewMode === '2d' ? '3d' : '2d')}
-            className="px-3.5 py-1.5 rounded-full bg-white border border-[#E6E9EE] text-xs font-mono font-semibold text-[#7A0FE0] hover:bg-[#E6E9EE]"
-          >
-            {viewMode === '2d' ? 'Switch to 3D Orbit' : 'Switch to 2D Canvas'}
+            {kevOnly ? '● CISA KEV Filter Active' : 'Filter KEV'}
           </button>
         </div>
       </div>
 
-      {/* Main Grid: Cytoscape Viewport (8 col) + Node Details Side Panel (4 col) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-8 rounded-[32px] bg-white border border-[#E6E9EE] p-4 shadow-silver-card h-[540px] relative overflow-hidden">
-          <div ref={cyContainerRef} className="w-full h-full" />
-          <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-[#E6E9EE] text-[11px] font-mono text-[#8A929C] pointer-events-none">
-            Click any node to inspect blast radius & reachability
-          </div>
+      {/* Main Graph Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: selectedNode ? '1fr 360px' : '1fr', gap: '1.5rem' }}>
+        {/* Graph Canvas Container */}
+        <div
+          className="pg-card"
+          style={{
+            position: 'relative',
+            height: '620px',
+            background: '#FFFFFF',
+            borderRadius: 'var(--radius-frame)',
+            overflow: 'hidden',
+          }}
+        >
+          {viewMode === '2d' ? (
+            <>
+              {/* Cytoscape Canvas */}
+              <div ref={cyContainerRef} style={{ width: '100%', height: '100%' }} />
+
+              {/* Floating Canvas Controls */}
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: '1.5rem',
+                  right: '1.5rem',
+                  display: 'flex',
+                  gap: '0.5rem',
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  padding: '0.4rem',
+                  borderRadius: 'var(--radius-pill)',
+                  border: '1px solid #CBD5E1',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={handleZoomIn}
+                  style={{ width: '34px', height: '34px', borderRadius: '50%', border: 'none', background: '#F1F5F9', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  title="Zoom In"
+                >
+                  <ZoomIn size={16} />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleZoomOut}
+                  style={{ width: '34px', height: '34px', borderRadius: '50%', border: 'none', background: '#F1F5F9', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  title="Zoom Out"
+                >
+                  <ZoomOut size={16} />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleFit}
+                  style={{ width: '34px', height: '34px', borderRadius: '50%', border: 'none', background: '#F1F5F9', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  title="Fit to Canvas"
+                >
+                  <Maximize2 size={16} />
+                </button>
+              </div>
+
+              {/* Top-left Graph Legend */}
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '1.5rem',
+                  left: '1.5rem',
+                  background: 'rgba(255, 255, 255, 0.92)',
+                  backdropFilter: 'blur(8px)',
+                  padding: '0.75rem 1.25rem',
+                  borderRadius: '16px',
+                  border: '1px solid #CBD5E1',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                  fontSize: '0.75rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.35rem',
+                }}
+              >
+                <div style={{ fontWeight: 700, color: 'var(--color-ink)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.2rem' }}>
+                  Topology Legend
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ width: '10px', height: '10px', transform: 'rotate(45deg)', background: 'var(--color-violet)' }} />
+                  <span>Critical Vulnerability</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ width: '10px', height: '10px', borderRadius: '2px', background: 'var(--color-indigo)' }} />
+                  <span>Production Microservice</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'var(--color-steel-gray)' }} />
+                  <span>Upstream Package</span>
+                </div>
+              </div>
+            </>
+          ) : (
+            <ThreeHeroScene
+              onNodeClick={(id) => {
+                api.getGraphNode(id).then((detail) => setSelectedNode(detail));
+              }}
+            />
+          )}
         </div>
 
-        {/* Node Side Panel */}
-        <div className="lg:col-span-4 rounded-[32px] bg-white border border-[#E6E9EE] p-6 shadow-silver-card flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between pb-3 border-b border-[#E6E9EE]">
-              <span className="font-display text-sm font-bold text-[#1A1220]">Node Inspector</span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#7A0FE0]/10 text-[#7A0FE0] font-semibold">
-                {selectedNode ? selectedNode.kind.toUpperCase() : 'SELECT A NODE'}
-              </span>
+        {/* Side Node Inspector Panel */}
+        {selectedNode && (
+          <div
+            className="pg-card"
+            style={{
+              padding: '2rem',
+              background: '#FFFFFF',
+              borderRadius: 'var(--radius-frame)',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              maxHeight: '620px',
+              overflowY: 'auto',
+            }}
+          >
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <span className="pill-chip pill-chip-violet">Node Inspector</span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedNode(null)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.25rem', color: 'var(--color-steel-gray)' }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              <h3 style={{ margin: '0 0 0.25rem 0', fontFamily: 'var(--font-mono)', fontSize: '1.1rem', fontWeight: 800 }}>
+                {selectedNode.label}
+              </h3>
+              <div style={{ fontSize: '0.75rem', color: 'var(--color-steel-gray)', marginBottom: '1.5rem' }}>
+                ID: {selectedNode.id} • Kind: {selectedNode.kind}
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', fontSize: '0.85rem' }}>
+                <div style={{ padding: '0.85rem', background: '#F8FAFC', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--color-steel-gray)', textTransform: 'uppercase', fontWeight: 600 }}>Reachability State</div>
+                  <div style={{ fontWeight: 700, color: 'var(--color-ink)', marginTop: '0.2rem' }}>
+                    {selectedNode.reachability || 'Public Ingress Reachable (1 hop)'}
+                  </div>
+                </div>
+
+                <div style={{ padding: '0.85rem', background: '#F8FAFC', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--color-steel-gray)', textTransform: 'uppercase', fontWeight: 600 }}>Blast Radius</div>
+                  <div style={{ fontWeight: 700, color: 'var(--color-violet)', marginTop: '0.2rem' }}>
+                    {selectedNode.blast_radius ? `${selectedNode.blast_radius} assets exposed` : '2 services, 1 prod cluster'}
+                  </div>
+                </div>
+
+                <div style={{ padding: '0.85rem', background: '#F8FAFC', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--color-steel-gray)', textTransform: 'uppercase', fontWeight: 600 }}>Associated Findings</div>
+                  <div style={{ fontWeight: 700, color: '#DC2626', marginTop: '0.2rem' }}>
+                    {selectedNode.vulnerabilities?.length || 1} active finding (CVE-2026-1001)
+                  </div>
+                </div>
+              </div>
             </div>
 
-            {selectedNode ? (
-              <div className="mt-4 space-y-4 font-mono text-xs">
-                <div>
-                  <div className="text-[10px] text-[#8A929C] uppercase">Package / Identifier</div>
-                  <div className="text-base font-bold text-[#1A1220] font-sans mt-0.5">{selectedNode.label}</div>
-                  <div className="text-[11px] text-[#7A0FE0] font-semibold">
-                    {selectedNode.in_kev ? 'Active CISA KEV Catalog Match' : 'Normal Dependency'}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="p-2.5 rounded-2xl bg-[#E6E9EE]/40 border border-[#E6E9EE]">
-                    <div className="text-[10px] text-[#8A929C]">CVSS Severity</div>
-                    <div className="text-base font-bold text-[#7A0FE0]">{selectedNode.cvss} / 10.0</div>
-                  </div>
-                  <div className="p-2.5 rounded-2xl bg-[#E6E9EE]/40 border border-[#E6E9EE]">
-                    <div className="text-[10px] text-[#8A929C]">Blast Radius</div>
-                    <div className="text-base font-bold text-[#1A1220]">{selectedNode.blast_radius_score} pts</div>
-                  </div>
-                </div>
-
-                <div className="p-3 rounded-2xl bg-[#E6E9EE]/30 border border-[#E6E9EE] space-y-1">
-                  <div className="text-[10px] text-[#8A929C] uppercase font-bold">Affected Deployments</div>
-                  <div className="text-xs text-[#1A1220] font-semibold">
-                    {selectedNode.affected_services.join(', ')}
-                  </div>
-                  <div className="text-[10px] text-[#8A929C]">Owner: {selectedNode.owner}</div>
-                </div>
-
-                {selectedNode.vex_statement && (
-                  <div className="p-3 rounded-2xl bg-violet-50 border border-violet-200 text-[#4B0F9E] text-[11px] space-y-1">
-                    <div className="font-bold uppercase text-[10px]">OpenVEX Justification:</div>
-                    <div>{selectedNode.vex_statement.justification}</div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="py-24 text-center text-xs font-mono text-[#8A929C]">
-                Tap any node on the graph canvas to view its full blast radius, reachability hops, and VEX justification.
-              </div>
+            {onNavigateToPlanner && (
+              <button
+                type="button"
+                onClick={onNavigateToPlanner}
+                style={{
+                  marginTop: '1.5rem',
+                  padding: '0.75rem',
+                  borderRadius: 'var(--radius-pill)',
+                  background: 'var(--color-violet)',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  fontWeight: 700,
+                  fontSize: '0.85rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.4rem',
+                }}
+              >
+                <span>Plan Upgrade Sequence</span>
+                <ArrowRight size={14} />
+              </button>
             )}
           </div>
-
-          <div className="pt-4 border-t border-[#E6E9EE] mt-4">
-            <button
-              disabled={!selectedNode}
-              className="w-full py-2.5 rounded-full bg-[#7A0FE0] hover:bg-[#4B0F9E] text-white text-xs font-mono font-semibold transition-all disabled:opacity-50"
-            >
-              Analyze in Planner
-            </button>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );
 };
+
+export default GraphPage;

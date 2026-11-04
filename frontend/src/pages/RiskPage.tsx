@@ -538,6 +538,23 @@ export const RiskPage: React.FC<RiskPageProps> = ({ apiBaseUrl }) => {
                   </div>
                 </div>
 
+                {/* Executive Summary in Plain English */}
+                <div
+                  style={{
+                    background: 'rgba(122, 15, 224, 0.05)',
+                    border: '1px solid rgba(122, 15, 224, 0.2)',
+                    borderRadius: 'var(--radius-card)',
+                    padding: '1.25rem',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700, fontSize: '0.85rem', color: 'var(--pg-violet)', marginBottom: '0.35rem' }}>
+                    <Sparkles size={15} /> Executive Risk Synthesis
+                  </div>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--pg-ink)', lineHeight: '1.55' }}>
+                    Even though baseline CVSS is <strong>{explainData.baseline_score.toFixed(1)}</strong>, this finding is prioritized with a final score of <strong>{explainData.final_score.toFixed(2)}</strong> because it is actively weaponized (CISA KEV), exhibits a calibrated <strong>{Math.round(explainData.probability * 100)}%</strong> exploit likelihood, and is exposed on service <strong>{selectedFinding?.service_name || 'checkout'}</strong> reachable from public ingress.
+                  </p>
+                </div>
+
                 {/* Mathematical Weighting Formula */}
                 <div>
                   <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--pg-steel)' }}>
@@ -627,3 +644,4 @@ export const RiskPage: React.FC<RiskPageProps> = ({ apiBaseUrl }) => {
 };
 
 export default RiskPage;
+

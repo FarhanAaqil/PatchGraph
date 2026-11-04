@@ -51,3 +51,4 @@ def seed_demo_data(db_path: str = "patchgraph_demo.db") -> dict:
 if __name__ == "__main__":
     result = seed_demo_data()
     print(json.dumps(result, indent=2))
+
