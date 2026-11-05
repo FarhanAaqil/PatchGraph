@@ -194,11 +194,11 @@
   "stress": {
     "edges_generated": 530,
     "queries_executed": 15,
-    "p50_ms": 0.19,
-    "p95_ms": 0.27,
+    "p50_ms": 0.18,
+    "p95_ms": 0.22,
     "target_p95_ms": 2000.0,
     "passes_latency_target": true,
     "cycle_handled_safely": true
   },
-  "result_manifest_sha256": "8e76eda094838585a585623b62a509b4de588f561f6eb6bd60981eb34aa7cad4"
+  "result_manifest_sha256": "997a7f465f6dc490ae353f2c36d20d6ad6c4f79e9b54c907b8c80b467b160777"
 }

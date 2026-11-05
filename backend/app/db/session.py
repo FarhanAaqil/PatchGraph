@@ -144,11 +144,11 @@ class DatabaseManager:
         user_viewer = "00000000-0000-0000-0000-000000000012"
 
         cur.execute(
-            "INSERT INTO projects (id, name, created_at) VALUES (?, ?, ?), (?, ?, ?)",
+            "INSERT OR IGNORE INTO projects (id, name, created_at) VALUES (?, ?, ?), (?, ?, ?)",
             (project_id, "commerce-platform-prod", now, other_project_id, "isolated-tenant-project", now),
         )
         cur.execute(
-            "INSERT INTO users (id, email, display_name, created_at) VALUES (?, ?, ?, ?), (?, ?, ?, ?), (?, ?, ?, ?)",
+            "INSERT OR IGNORE INTO users (id, email, display_name, created_at) VALUES (?, ?, ?, ?), (?, ?, ?, ?), (?, ?, ?, ?)",
             (
                 user_approver,
                 "approver@patchgraph.local",
@@ -165,7 +165,7 @@ class DatabaseManager:
             ),
         )
         cur.execute(
-            "INSERT INTO memberships (project_id, user_id, role) VALUES (?, ?, ?), (?, ?, ?), (?, ?, ?)",
+            "INSERT OR IGNORE INTO memberships (project_id, user_id, role) VALUES (?, ?, ?), (?, ?, ?), (?, ?, ?)",
             (
                 project_id,
                 user_approver,
@@ -181,14 +181,14 @@ class DatabaseManager:
 
         app_id = "app_commerce_01"
         cur.execute(
-            "INSERT INTO applications (id, project_id, name, criticality) VALUES (?, ?, ?, ?)",
+            "INSERT OR IGNORE INTO applications (id, project_id, name, criticality) VALUES (?, ?, ?, ?)",
             (app_id, project_id, "commerce-platform", 5),
         )
 
         svc_checkout = "svc_checkout_01"
         svc_analytics = "svc_analytics_02"
         cur.execute(
-            "INSERT INTO services (id, application_id, name, owner_email) VALUES (?, ?, ?, ?), (?, ?, ?, ?)",
+            "INSERT OR IGNORE INTO services (id, application_id, name, owner_email) VALUES (?, ?, ?, ?), (?, ?, ?, ?)",
             (
                 svc_checkout,
                 app_id,
@@ -204,14 +204,14 @@ class DatabaseManager:
         env_prod = "env_prod_01"
         env_staging = "env_staging_02"
         cur.execute(
-            "INSERT INTO environments (id, project_id, name, production, max_downtime_minutes) VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?)",
+            "INSERT OR IGNORE INTO environments (id, project_id, name, production, max_downtime_minutes) VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?)",
             (env_prod, project_id, "prod", 1, 30, env_staging, project_id, "staging", 0, 120),
         )
 
         asset_checkout = "asset_k8s_checkout_prod"
         asset_analytics = "asset_vm_analytics_staging"
         cur.execute(
-            "INSERT INTO assets (id, project_id, environment_id, external_key, kind, criticality, metadata) VALUES (?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?)",
+            "INSERT OR IGNORE INTO assets (id, project_id, environment_id, external_key, kind, criticality, metadata) VALUES (?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?)",
             (
                 asset_checkout,
                 project_id,
@@ -231,7 +231,7 @@ class DatabaseManager:
         )
 
         cur.execute(
-            "INSERT INTO deployments (id, service_id, asset_id, deployed_at, release_ref) VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?)",
+            "INSERT OR IGNORE INTO deployments (id, service_id, asset_id, deployed_at, release_ref) VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?)",
             (
                 "dep_01",
                 svc_checkout,
@@ -250,7 +250,7 @@ class DatabaseManager:
         pkg_example = "pkg_example_lib"
         pkg_urllib3 = "pkg_urllib3"
         cur.execute(
-            "INSERT INTO packages (id, ecosystem, normalized_name, purl) VALUES (?, ?, ?, ?), (?, ?, ?, ?), (?, ?, ?, ?)",
+            "INSERT OR IGNORE INTO packages (id, ecosystem, normalized_name, purl) VALUES (?, ?, ?, ?), (?, ?, ?, ?), (?, ?, ?, ?)",
             (
                 pkg_sdk,
                 "pypi",
@@ -272,7 +272,7 @@ class DatabaseManager:
         pv_example_143 = "pv_example_lib_1_4_3"
         pv_urllib3_202 = "pv_urllib3_2_0_2"
         cur.execute(
-            "INSERT INTO package_versions (id, package_id, version, normalized_version) VALUES (?, ?, ?, ?), (?, ?, ?, ?), (?, ?, ?, ?), (?, ?, ?, ?)",
+            "INSERT OR IGNORE INTO package_versions (id, package_id, version, normalized_version) VALUES (?, ?, ?, ?), (?, ?, ?, ?), (?, ?, ?, ?), (?, ?, ?, ?)",
             (
                 pv_sdk,
                 pkg_sdk,
@@ -296,7 +296,7 @@ class DatabaseManager:
         imp_sbom = "imp_seed_sbom_01"
         imp_vex = "imp_seed_vex_01"
         cur.execute(
-            """INSERT INTO imports (id, project_id, kind, status, source_name, content_sha256, object_key, parser_version, errors, created_at)
+            """INSERT OR IGNORE INTO imports (id, project_id, kind, status, source_name, content_sha256, object_key, parser_version, errors, created_at)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 imp_sbom,
@@ -323,7 +323,7 @@ class DatabaseManager:
         )
 
         cur.execute(
-            """INSERT INTO dependencies (project_id, parent_version_id, child_version_id, scope, optional, import_id)
+            """INSERT OR IGNORE INTO dependencies (project_id, parent_version_id, child_version_id, scope, optional, import_id)
                VALUES (?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?)""",
             (
                 project_id,
@@ -342,7 +342,7 @@ class DatabaseManager:
         )
 
         cur.execute(
-            """INSERT INTO service_components (service_id, environment_id, package_version_id, import_id, direct)
+            """INSERT OR IGNORE INTO service_components (service_id, environment_id, package_version_id, import_id, direct)
                VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?), (?, ?, ?, ?, ?)""",
             (
                 svc_checkout,
@@ -366,7 +366,7 @@ class DatabaseManager:
         vuln_01 = "vuln_cve_2026_1001"
         vuln_02 = "vuln_cve_2023_45803"
         cur.execute(
-            "INSERT INTO vulnerabilities (id, canonical_id, published_at, modified_at, summary) VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?)",
+            "INSERT OR IGNORE INTO vulnerabilities (id, canonical_id, published_at, modified_at, summary) VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?)",
             (
                 vuln_01,
                 "CVE-2026-1001",
@@ -384,7 +384,7 @@ class DatabaseManager:
         adv_osv = "adv_osv_2026_1001"
         adv_nvd = "adv_nvd_2026_1001"
         cur.execute(
-            """INSERT INTO advisories (id, vulnerability_id, source, external_id, source_url, fetched_at, content_sha256, raw_object_key, payload)
+            """INSERT OR IGNORE INTO advisories (id, vulnerability_id, source, external_id, source_url, fetched_at, content_sha256, raw_object_key, payload)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 adv_osv,
@@ -409,12 +409,12 @@ class DatabaseManager:
         )
 
         cur.execute(
-            "INSERT INTO affected_ranges (advisory_id, package_id, range_type, introduced, fixed, last_affected) VALUES (?, ?, ?, ?, ?, ?)",
+            "INSERT OR IGNORE INTO affected_ranges (advisory_id, package_id, range_type, introduced, fixed, last_affected) VALUES (?, ?, ?, ?, ?, ?)",
             (adv_osv, pkg_example, "SEMVER", "1.0.0", "1.4.3", "1.4.2"),
         )
 
         cur.execute(
-            """INSERT INTO exploit_evidence (vulnerability_id, observed_on, source, epss, percentile, known_exploited, evidence)
+            """INSERT OR IGNORE INTO exploit_evidence (vulnerability_id, observed_on, source, epss, percentile, known_exploited, evidence)
                VALUES (?, ?, ?, ?, ?, ?, ?)""",
             (
                 vuln_01,
@@ -433,7 +433,7 @@ class DatabaseManager:
         )
 
         cur.execute(
-            """INSERT INTO vex_statements (id, project_id, import_id, vulnerability_id, package_version_id, status, justification, action_statement)
+            """INSERT OR IGNORE INTO vex_statements (id, project_id, import_id, vulnerability_id, package_version_id, status, justification, action_statement)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 "vex_stmt_01",
@@ -480,14 +480,14 @@ class DatabaseManager:
             },
         }
         cur.execute(
-            "INSERT INTO evidence_snapshots (id, project_id, created_at, source_cutoffs, manifest_sha256) VALUES (?, ?, ?, ?, ?)",
+            "INSERT OR IGNORE INTO evidence_snapshots (id, project_id, created_at, source_cutoffs, manifest_sha256) VALUES (?, ?, ?, ?, ?)",
             (snap_id, project_id, now, json.dumps(source_cutoffs), manifest_sha),
         )
 
         finding_01 = "finding_seed_01"
         finding_02 = "finding_seed_02"
         cur.execute(
-            """INSERT INTO findings (id, project_id, vulnerability_id, package_version_id, service_id, environment_id, applicability, status)
+            """INSERT OR IGNORE INTO findings (id, project_id, vulnerability_id, package_version_id, service_id, environment_id, applicability, status)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 finding_01,
@@ -511,7 +511,7 @@ class DatabaseManager:
 
         rr_id = "rr_01"
         cur.execute(
-            "INSERT INTO risk_runs (id, project_id, snapshot_id, model_version, config, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+            "INSERT OR IGNORE INTO risk_runs (id, project_id, snapshot_id, model_version, config, created_at) VALUES (?, ?, ?, ?, ?, ?)",
             (
                 rr_id,
                 project_id,
@@ -550,7 +550,7 @@ class DatabaseManager:
             "weights": {"alpha": 0.4, "beta": 2.5, "gamma": 0.4, "delta": 1.5, "epsilon": 1.5, "lambda": 1.0},
         }
         cur.execute(
-            """INSERT INTO finding_scores (risk_run_id, finding_id, probability, baseline_score, final_score, uncertainty, factors)
+            """INSERT OR IGNORE INTO finding_scores (risk_run_id, finding_id, probability, baseline_score, final_score, uncertainty, factors)
                VALUES (?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?)""",
             (
                 rr_id,
@@ -572,7 +572,7 @@ class DatabaseManager:
 
         plan_id = "plan_01"
         cur.execute(
-            """INSERT INTO planning_runs (id, project_id, risk_run_id, status, objective_value, best_bound, runtime_ms, constraints, created_at)
+            """INSERT OR IGNORE INTO planning_runs (id, project_id, risk_run_id, status, objective_value, best_bound, runtime_ms, constraints, created_at)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 plan_id,
@@ -595,7 +595,7 @@ class DatabaseManager:
         )
 
         cur.execute(
-            """INSERT INTO remediation_actions (id, planning_run_id, package_id, from_version, to_version, action_type, selected, effort_hours, downtime_minutes, compatibility_risk, risk_removed, rationale)
+            """INSERT OR IGNORE INTO remediation_actions (id, planning_run_id, package_id, from_version, to_version, action_type, selected, effort_hours, downtime_minutes, compatibility_risk, risk_removed, rationale)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 "act_seed_01",
@@ -637,7 +637,7 @@ class DatabaseManager:
         )
 
         cur.execute(
-            """INSERT INTO audit_logs (project_id, actor_id, action, entity_type, entity_id, request_id, before_state, after_state, created_at)
+            """INSERT OR IGNORE INTO audit_logs (project_id, actor_id, action, entity_type, entity_id, request_id, before_state, after_state, created_at)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 project_id,

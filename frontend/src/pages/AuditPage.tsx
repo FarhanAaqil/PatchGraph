@@ -31,7 +31,7 @@ export const AuditPage: React.FC<AuditPageProps> = ({ apiBaseUrl, initialPlanId 
   const [decisionComment, setDecisionComment] = useState('');
   const [decisionSuccessMsg, setDecisionSuccessMsg] = useState<string | null>(null);
   const [decisionErrorMsg, setDecisionErrorMsg] = useState<string | null>(null);
-  const [selectedPlanId, setSelectedPlanId] = useState<string>(initialPlanId || 'plan_01');
+  const [selectedPlanId, setSelectedPlanId] = useState<string>(initialPlanId || '');
 
   // Filter state for audit logs
   const [searchQuery, setSearchQuery] = useState('');
@@ -51,7 +51,13 @@ export const AuditPage: React.FC<AuditPageProps> = ({ apiBaseUrl, initialPlanId 
   });
 
   const plans = plansData?.items || [];
-  const currentPlan = plans.find((p) => p.id === selectedPlanId) || (plans.length > 0 ? plans[0] : null);
+  const currentPlan = (selectedPlanId && plans.find((p) => p.id === selectedPlanId)) || (plans.length > 0 ? plans[0] : null);
+
+  React.useEffect(() => {
+    if (!selectedPlanId && plans.length > 0) {
+      setSelectedPlanId(plans[0].id);
+    }
+  }, [plans, selectedPlanId]);
 
   // Mutation for deciding plan
   const decideMutation = useMutation({
