@@ -29,3 +29,4 @@ test.describe('PatchGraph Real File Upload E2E', () => {
     await expect(page.getByText('e2e_bom.json').first()).toBeVisible({ timeout: 10000 });
   });
 });
+
