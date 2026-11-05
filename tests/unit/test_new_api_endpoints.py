@@ -98,6 +98,37 @@ class TestExtendedApiEndpoints(unittest.TestCase):
         self.assertEqual(res["tables_seeded"], 26)
 
 
+
+    def test_imports_list(self) -> None:
+        res = self.client.get("/api/v1/imports", headers=self.headers)
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertIn("items", data)
+        self.assertIn("total", data)
+        self.assertGreaterEqual(data["total"], 1)
+
+    def test_risk_runs_latest(self) -> None:
+        res = self.client.get("/api/v1/risk-runs/latest", headers=self.headers)
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertIn("id", data)
+        self.assertIn("model_version", data)
+
+    def test_vex_statements_list(self) -> None:
+        res = self.client.get("/api/v1/vex-statements", headers=self.headers)
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertIn("items", data)
+        self.assertIn("total", data)
+
+    def test_model_card(self) -> None:
+        res = self.client.get("/api/v1/model-card", headers=self.headers)
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertEqual(data["model_name"], "PatchGraph Exploit Likelihood Calibrator")
+        self.assertIn("brier_score", data)
+        self.assertIn("pr_auc", data)
+
 if __name__ == "__main__":
     unittest.main()
 

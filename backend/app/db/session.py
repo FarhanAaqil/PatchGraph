@@ -77,6 +77,8 @@ def translate_postgres_ddl_to_sqlite(pg_sql: str) -> List[str]:
             # GIN index is PostgreSQL-specific; recorded in schema inspection, skipped in SQLite engine
             continue
         stmt = line
+        stmt = re.sub(r"\bCREATE\s+TABLE\s+", "CREATE TABLE IF NOT EXISTS ", stmt, flags=re.I)
+        stmt = re.sub(r"\bCREATE\s+INDEX\s+", "CREATE INDEX IF NOT EXISTS ", stmt, flags=re.I)
         stmt = re.sub(r"\bid\s+bigserial\s+PRIMARY\s+KEY\b", "id INTEGER PRIMARY KEY AUTOINCREMENT", stmt, flags=re.I)
         stmt = re.sub(r"\buuid\b", "TEXT", stmt, flags=re.I)
         stmt = re.sub(r"\btimestamptz\b", "TEXT", stmt, flags=re.I)
@@ -659,6 +661,9 @@ _DEFAULT_DB: Optional[DatabaseManager] = None
 def get_db() -> DatabaseManager:
     global _DEFAULT_DB
     if _DEFAULT_DB is None:
-        db_path = os.environ.get("PATCHGRAPH_SQLITE_PATH", ":memory:")
+        repo_root = Path(__file__).resolve().parent.parent.parent.parent
+        default_db = repo_root / "data" / "patchgraph.db"
+        default_db.parent.mkdir(parents=True, exist_ok=True)
+        db_path = os.environ.get("PATCHGRAPH_SQLITE_PATH", str(default_db))
         _DEFAULT_DB = DatabaseManager(db_path=db_path)
     return _DEFAULT_DB

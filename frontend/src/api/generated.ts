@@ -543,4 +543,52 @@ export class PatchGraphApiClient {
       method: 'POST',
     });
   }
+
+  listImports() {
+    return this.request<{ items: ImportStatusResponse[]; total: number; request_id: string }>('/imports');
+  }
+
+  getLatestRiskRun() {
+    return this.request<{
+      id: string;
+      project_id: string;
+      snapshot_id: string;
+      model_version: string;
+      config: Record<string, unknown>;
+      created_at: string;
+      findings_count: number;
+      request_id: string;
+    }>('/risk-runs/latest');
+  }
+
+  listVexStatements() {
+    return this.request<{
+      items: Array<{
+        cve: string;
+        service: string;
+        status: string;
+        justification: string;
+        action_statement: string;
+      }>;
+      total: number;
+      request_id: string;
+    }>('/vex-statements');
+  }
+
+  getModelCard() {
+    return this.request<{
+      model_name: string;
+      version: string;
+      brier_score: number;
+      ece: number;
+      pr_auc: number;
+      roc_auc: number;
+      temporal_cutoff: string;
+      training_samples: number;
+      test_samples: number;
+      features: string[];
+      request_id: string;
+    }>('/model-card');
+  }
+
 }
