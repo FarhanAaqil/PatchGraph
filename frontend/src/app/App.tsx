@@ -1,18 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { PatchGraphApiClient } from '../api/generated';
-import { APP_ROUTES, AppRoute, findRouteByPath } from './routes';
+import { APP_ROUTES, AppRoute } from './routes';
 import { SEVERITY_LABELS, UI_STATE_BANNERS, UiOperationalState } from '../content/terms';
 import { CommandPalette } from '../components/CommandPalette';
 import { Sidebar } from '../components/Sidebar';
-import { LandingPage } from '../pages/LandingPage';
-import { IngestPage } from '../pages/IngestPage';
-import { GraphPage } from '../pages/GraphPage';
-import { RiskPage } from '../pages/RiskPage';
-import { PlannerPage } from '../pages/PlannerPage';
-import { AuditPage } from '../pages/AuditPage';
-import { SettingsPage } from '../pages/SettingsPage';
-import ImportsPage from '../pages/Imports';
+import { useToast } from '../components/Toast';
 import {
   ShieldAlert,
   Search,
@@ -20,22 +14,89 @@ import {
   Database,
   Lock,
   Layers,
-  Activity
+  Activity,
+  Loader2,
 } from 'lucide-react';
 
+// Lazy-loaded page components for efficient code splitting & chunking
+const LandingPage = lazy(() => import('../pages/LandingPage'));
+const IngestPage = lazy(() => import('../pages/IngestPage'));
+const GraphPage = lazy(() => import('../pages/GraphPage'));
+const RiskPage = lazy(() => import('../pages/RiskPage'));
+const PlannerPage = lazy(() => import('../pages/PlannerPage'));
+const AuditPage = lazy(() => import('../pages/AuditPage'));
+const SettingsPage = lazy(() => import('../pages/SettingsPage'));
+const ImportsPage = lazy(() => import('../pages/Imports'));
+const AssetsPage = lazy(() => import('../pages/Assets'));
+
+const PageSkeleton: React.FC = () => (
+  <div
+    style={{
+      minHeight: '60vh',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '1rem',
+      color: 'var(--color-steel-gray)',
+    }}
+  >
+    <div
+      style={{
+        width: '42px',
+        height: '42px',
+        borderRadius: '50%',
+        border: '3px solid rgba(122, 15, 224, 0.15)',
+        borderTopColor: '#7A0FE0',
+        animation: 'spin-slow 0.8s linear infinite',
+      }}
+    />
+    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem' }}>
+      Loading intelligence workspace...
+    </span>
+  </div>
+);
+
 export const App: React.FC = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const toast = useToast();
+
   const apiClient = new PatchGraphApiClient();
   const { data: liveSources } = useQuery({
     queryKey: ['headerSources'],
     queryFn: () => apiClient.getSourcesStatus(),
   });
 
-  const [activeTab, setActiveTab] = useState<string>('landing');
   const [uiState, setUiState] = useState<UiOperationalState>('healthy');
   const [role, setRole] = useState<'viewer' | 'analyst' | 'approver' | 'admin'>('approver');
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [motionEnabled, setMotionEnabled] = useState(true);
   const [apiBaseUrl, setApiBaseUrl] = useState<string>('/api/v1');
+
+  // Derive active tab from current URL pathname
+  const activeTab = useMemo(() => {
+    const p = location.pathname.toLowerCase();
+    if (p === '/ingest' || p.startsWith('/imports')) return 'ingest';
+    if (p === '/graph' || p.startsWith('/dependency-graph')) return 'graph';
+    if (
+      p === '/risk' ||
+      p.startsWith('/prioritization') ||
+      p.startsWith('/findings') ||
+      p.startsWith('/explainability')
+    ) {
+      return 'risk';
+    }
+    if (p === '/planner' || p.startsWith('/remediation-planner') || p.startsWith('/what-if')) {
+      return 'planner';
+    }
+    if (p === '/audit' || p.startsWith('/review') || p.startsWith('/runs')) return 'audit';
+    if (p === '/settings' || p.startsWith('/data-health') || p.startsWith('/health')) {
+      return 'settings';
+    }
+    if (p === '/assets') return 'assets';
+    return 'landing';
+  }, [location.pathname]);
 
   // Remember sidebar collapse state in localStorage
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
@@ -73,23 +134,40 @@ export const App: React.FC = () => {
   };
 
   const handleNavigate = (routeId: string) => {
+    let target = '/';
     if (routeId === 'dashboard' || routeId === 'landing' || routeId === '/') {
-      setActiveTab('landing');
+      target = '/';
     } else if (routeId === 'imports' || routeId === 'ingest') {
-      setActiveTab('ingest');
+      target = '/ingest';
     } else if (routeId === 'dependency-graph' || routeId === 'graph') {
-      setActiveTab('graph');
-    } else if (routeId === 'prioritization' || routeId === 'risk' || routeId === 'finding-detail') {
-      setActiveTab('risk');
-    } else if (routeId === 'remediation-planner' || routeId === 'planner' || routeId === 'what-if') {
-      setActiveTab('planner');
+      target = '/graph';
+    } else if (
+      routeId === 'prioritization' ||
+      routeId === 'risk' ||
+      routeId === 'finding-detail' ||
+      routeId === 'explainability'
+    ) {
+      target = '/risk';
+    } else if (
+      routeId === 'remediation-planner' ||
+      routeId === 'planner' ||
+      routeId === 'what-if'
+    ) {
+      target = '/planner';
     } else if (routeId === 'audit' || routeId === 'review' || routeId === 'runs') {
-      setActiveTab('audit');
-    } else if (routeId === 'data-health' || routeId === 'settings' || routeId === 'health') {
-      setActiveTab('settings');
+      target = '/audit';
+    } else if (
+      routeId === 'data-health' ||
+      routeId === 'settings' ||
+      routeId === 'health'
+    ) {
+      target = '/settings';
+    } else if (routeId === 'assets') {
+      target = '/assets';
     } else {
-      setActiveTab(routeId);
+      target = routeId.startsWith('/') ? routeId : `/${routeId}`;
     }
+    navigate(target);
   };
 
   const navItems = [
@@ -102,7 +180,9 @@ export const App: React.FC = () => {
     { id: 'settings', label: 'Settings', routeId: 'data-health' },
   ];
 
-  const currentTabLabel = navItems.find((n) => n.id === activeTab)?.label || 'Overview';
+  const currentTabLabel =
+    navItems.find((n) => n.id === activeTab)?.label ||
+    (activeTab === 'assets' ? 'Assets Inventory' : 'Overview');
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--color-silver)', display: 'flex' }}>
@@ -264,86 +344,90 @@ export const App: React.FC = () => {
 
         {/* ==================== WORKBENCH VIEW PANELS ==================== */}
         <main role="main" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          {activeTab === 'landing' && (
-            <div>
-              <LandingPage onNavigate={(tab) => handleNavigate(tab)} />
+          <Suspense fallback={<PageSkeleton />}>
+            {activeTab === 'landing' && (
+              <div>
+                <LandingPage onNavigate={(tab) => handleNavigate(tab)} />
 
-              {/* Scenario Telemetry Specification (Preserved data-testid for tests, clean authentic copy) */}
-              <div style={{ maxWidth: '1100px', margin: '2rem auto 4rem auto', padding: '0 1.5rem' }}>
-                <div
-                  data-testid="seeded-scenario-summary"
-                  style={{
-                    background: '#FFF',
-                    border: '1px solid #CBD5E1',
-                    borderRadius: 'var(--radius-card)',
-                    padding: '1.75rem 2rem',
-                    boxShadow: 'var(--shadow-soft-silver)',
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <ShieldAlert size={18} style={{ color: 'var(--color-violet)' }} />
-                      <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700 }}>
-                        Active Scenario Telemetry: Commerce Platform
-                      </h3>
+                {/* Scenario Telemetry Specification */}
+                <div style={{ maxWidth: '1100px', margin: '2rem auto 4rem auto', padding: '0 1.5rem' }}>
+                  <div
+                    data-testid="seeded-scenario-summary"
+                    style={{
+                      background: '#FFF',
+                      border: '1px solid #CBD5E1',
+                      borderRadius: 'var(--radius-card)',
+                      padding: '1.75rem 2rem',
+                      boxShadow: 'var(--shadow-soft-silver)',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <ShieldAlert size={18} style={{ color: 'var(--color-violet)' }} />
+                        <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700 }}>
+                          Active Scenario Telemetry: Commerce Platform
+                        </h3>
+                      </div>
+                      <span className="pill-chip" style={{ background: '#F1F5F9', color: 'var(--color-steel-gray)' }}>
+                        Snapshot: snap_01
+                      </span>
                     </div>
-                    <span className="pill-chip" style={{ background: '#F1F5F9', color: 'var(--color-steel-gray)' }}>
-                      Snapshot: snap_01
-                    </span>
-                  </div>
 
-                  <ul style={{ margin: 0, paddingLeft: '1.25rem', fontSize: '0.85rem', color: 'var(--text-dark-secondary)', lineHeight: '1.7' }}>
-                    <li>
-                      <strong>Vulnerable Transitive Package:</strong> <code>example-lib@1.4.0</code> via{' '}
-                      <code>checkout-sdk@2.1.0</code> ({SEVERITY_LABELS.HIGH.badgeText} CVSS 8.8, EPSS 0.86, CISA KEV=true)
-                    </li>
-                    <li>
-                      <strong>Affected Production Service:</strong> <code>checkout</code> (Criticality 5, max downtime 30m, final score 10.57)
-                    </li>
-                    <li>
-                      <strong>VEX-Qualified Staging Service:</strong> <code>analytics-worker</code> (OpenVEX status:{' '}
-                      <code>not_affected</code>, uncertainty 0.29)
-                    </li>
-                    <li>
-                      <strong>Optimal CP-SAT Plan (plan_01):</strong> Upgrade <code>example-lib</code>{' '}
-                      <code>1.4.0 -&gt; 1.4.3</code> (6h effort, 10m downtime, 18.4 weighted risk removed)
-                    </li>
-                  </ul>
+                    <ul style={{ margin: 0, paddingLeft: '1.25rem', fontSize: '0.85rem', color: 'var(--text-dark-secondary)', lineHeight: '1.7' }}>
+                      <li>
+                        <strong>Vulnerable Transitive Package:</strong> <code>example-lib@1.4.0</code> via{' '}
+                        <code>checkout-sdk@2.1.0</code> ({SEVERITY_LABELS.HIGH.badgeText} CVSS 8.8, EPSS 0.86, CISA KEV=true)
+                      </li>
+                      <li>
+                        <strong>Affected Production Service:</strong> <code>checkout</code> (Criticality 5, max downtime 30m, final score 10.57)
+                      </li>
+                      <li>
+                        <strong>VEX-Qualified Staging Service:</strong> <code>analytics-worker</code> (OpenVEX status:{' '}
+                        <code>not_affected</code>, uncertainty 0.29)
+                      </li>
+                      <li>
+                        <strong>Optimal CP-SAT Plan (plan_01):</strong> Upgrade <code>example-lib</code>{' '}
+                        <code>1.4.0 -&gt; 1.4.3</code> (6h effort, 10m downtime, 18.4 weighted risk removed)
+                      </li>
+                    </ul>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {activeTab === 'ingest' && (
-            <div>
-              <IngestPage />
-              <div style={{ maxWidth: '1440px', margin: '2rem auto', padding: '0 2rem' }}>
-                <ImportsPage initialState={uiState} />
+            {activeTab === 'ingest' && (
+              <div>
+                <IngestPage />
+                <div style={{ maxWidth: '1440px', margin: '2rem auto', padding: '0 2rem' }}>
+                  <ImportsPage initialState={uiState} />
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {activeTab === 'graph' && <GraphPage onNavigateToPlanner={() => handleNavigate('planner')} />}
+            {activeTab === 'graph' && <GraphPage onNavigateToPlanner={() => handleNavigate('planner')} />}
 
-          {activeTab === 'risk' && <RiskPage apiBaseUrl={apiBaseUrl} />}
+            {activeTab === 'risk' && <RiskPage apiBaseUrl={apiBaseUrl} />}
 
-          {activeTab === 'planner' && (
-            <PlannerPage
-              apiBaseUrl={apiBaseUrl}
-              onNavigateToAudit={(planId) => handleNavigate('audit')}
-            />
-          )}
+            {activeTab === 'planner' && (
+              <PlannerPage
+                apiBaseUrl={apiBaseUrl}
+                onNavigateToAudit={(planId) => handleNavigate('audit')}
+              />
+            )}
 
-          {activeTab === 'audit' && <AuditPage apiBaseUrl={apiBaseUrl} />}
+            {activeTab === 'audit' && <AuditPage apiBaseUrl={apiBaseUrl} />}
 
-          {activeTab === 'settings' && (
-            <SettingsPage
-              apiBaseUrl={apiBaseUrl}
-              onUpdateApiBaseUrl={(url) => setApiBaseUrl(url)}
-              motionEnabled={motionEnabled}
-              onToggleMotion={(enabled) => setMotionEnabled(enabled)}
-            />
-          )}
+            {activeTab === 'settings' && (
+              <SettingsPage
+                apiBaseUrl={apiBaseUrl}
+                onUpdateApiBaseUrl={(url) => setApiBaseUrl(url)}
+                motionEnabled={motionEnabled}
+                onToggleMotion={(enabled) => setMotionEnabled(enabled)}
+              />
+            )}
+
+            {activeTab === 'assets' && <AssetsPage />}
+          </Suspense>
         </main>
       </div>
 
