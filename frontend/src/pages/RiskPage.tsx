@@ -65,7 +65,11 @@ export const RiskPage: React.FC<RiskPageProps> = ({ apiBaseUrl }) => {
       f.package_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       f.service_name.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesEnv = envFilter === 'all' || f.environment.toLowerCase() === envFilter.toLowerCase();
+    const matchesEnv =
+      envFilter === 'all' ||
+      f.environment.toLowerCase() === envFilter.toLowerCase() ||
+      (envFilter === 'production' && f.environment.toLowerCase() === 'prod') ||
+      (envFilter === 'prod' && f.environment.toLowerCase() === 'production');
     const matchesKev = kevFilter === 'all' || (kevFilter === 'kev' ? (f.factors?.kev_bonus ?? 0) > 0 : true);
 
     return matchesSearch && matchesEnv && matchesKev;
@@ -153,7 +157,7 @@ export const RiskPage: React.FC<RiskPageProps> = ({ apiBaseUrl }) => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Filter size={15} style={{ color: 'var(--pg-steel)' }} />
             <select
-              value={envFilter}
+              data-testid="risk-env-filter" value={envFilter}
               onChange={(e) => setEnvFilter(e.target.value)}
               style={{
                 padding: '0.65rem 1.25rem',
@@ -165,14 +169,14 @@ export const RiskPage: React.FC<RiskPageProps> = ({ apiBaseUrl }) => {
               }}
             >
               <option value="all">All Environments</option>
-              <option value="production">Production</option>
+              <option value="prod">Production</option>
               <option value="staging">Staging</option>
               <option value="development">Development</option>
             </select>
           </div>
 
           <select
-            value={kevFilter}
+            data-testid="risk-kev-filter" value={kevFilter}
             onChange={(e) => setKevFilter(e.target.value)}
             style={{
               padding: '0.65rem 1.25rem',
