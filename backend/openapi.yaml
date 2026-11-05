@@ -1016,3 +1016,123 @@ paths:
                     type: integer
                   is_demo:
                     type: boolean
+
+  /imports:
+    get:
+      summary: List all SBOM, SPDX, and VEX imports
+      operationId: listImports
+      responses:
+        '200':
+          description: List of import records
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ImportStatusResponse'
+                  total:
+                    type: integer
+                  request_id:
+                    type: string
+
+  /risk-runs/latest:
+    get:
+      summary: Get the latest risk run evaluation
+      operationId: getLatestRiskRun
+      responses:
+        '200':
+          description: Latest risk run record
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  project_id:
+                    type: string
+                  snapshot_id:
+                    type: string
+                  model_version:
+                    type: string
+                  config:
+                    type: object
+                  created_at:
+                    type: string
+                    format: date-time
+                  findings_count:
+                    type: integer
+                  request_id:
+                    type: string
+
+  /vex-statements:
+    get:
+      summary: List all VEX applicability statements
+      operationId: listVexStatements
+      responses:
+        '200':
+          description: List of VEX statements
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        cve:
+                          type: string
+                        service:
+                          type: string
+                        status:
+                          type: string
+                        justification:
+                          type: string
+                        action_statement:
+                          type: string
+                  total:
+                    type: integer
+                  request_id:
+                    type: string
+
+  /model-card:
+    get:
+      summary: Get ML exploit likelihood model card and calibration metrics
+      operationId: getModelCard
+      responses:
+        '200':
+          description: Model card specifications and metrics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  model_name:
+                    type: string
+                  version:
+                    type: string
+                  brier_score:
+                    type: number
+                  ece:
+                    type: number
+                  pr_auc:
+                    type: number
+                  roc_auc:
+                    type: number
+                  temporal_cutoff:
+                    type: string
+                  training_samples:
+                    type: integer
+                  test_samples:
+                    type: integer
+                  features:
+                    type: array
+                    items:
+                      type: string
+                  request_id:
+                    type: string
