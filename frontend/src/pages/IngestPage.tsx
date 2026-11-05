@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { PatchGraphApiClient } from '../api/generated';
 import {
   UploadCloud,
@@ -26,36 +27,21 @@ export const IngestPage: React.FC = () => {
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [copiedSha, setCopiedSha] = useState<string | null>(null);
 
-  // Ingest History
-  const [history, setHistory] = useState([
-    {
-      id: 'imp_seed_cdx',
-      kind: 'CycloneDX 1.5',
-      name: 'sbom_cyclonedx_seed.json',
-      sha256: '8f434346648f6b96df89dda901c5176b10a6d83961dd3c1ac88b59b2dc327aa4',
-      status: 'completed',
-      date: '2026-11-01T00:00:00Z',
-      components: 2,
-    },
-    {
-      id: 'imp_seed_vex',
-      kind: 'OpenVEX',
-      name: 'vex_openvex_seed.json',
-      sha256: '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',
-      status: 'completed',
-      date: '2026-11-01T00:00:00Z',
-      components: 1,
-    },
-    {
-      id: 'imp_seed_topo',
-      kind: 'Deployment Topology',
-      name: 'topology_seed.json',
-      sha256: '7b52009b64fd0a2a49e6d8a93975307700000000000000000000000000000002',
-      status: 'completed',
-      date: '2026-11-01T00:00:00Z',
-      components: 3,
-    },
-  ]);
+  const queryClient = useQueryClient();
+  const { data: importsData, isLoading: isLoadingImports } = useQuery({
+    queryKey: ['imports'],
+    queryFn: () => api.listImports(),
+  });
+
+  const history = (importsData?.items || []).map((imp) => ({
+    id: imp.id,
+    kind: imp.kind.toUpperCase(),
+    name: imp.source_name,
+    sha256: imp.content_sha256,
+    status: imp.status,
+    date: imp.created_at,
+    components: 1,
+  }));
 
   const handleLoadSampleData = async () => {
     setIsUploading(true);
@@ -65,18 +51,9 @@ export const IngestPage: React.FC = () => {
       const res = await api.loadSampleData();
       setProgress(100);
       setUploadStatus(`Sample Data Loaded: ${res.packages_loaded} packages registered, ${res.findings_loaded} calibrated findings created. Pinned to snapshot ${res.snapshot_id}.`);
-      setHistory((prev) => [
-        {
-          id: 'imp_seed_sample',
-          kind: 'CycloneDX + Topology',
-          name: 'sbom_cyclonedx_seed.json',
-          sha256: '5d5112f2ede415e41e8e56c5177516b031701b7d8beffeba04ff415f8a6aa3e9',
-          status: 'completed',
-          date: new Date().toISOString(),
-          components: res.packages_loaded,
-        },
-        ...prev,
-      ]);
+      queryClient.invalidateQueries({ queryKey: ['imports'] });
+      queryClient.invalidateQueries({ queryKey: ['findings'] });
+      queryClient.invalidateQueries({ queryKey: ['assets'] });
     } catch (err: any) {
       setUploadStatus(`Load failed: ${err.message || 'Error communicating with backend'}`);
     } finally {
@@ -109,18 +86,7 @@ export const IngestPage: React.FC = () => {
         });
         setProgress(100);
         setUploadStatus(`Ingestion Successful! Content SHA-256: ${res.content_sha256.slice(0, 16)}...`);
-        setHistory((prev) => [
-          {
-            id: res.id,
-            kind: 'CycloneDX 1.5',
-            name: 'uploaded_sbom.json',
-            sha256: res.content_sha256,
-            status: res.status,
-            date: new Date().toISOString(),
-            components: 2,
-          },
-          ...prev,
-        ]);
+        queryClient.invalidateQueries({ queryKey: ['imports'] });
       } else if (kind === 'OpenVEX') {
         setProgress(60);
         const res = await api.importVex({
@@ -138,18 +104,7 @@ export const IngestPage: React.FC = () => {
         });
         setProgress(100);
         setUploadStatus(`OpenVEX Advisory Registered! Content SHA-256: ${res.content_sha256.slice(0, 16)}...`);
-        setHistory((prev) => [
-          {
-            id: res.id,
-            kind: 'OpenVEX',
-            name: 'uploaded_vex.json',
-            sha256: res.content_sha256,
-            status: res.status,
-            date: new Date().toISOString(),
-            components: 1,
-          },
-          ...prev,
-        ]);
+        queryClient.invalidateQueries({ queryKey: ['imports'] });
       } else if (kind === 'Topology') {
         setProgress(60);
         const res = await api.importTopology({
@@ -163,18 +118,7 @@ export const IngestPage: React.FC = () => {
         });
         setProgress(100);
         setUploadStatus(`Deployment Topology Registered! Status: ${res.status}`);
-        setHistory((prev) => [
-          {
-            id: res.id,
-            kind: 'Deployment Topology',
-            name: 'cluster_topology.json',
-            sha256: '7b52009b64fd0a2a49e6d8a939753077' + res.id.slice(0, 8),
-            status: res.status,
-            date: new Date().toISOString(),
-            components: res.services_registered,
-          },
-          ...prev,
-        ]);
+        queryClient.invalidateQueries({ queryKey: ['imports'] });
       }
     } catch (err: any) {
       setUploadStatus(`Failed: ${err.message || 'Validation error'}`);

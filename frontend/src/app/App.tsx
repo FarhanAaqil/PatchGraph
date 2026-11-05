@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { PatchGraphApiClient } from '../api/generated';
 import { APP_ROUTES, AppRoute, findRouteByPath } from './routes';
 import { SEVERITY_LABELS, UI_STATE_BANNERS, UiOperationalState } from '../content/terms';
 import { CommandPalette } from '../components/CommandPalette';
@@ -22,6 +24,12 @@ import {
 } from 'lucide-react';
 
 export const App: React.FC = () => {
+  const apiClient = new PatchGraphApiClient();
+  const { data: liveSources } = useQuery({
+    queryKey: ['headerSources'],
+    queryFn: () => apiClient.getSourcesStatus(),
+  });
+
   const [activeTab, setActiveTab] = useState<string>('landing');
   const [uiState, setUiState] = useState<UiOperationalState>('healthy');
   const [role, setRole] = useState<'viewer' | 'analyst' | 'approver' | 'admin'>('approver');
@@ -167,7 +175,7 @@ export const App: React.FC = () => {
                   boxShadow: '0 0 6px #7A0FE0',
                 }}
               />
-              Freshness: Synchronized (snap_01)
+              {`Freshness: ${liveSources?.data_freshness || 'Synchronized'} (${liveSources?.snapshot_id || 'snap_01'})`}
             </span>
 
             {/* Quick Search */}

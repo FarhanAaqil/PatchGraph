@@ -358,7 +358,9 @@ export interface SourcesStatusResponse {
     parser_version: string;
   }>;
   snapshot_sha256: string;
-  offline_demo_mode: boolean;
+  data_freshness?: string;
+  snapshot_id?: string;
+  offline_demo_mode?: boolean;
   request_id: string;
 }
 

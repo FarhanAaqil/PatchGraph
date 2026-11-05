@@ -45,6 +45,11 @@ export const PlannerPage: React.FC<PlannerPageProps> = ({ apiBaseUrl, onNavigate
     queryFn: () => client.listPlans(),
   });
 
+  const { data: latestRiskRun } = useQuery({
+    queryKey: ['latestRiskRun'],
+    queryFn: () => client.getLatestRiskRun(),
+  });
+
   const existingPlans = plansData?.items || [];
   const [activePlan, setActivePlan] = useState<PlanResponse | null>(null);
 
@@ -66,7 +71,7 @@ export const PlannerPage: React.FC<PlannerPageProps> = ({ apiBaseUrl, onNavigate
 
   const handleRunOptimizer = () => {
     solveMutation.mutate({
-      risk_run_id: 'risk_run_01',
+      risk_run_id: latestRiskRun?.id || 'latest',
       budget_hours: budgetHours,
       max_downtime_minutes: maxDowntime,
       environments: [selectedEnv === 'production' ? 'prod' : selectedEnv],

@@ -1,4 +1,6 @@
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { PatchGraphApiClient } from '../api/generated';
 import { ThreeHeroScene } from '../components/ThreeHeroScene';
 import { 
   ArrowRight, 
@@ -21,6 +23,33 @@ interface Props {
 }
 
 export const LandingPage: React.FC<Props> = ({ onNavigate }) => {
+  const client = new PatchGraphApiClient();
+
+  const { data: assetsData } = useQuery({
+    queryKey: ['landingAssets'],
+    queryFn: () => client.listAssets(),
+  });
+
+  const { data: findingsData } = useQuery({
+    queryKey: ['landingFindings'],
+    queryFn: () => client.listFindings(),
+  });
+
+  const { data: auditData } = useQuery({
+    queryKey: ['landingAudit'],
+    queryFn: () => client.listAuditLogs(),
+  });
+
+  const { data: sourcesData } = useQuery({
+    queryKey: ['landingSources'],
+    queryFn: () => client.getSourcesStatus(),
+  });
+
+  const totalAssets = assetsData?.total ?? 14;
+  const totalFindings = findingsData?.total ?? 2;
+  const totalAudit = auditData?.total ?? 5;
+  const syncedFeedsCount = sourcesData?.sources ? Object.keys(sourcesData.sources).length : 4;
+
   const pipelineSteps = [
     {
       num: '01',
@@ -206,7 +235,7 @@ export const LandingPage: React.FC<Props> = ({ onNavigate }) => {
           </div>
           <div>
             <div style={{ fontSize: '0.75rem', color: 'var(--color-steel-gray)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>Pipeline Runtime</div>
-            <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-ink)', fontFamily: 'var(--font-display)' }}>Synchronized (0 errors)</div>
+            <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-ink)', fontFamily: 'var(--font-display)' }}>{syncedFeedsCount} Threat Feeds Active</div>
           </div>
         </div>
 
@@ -227,7 +256,7 @@ export const LandingPage: React.FC<Props> = ({ onNavigate }) => {
           </div>
           <div>
             <div style={{ fontSize: '0.75rem', color: 'var(--color-steel-gray)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>Topology Inventory</div>
-            <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-ink)', fontFamily: 'var(--font-display)' }}>14 Assets Tracked</div>
+            <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-ink)', fontFamily: 'var(--font-display)' }}>{totalAssets} Assets Tracked</div>
           </div>
         </div>
 
@@ -247,8 +276,8 @@ export const LandingPage: React.FC<Props> = ({ onNavigate }) => {
             <Cpu size={20} />
           </div>
           <div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--color-steel-gray)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>CP-SAT Optimizer</div>
-            <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-ink)', fontFamily: 'var(--font-display)' }}>Provably Optimal</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--color-steel-gray)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>Vulnerability Exposure</div>
+            <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-ink)', fontFamily: 'var(--font-display)' }}>{totalFindings} Ranked Findings</div>
           </div>
         </div>
 
@@ -269,7 +298,7 @@ export const LandingPage: React.FC<Props> = ({ onNavigate }) => {
           </div>
           <div>
             <div style={{ fontSize: '0.75rem', color: 'var(--color-steel-gray)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>Audit Ledger</div>
-            <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-ink)', fontFamily: 'var(--font-display)' }}>Cryptographic Log</div>
+            <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-ink)', fontFamily: 'var(--font-display)' }}>{totalAudit} Audit Events</div>
           </div>
         </div>
       </section>
