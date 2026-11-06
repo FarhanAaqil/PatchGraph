@@ -1,687 +1,903 @@
-import React, { useEffect, useRef, useState } from 'react';
-import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { GraphNode } from '../api/generated';
-
-interface Props {
-  onStageSelect?: (stage: number) => void;
-  onNodeClick?: (nodeId: string) => void;
-  graphNodes?: GraphNode[];
-}
-
-interface GraphNodeMeta {
-  id: string;
-  name: string;
-  layer: string;
-  color: number;
-  pos: [number, number, number];
-  isVuln?: boolean;
-  cvss?: number;
-  statusText?: string;
-  details: string;
-}
-
-export const ThreeHeroScene: React.FC<Props> = ({ onStageSelect, onNodeClick, graphNodes }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [activeStage, setActiveStage] = useState<number>(2);
-  const [hoveredNode, setHoveredNode] = useState<GraphNodeMeta | null>(null);
-  const [mousePos, setMousePos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const animFrameRef = useRef<number | null>(null);
-  const controlsRef = useRef<OrbitControls | null>(null);
-  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
-  const tweenTargetRef = useRef<{ cam: THREE.Vector3; target: THREE.Vector3 } | null>(null);
-
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const width = container.clientWidth || 900;
-    const height = container.clientHeight || 560;
-
-    // 1. Scene setup with depth fog
-    const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0xE6E9EE, 0.0012);
-
-    // 2. Camera setup
-    const camera = new THREE.PerspectiveCamera(46, width / height, 1, 3000);
-    camera.position.set(0, 35, 260);
-    cameraRef.current = camera;
-
-    // 3. Renderer with antialiasing and high pixel ratio
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setSize(width, height);
-    container.appendChild(renderer.domElement);
-
-    // 4. Smooth OrbitControls
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.06;
-    controls.maxDistance = 450;
-    controls.minDistance = 90;
-    controls.maxPolarAngle = Math.PI / 1.85;
-    controls.minPolarAngle = Math.PI / 4.5;
-    controlsRef.current = controls;
-
-    // 5. Rich Multi-Point Lighting System
-    const ambientLight = new THREE.AmbientLight(0xFFFFFF, 1.1);
-    scene.add(ambientLight);
-
-    const keyVioletLight = new THREE.PointLight(0x7A0FE0, 4.5, 450);
-    keyVioletLight.position.set(0, 20, 80);
-    scene.add(keyVioletLight);
-
-    const fillIndigoLight = new THREE.PointLight(0x4B0F9E, 2.5, 600);
-    fillIndigoLight.position.set(-140, 100, -60);
-    scene.add(fillIndigoLight);
-
-    const rimSilverLight = new THREE.PointLight(0xFFFFFF, 1.8, 500);
-    rimSilverLight.position.set(160, -50, 90);
-    scene.add(rimSilverLight);
-
-    // 6. Holographic Platform Layers
-    const platformGroup = new THREE.Group();
-    scene.add(platformGroup);
-
-    const layersData = [
-      { y: -65, label: 'L0 · VULNERABLE PACKAGES', radius: 105 },
-      { y: -20, label: 'L1 · INTERNAL SDKS', radius: 95 },
-      { y: +25, label: 'L2 · PRODUCTION MICROSERVICES', radius: 100 },
-      { y: +70, label: 'L3 · CLOUD RUNTIME ENVS', radius: 90 },
-    ];
-
-    layersData.forEach((layer) => {
-      // Thin ring
-      const ringGeom = new THREE.RingGeometry(layer.radius - 0.7, layer.radius + 0.7, 64);
-      const ringMat = new THREE.MeshBasicMaterial({
-        color: 0x8A929C,
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0.22,
-      });
-      const ring = new THREE.Mesh(ringGeom, ringMat);
-      ring.position.y = layer.y;
-      ring.rotation.x = Math.PI / 2;
-      platformGroup.add(ring);
-
-      // Inner faint radial grid disk
-      const diskGeom = new THREE.CircleGeometry(layer.radius, 32);
-      const diskMat = new THREE.MeshBasicMaterial({
-        color: 0x7A0FE0,
-        transparent: true,
-        opacity: 0.02,
-        side: THREE.DoubleSide,
-      });
-      const disk = new THREE.Mesh(diskGeom, diskMat);
-      disk.position.y = layer.y;
-      disk.rotation.x = Math.PI / 2;
-      platformGroup.add(disk);
-    });
-
-    // 7. Ambient Shimmering Particles (500 count)
-    const particleCount = 500;
-    const particleGeom = new THREE.BufferGeometry();
-    const particlePositions = new Float32Array(particleCount * 3);
-    for (let i = 0; i < particleCount; i++) {
-      particlePositions[i * 3] = (Math.random() - 0.5) * 650;
-      particlePositions[i * 3 + 1] = (Math.random() - 0.5) * 450;
-      particlePositions[i * 3 + 2] = (Math.random() - 0.5) * 550;
-    }
-    particleGeom.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
-    const particleMat = new THREE.PointsMaterial({
-      color: 0x7A0FE0,
-      size: 2.2,
-      transparent: true,
-      opacity: 0.4,
-    });
-    const particles = new THREE.Points(particleGeom, particleMat);
-    scene.add(particles);
-
-    // 8. 3D Supply-Chain Topology Nodes
-    const graphGroup = new THREE.Group();
-    scene.add(graphGroup);
-
-    const defaultNodes: GraphNodeMeta[] = [
-      {
-        id: 'pkg-vulnerable',
-        name: 'example-lib@1.4.0',
-        layer: 'Package',
-        color: 0x7A0FE0,
-        pos: [0, -65, 30],
-        isVuln: true,
-        cvss: 8.8,
-        statusText: 'CRITICAL (CISA KEV)',
-        details: 'Transitive CVE-2026-1001 • Platt Exploit P: 86.4% • In KEV',
-      },
-      {
-        id: 'pkg-safe',
-        name: 'urllib3@1.26.5',
-        layer: 'Package',
-        color: 0x8A929C,
-        pos: [-65, -65, -20],
-        cvss: 0,
-        statusText: 'CLEAN',
-        details: 'Deterministic baseline verify • No known vulnerabilities',
-      },
-      {
-        id: 'app-sdk',
-        name: 'checkout-sdk@2.1.0',
-        layer: 'Application',
-        color: 0x4B0F9E,
-        pos: [25, -20, 15],
-        statusText: 'EXPOSED DEPENDENCY',
-        details: 'Consumes example-lib@1.4.0 via direct requirement specification',
-      },
-      {
-        id: 'svc-checkout',
-        name: 'service:checkout',
-        layer: 'Service',
-        color: 0x7A0FE0,
-        pos: [45, 25, 0],
-        cvss: 8.8,
-        statusText: 'PRODUCTION HIGH-RISK',
-        details: 'PCI-DSS Production Gateway • Criticality: 5 • SLA: 30m Downtime',
-      },
-      {
-        id: 'svc-worker',
-        name: 'service:analytics',
-        layer: 'Service',
-        color: 0x8A929C,
-        pos: [-55, 25, -15],
-        statusText: 'VEX QUALIFIED (NOT AFFECTED)',
-        details: 'OpenVEX Justification: vulnerable code path not invoked',
-      },
-      {
-        id: 'env-prod',
-        name: 'prod-cluster-ap-south-1',
-        layer: 'Environment',
-        color: 0x1A1220,
-        pos: [55, 70, -10],
-        statusText: 'PUBLIC INGRESS REACHABLE',
-        details: 'Production Kubernetes Cluster • Blast Radius: 14 downstream assets',
-      },
-    ];
-
-    let nodes: GraphNodeMeta[] = [];
-    if (graphNodes && graphNodes.length > 0) {
-      const packages = graphNodes.filter((n) => n.kind === 'package_version');
-      const apps = graphNodes.filter((n) => n.kind === 'application');
-      const services = graphNodes.filter((n) => n.kind === 'service');
-      const envs = graphNodes.filter((n) => n.kind === 'environment');
-
-      const placeLayer = (items: GraphNode[], y: number, layerName: string, radius: number) => {
-        const slice = items.slice(0, 6);
-        slice.forEach((item, idx) => {
-          const total = slice.length;
-          const angle = (idx / total) * Math.PI * 2;
-          const x = Math.cos(angle) * (radius * 0.6);
-          const z = Math.sin(angle) * (radius * 0.6);
-          const isVuln = Boolean((item.cvss && item.cvss >= 7) || item.in_kev);
-          nodes.push({
-            id: item.id,
-            name: item.label,
-            layer: layerName,
-            color: isVuln ? 0x7A0FE0 : item.kind === 'service' ? 0x4B0F9E : 0x8A929C,
-            pos: [x, y, z],
-            isVuln,
-            cvss: item.cvss,
-            statusText: isVuln ? 'CRITICAL (CVSS / KEV)' : item.reachability || 'ACTIVE',
-            details: `Kind: ${item.kind} • Reachability: ${item.reachability || 'Standard'} • Owner: ${item.owner || 'Platform Team'}`,
-          });
-        });
-      };
-
-      placeLayer(packages, -65, 'Package', 105);
-      placeLayer(apps, -20, 'Application', 95);
-      placeLayer(services, 25, 'Service', 100);
-      placeLayer(envs, 70, 'Environment', 90);
-    }
-
-    if (nodes.length === 0) {
-      nodes = defaultNodes;
-    }
-
-    const nodeMeshes: { mesh: THREE.Mesh; meta: GraphNodeMeta }[] = [];
-    const wireShields: THREE.Mesh[] = [];
-
-    nodes.forEach((node) => {
-      const geom = node.isVuln
-        ? new THREE.IcosahedronGeometry(12, 1)
-        : node.layer === 'Environment'
-        ? new THREE.OctahedronGeometry(10, 0)
-        : new THREE.SphereGeometry(8, 24, 24);
-
-      const mat = new THREE.MeshStandardMaterial({
-        color: node.color,
-        emissive: node.color,
-        emissiveIntensity: node.isVuln ? 0.95 : 0.35,
-        roughness: 0.15,
-        metalness: 0.8,
-      });
-
-      const mesh = new THREE.Mesh(geom, mat);
-      mesh.position.set(node.pos[0], node.pos[1], node.pos[2]);
-      (mesh as any).nodeMeta = node;
-      graphGroup.add(mesh);
-      nodeMeshes.push({ mesh, meta: node });
-
-      // Pulsing wireframe shield for vulnerable node
-      if (node.isVuln) {
-        const wireGeom = new THREE.IcosahedronGeometry(18, 1);
-        const wireMat = new THREE.MeshBasicMaterial({
-          color: 0x7A0FE0,
-          wireframe: true,
-          transparent: true,
-          opacity: 0.55,
-        });
-        const wire = new THREE.Mesh(wireGeom, wireMat);
-        mesh.add(wire);
-        wireShields.push(wire);
-      }
-    });
-
-    // 9. Standard Edge Connectors
-    const edgeCoords: [[number, number, number], [number, number, number]][] = [
-      [[-65, -65, -20], [-55, 25, -15]],
-      [[25, -20, 15], [-55, 25, -15]],
-    ];
-
-    edgeCoords.forEach(([p1, p2]) => {
-      const lineGeom = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(...p1),
-        new THREE.Vector3(...p2),
-      ]);
-      const lineMat = new THREE.LineBasicMaterial({
-        color: 0x8A929C,
-        transparent: true,
-        opacity: 0.35,
-      });
-      const line = new THREE.Line(lineGeom, lineMat);
-      graphGroup.add(line);
-    });
-
-    // 10. Glowing Patch Path Spline (Packages -> SDK -> Service -> Prod Cluster)
-    const patchPathPoints = [
-      new THREE.Vector3(0, -65, 30),
-      new THREE.Vector3(25, -20, 15),
-      new THREE.Vector3(45, 25, 0),
-      new THREE.Vector3(55, 70, -10),
-    ];
-    const patchCurve = new THREE.CatmullRomCurve3(patchPathPoints);
-    const tubeGeom = new THREE.TubeGeometry(patchCurve, 50, 2.2, 10, false);
-    const tubeMat = new THREE.MeshStandardMaterial({
-      color: 0x7A0FE0,
-      emissive: 0x7A0FE0,
-      emissiveIntensity: 0.9,
-      transparent: true,
-      opacity: 0.85,
-      roughness: 0.1,
-    });
-    const patchTube = new THREE.Mesh(tubeGeom, tubeMat);
-    graphGroup.add(patchTube);
-
-    // Multiple traveling light photons along the patch path
-    const photonCount = 3;
-    const photons: { mesh: THREE.Mesh; offset: number }[] = [];
-    for (let i = 0; i < photonCount; i++) {
-      const pGeom = new THREE.SphereGeometry(3.5, 16, 16);
-      const pMat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
-      const pMesh = new THREE.Mesh(pGeom, pMat);
-      graphGroup.add(pMesh);
-      photons.push({ mesh: pMesh, offset: i / photonCount });
-    }
-
-    // 11. Raycasting for Interactive Hover and Click
-    const raycaster = new THREE.Raycaster();
-    const mouse = new THREE.Vector2();
-
-    const handlePointerMove = (e: MouseEvent) => {
-      const rect = container.getBoundingClientRect();
-      const clientX = e.clientX - rect.left;
-      const clientY = e.clientY - rect.top;
-      mouse.x = (clientX / width) * 2 - 1;
-      mouse.y = -(clientY / height) * 2 + 1;
-      setMousePos({ x: clientX, y: clientY });
-
-      raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObjects(nodeMeshes.map((n) => n.mesh));
-
-      if (intersects.length > 0) {
-        const hit = intersects[0].object as THREE.Mesh;
-        const meta = (hit as any).nodeMeta as GraphNodeMeta;
-        if (meta) {
-          setHoveredNode(meta);
-          container.style.cursor = 'pointer';
-          hit.scale.set(1.2, 1.2, 1.2);
-        }
-      } else {
-        setHoveredNode(null);
-        container.style.cursor = 'grab';
-        nodeMeshes.forEach((n) => n.mesh.scale.set(1, 1, 1));
-      }
-    };
-
-    const handlePointerClick = () => {
-      raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObjects(nodeMeshes.map((n) => n.mesh));
-
-      if (intersects.length > 0) {
-        const hit = intersects[0].object as THREE.Mesh;
-        const meta = (hit as any).nodeMeta as GraphNodeMeta;
-        if (meta) {
-          if (onNodeClick) onNodeClick(meta.id);
-          // Animate camera to focus on clicked node
-          tweenTargetRef.current = {
-            cam: new THREE.Vector3(meta.pos[0] + 30, meta.pos[1] + 25, meta.pos[2] + 120),
-            target: new THREE.Vector3(...meta.pos),
-          };
-        }
-      }
-    };
-
-    container.addEventListener('mousemove', handlePointerMove);
-    container.addEventListener('click', handlePointerClick);
-
-    // 12. Stage Camera Targets
-    const stageTargets = [
-      {
-        cam: new THREE.Vector3(15, -45, 140),
-        target: new THREE.Vector3(0, -65, 30),
-      }, // 01 Root Cause (Vulnerable package)
-      {
-        cam: new THREE.Vector3(0, 35, 260),
-        target: new THREE.Vector3(0, 0, 0),
-      }, // 02 Full Architecture Overview
-      {
-        cam: new THREE.Vector3(65, 80, 160),
-        target: new THREE.Vector3(50, 45, -5),
-      }, // 03 Blast Radius (Prod Reachability)
-    ];
-
-    // Visibility Observer
-    let isVisible = true;
-    const observer = new IntersectionObserver(([entry]) => {
-      isVisible = entry.isIntersecting;
-    }, { threshold: 0.1 });
-    observer.observe(container);
-
-    let progress = 0;
-    const clock = new THREE.Clock();
-
-    // 13. Render Loop
-    const animate = () => {
-      animFrameRef.current = requestAnimationFrame(animate);
-      if (!isVisible) return;
-
-      const delta = clock.getDelta();
-      controls.update();
-
-      // Camera tweening
-      if (tweenTargetRef.current) {
-        camera.position.lerp(tweenTargetRef.current.cam, 0.08);
-        controls.target.lerp(tweenTargetRef.current.target, 0.08);
-        if (camera.position.distanceTo(tweenTargetRef.current.cam) < 1.5) {
-          tweenTargetRef.current = null;
-        }
-      }
-
-      if (!prefersReducedMotion) {
-        progress = (progress + delta * 0.35) % 1;
-
-        // Move traveling light photons along curve
-        photons.forEach((photon) => {
-          const t = (progress + photon.offset) % 1;
-          const pt = patchCurve.getPoint(t);
-          photon.mesh.position.copy(pt);
-        });
-
-        // Rotate wire shields & particles
-        wireShields.forEach((shield) => {
-          shield.rotation.x += 0.02;
-          shield.rotation.y += 0.025;
-        });
-
-        particles.rotation.y += 0.0004;
-        platformGroup.rotation.y += 0.0008;
-      }
-
-      renderer.render(scene, camera);
-    };
-
-    animate();
-
-    // 14. Responsive Window Resize
-    const handleResize = () => {
-      if (!container) return;
-      const newWidth = container.clientWidth;
-      const newHeight = container.clientHeight;
-      camera.aspect = newWidth / newHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(newWidth, newHeight);
-    };
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-      container.removeEventListener('mousemove', handlePointerMove);
-      container.removeEventListener('click', handlePointerClick);
-      window.removeEventListener('resize', handleResize);
-      observer.disconnect();
-      if (container.contains(renderer.domElement)) {
-        container.removeChild(renderer.domElement);
-      }
-      renderer.dispose();
-    };
-  }, [graphNodes]);
-
-  const handleSelectStage = (stage: number) => {
-    setActiveStage(stage);
-    if (onStageSelect) onStageSelect(stage);
-
-    const stageTargets = [
-      {
-        cam: new THREE.Vector3(15, -45, 140),
-        target: new THREE.Vector3(0, -65, 30),
-      }, // 01 Root Cause
-      {
-        cam: new THREE.Vector3(0, 35, 260),
-        target: new THREE.Vector3(0, 0, 0),
-      }, // 02 Overview
-      {
-        cam: new THREE.Vector3(65, 80, 160),
-        target: new THREE.Vector3(50, 45, -5),
-      }, // 03 Blast Radius
-    ];
-
-    if (stageTargets[stage - 1]) {
-      tweenTargetRef.current = stageTargets[stage - 1];
-    }
-  };
-
-  return (
-    <div
-      ref={containerRef}
-      className="pg-hero-card"
-      style={{
-        width: '100%',
-        height: '560px',
-        position: 'relative',
-        cursor: 'grab',
-        userSelect: 'none',
-      }}
-    >
-      {/* Floating HUD Header Badge */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '1.5rem',
-          left: '1.75rem',
-          zIndex: 10,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.75rem',
-          pointerEvents: 'none',
-        }}
-      >
-        <span
-          className="pill-chip glass-panel"
-          style={{
-            padding: '0.4rem 1rem',
-            borderRadius: 'var(--radius-pill)',
-            fontSize: '0.75rem',
-            fontFamily: 'var(--font-mono)',
-            fontWeight: 700,
-            color: 'var(--color-ink)',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-          }}
-        >
-          <span
-            style={{
-              width: '8px',
-              height: '8px',
-              borderRadius: '50%',
-              background: 'var(--color-violet)',
-              boxShadow: '0 0 10px var(--color-violet)',
-              animation: 'pulse-violet 2s infinite',
-            }}
-          />
-          LIVE 3D TOPOLOGY HUD
-        </span>
-
-        <span
-          className="pill-chip glass-panel"
-          style={{
-            padding: '0.4rem 0.85rem',
-            borderRadius: 'var(--radius-pill)',
-            fontSize: '0.7rem',
-            fontFamily: 'var(--font-mono)',
-            color: 'var(--color-steel-gray)',
-          }}
-        >
-          OR-Tools CP-SAT Ready
-        </span>
-      </div>
-
-      {/* Floating Camera Stage Buttons (01, 02, 03) */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '1.5rem',
-          right: '1.75rem',
-          zIndex: 10,
-          display: 'flex',
-          gap: '0.5rem',
-        }}
-      >
-        {[
-          { num: 1, label: '01', desc: 'Root Cause' },
-          { num: 2, label: '02', desc: 'Topology' },
-          { num: 3, label: '03', desc: 'Blast Radius' },
-        ].map((s) => (
-          <button
-            key={s.num}
-            type="button"
-            onClick={() => handleSelectStage(s.num)}
-            title={`Stage ${s.label}: ${s.desc}`}
-            style={{
-              width: '42px',
-              height: '42px',
-              borderRadius: '50%',
-              border: activeStage === s.num ? '2px solid var(--color-violet)' : '1px solid rgba(203, 213, 225, 0.7)',
-              background: activeStage === s.num ? 'var(--color-violet)' : 'rgba(255, 255, 255, 0.85)',
-              color: activeStage === s.num ? '#FFFFFF' : 'var(--color-ink)',
-              fontFamily: 'var(--font-display)',
-              fontWeight: 800,
-              fontSize: '0.85rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              transition: 'all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
-              boxShadow: activeStage === s.num ? 'var(--shadow-violet-glow)' : '0 2px 8px rgba(0,0,0,0.05)',
-            }}
-          >
-            {s.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Interactive 3D Raycast Tooltip */}
-      {hoveredNode && (
-        <div
-          style={{
-            position: 'absolute',
-            left: `${mousePos.x + 16}px`,
-            top: `${mousePos.y - 48}px`,
-            zIndex: 30,
-            pointerEvents: 'none',
-            background: 'var(--gradient-ink-card)',
-            color: '#FFFFFF',
-            padding: '0.85rem 1.25rem',
-            borderRadius: '16px',
-            border: '1px solid rgba(122, 15, 224, 0.45)',
-            boxShadow: 'var(--shadow-ink-depth)',
-            maxWidth: '300px',
-            animation: 'fadeIn 0.15s ease',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', marginBottom: '0.25rem' }}>
-            <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--color-steel-gray)', fontWeight: 700, letterSpacing: '0.05em' }}>
-              {hoveredNode.layer}
-            </span>
-            {hoveredNode.isVuln && (
-              <span style={{ fontSize: '0.65rem', background: '#DC2626', color: '#FFF', padding: '0.1rem 0.4rem', borderRadius: '4px', fontWeight: 700 }}>
-                CRITICAL
-              </span>
-            )}
-          </div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, fontSize: '0.9rem', color: '#FFFFFF' }}>
-            {hoveredNode.name}
-          </div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--color-silver)', marginTop: '0.35rem', lineHeight: '1.4' }}>
-            {hoveredNode.details}
-          </div>
-          <div style={{ marginTop: '0.5rem', fontSize: '0.65rem', color: 'var(--color-violet)', fontWeight: 700 }}>
-            Click to focus camera in 3D ➔
-          </div>
-        </div>
-      )}
-
-      {/* Bottom Floating Navigation Helper Pill */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: '1.5rem',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 10,
-          pointerEvents: 'none',
-        }}
-      >
-        <span
-          className="pill-chip glass-panel"
-          style={{
-            padding: '0.45rem 1.25rem',
-            borderRadius: 'var(--radius-pill)',
-            fontSize: '0.75rem',
-            color: 'var(--color-steel-gray)',
-            fontFamily: 'var(--font-mono)',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-          }}
-        >
-          <span style={{ color: 'var(--color-violet)' }}>✦</span>
-          Drag to orbit 360° • Scroll to zoom • Click any node to focus
-        </span>
-      </div>
-    </div>
-  );
-};
-
-export default ThreeHeroScene;
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { GraphNode } from '../api/generated';
+import { ArrowRight } from 'lucide-react';
+
+interface Props {
+  onStageSelect?: (stage: number) => void;
+  onNodeClick?: (nodeId: string) => void;
+  graphNodes?: GraphNode[];
+  activeStage?: number;
+}
+
+export interface GraphNodeMeta {
+  id: string;
+  name: string;
+  layer: 'Package' | 'Application' | 'Service' | 'Environment';
+  type: 'obsidian' | 'purple' | 'silver';
+  pos: [number, number, number];
+  radius: number;
+  hasHalo?: boolean;
+  haloRadius?: number;
+  isVuln?: boolean;
+  cvss?: number;
+  probPct?: number;
+  statusText?: string;
+  details: string;
+}
+
+export const ThreeHeroScene: React.FC<Props> = ({
+  onStageSelect,
+  onNodeClick,
+  graphNodes,
+  activeStage = 1,
+}) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [hoveredNode, setHoveredNode] = useState<GraphNodeMeta | null>(null);
+  const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+
+  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
+  const controlsRef = useRef<OrbitControls | null>(null);
+  const animFrameRef = useRef<number | null>(null);
+  const tweenTargetRef = useRef<{ cam: THREE.Vector3; target: THREE.Vector3 } | null>(null);
+  const currentStageRef = useRef<number>(activeStage);
+
+  // Keep currentStageRef in sync
+  useEffect(() => {
+    currentStageRef.current = activeStage;
+  }, [activeStage]);
+
+  // Handle stage camera tweening
+  const setCameraForStage = useCallback((stage: number) => {
+    if (stage === 1) {
+      // Stage 1: Blast Radius overview
+      tweenTargetRef.current = {
+        cam: new THREE.Vector3(25, 12, 175),
+        target: new THREE.Vector3(25, 0, 0),
+      };
+    } else if (stage === 2) {
+      // Stage 2: Exploit risk focus
+      tweenTargetRef.current = {
+        cam: new THREE.Vector3(40, 20, 150),
+        target: new THREE.Vector3(45, 10, 0),
+      };
+    } else if (stage === 3) {
+      // Stage 3: CP-SAT Remediation optimization
+      tweenTargetRef.current = {
+        cam: new THREE.Vector3(70, -5, 160),
+        target: new THREE.Vector3(60, -10, 5),
+      };
+    }
+  }, []);
+
+  useEffect(() => {
+    setCameraForStage(activeStage);
+  }, [activeStage, setCameraForStage]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const width = container.clientWidth || 960;
+    const height = container.clientHeight || 640;
+
+    // 1. Scene with clean platinum/silver background & depth fog
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0xEAEDF2, 0.0016);
+
+    // 2. Camera setup framing right 60% for graph, left 40% for hero text
+    const camera = new THREE.PerspectiveCamera(45, width / height, 1, 2500);
+    camera.position.set(25, 12, 175);
+    camera.lookAt(25, 0, 0);
+    cameraRef.current = camera;
+
+    // 3. Renderer with high pixel ratio and smooth antialiasing
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true,
+      powerPreference: 'high-performance',
+    });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(width, height);
+    renderer.setClearColor(0xEAEDF2, 0);
+    container.appendChild(renderer.domElement);
+
+    // 4. OrbitControls with soft damping and constrained angles
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.maxDistance = 260;
+    controls.minDistance = 90;
+    controls.maxPolarAngle = Math.PI / 1.75;
+    controls.minPolarAngle = Math.PI / 3.5;
+    controls.target.set(25, 0, 0);
+    controlsRef.current = controls;
+
+    // 5. Lighting matching the screenshot
+    const ambientLight = new THREE.AmbientLight(0xFFFFFF, 1.25);
+    scene.add(ambientLight);
+
+    const dirLight = new THREE.DirectionalLight(0xFFFFFF, 2.0);
+    dirLight.position.set(120, 160, 140);
+    scene.add(dirLight);
+
+    const pointPurple = new THREE.PointLight(0x9333EA, 4.5, 350);
+    pointPurple.position.set(70, 15, 60);
+    scene.add(pointPurple);
+
+    const pointSecondary = new THREE.PointLight(0x7A0FE0, 3.2, 280);
+    pointSecondary.position.set(-35, -25, 45);
+    scene.add(pointSecondary);
+
+    const fillBlue = new THREE.PointLight(0x3B82F6, 1.5, 300);
+    fillBlue.position.set(140, -40, 70);
+    scene.add(fillBlue);
+
+    // Root graph group for mouse parallax
+    const graphRoot = new THREE.Group();
+    scene.add(graphRoot);
+
+    // 6. Define Nodes matching the exact constellation layout in user screenshot
+    const defaultNodes: GraphNodeMeta[] = [
+      // Left entrypoint & blast radius nodes
+      {
+        id: 'node-l-top-purple',
+        name: 'edge-router:ingress',
+        layer: 'Environment',
+        type: 'purple',
+        pos: [-50, 48, 10],
+        radius: 9,
+        hasHalo: true,
+        haloRadius: 21,
+        cvss: 7.5,
+        probPct: 64,
+        statusText: 'PUBLIC INGRESS GATEWAY',
+        details: 'External HTTPS Traffic Controller • Exposes downstream cluster',
+      },
+      {
+        id: 'node-l-mid-purple-1',
+        name: 'gateway-proxy@3.2.0',
+        layer: 'Service',
+        type: 'purple',
+        pos: [-38, 30, 20],
+        radius: 7.5,
+        hasHalo: false,
+        cvss: 5.4,
+        probPct: 42,
+        statusText: 'MICROSERVICE ROUTE',
+        details: 'Reverse proxy dispatch to checkout & billing services',
+      },
+      {
+        id: 'node-l-mid-purple-2',
+        name: 'auth-session-mgr@1.9.4',
+        layer: 'Application',
+        type: 'purple',
+        pos: [-44, 12, 15],
+        radius: 8,
+        hasHalo: true,
+        haloRadius: 18,
+        cvss: 6.8,
+        probPct: 58,
+        statusText: 'INTERMEDIATE APP',
+        details: 'JWT session validation & token issuance layer',
+      },
+      {
+        id: 'node-l-conduit-start',
+        name: 'example-lib@1.4.0',
+        layer: 'Package',
+        type: 'purple',
+        pos: [-48, -12, 15],
+        radius: 8.5,
+        hasHalo: true,
+        haloRadius: 20,
+        isVuln: true,
+        cvss: 8.8,
+        probPct: 86.4,
+        statusText: 'CRITICAL (CISA KEV)',
+        details: 'Transitive CVE-2026-1001 • Remote Code Execution • In KEV',
+      },
+      // Lower-left cluster nodes
+      {
+        id: 'node-ll-silver',
+        name: 'pydantic@2.6.1',
+        layer: 'Package',
+        type: 'silver',
+        pos: [-62, -28, 5],
+        radius: 6,
+        statusText: 'CLEAN LIBRARY',
+        details: 'Data validation and schema parsing • Up to date',
+      },
+      {
+        id: 'node-ll-dark-1',
+        name: 'redis-client@4.5.0',
+        layer: 'Package',
+        type: 'obsidian',
+        pos: [-50, -38, 20],
+        radius: 8.5,
+        statusText: 'CACHE ACCESSORY',
+        details: 'Shared in-memory cache driver • Low severity baseline',
+      },
+      {
+        id: 'node-ll-dark-2',
+        name: 'async-worker@0.8.2',
+        layer: 'Application',
+        type: 'obsidian',
+        pos: [-58, -48, 10],
+        radius: 7,
+        statusText: 'BACKGROUND TASK',
+        details: 'Consumes queue messages for non-blocking notifications',
+      },
+      {
+        id: 'node-ll-purple',
+        name: 'audit-relay@1.0.1',
+        layer: 'Service',
+        type: 'purple',
+        pos: [-35, -42, 15],
+        radius: 7,
+        hasHalo: false,
+        statusText: 'TELEMETRY AGENT',
+        details: 'Internal audit log shipping container',
+      },
+
+      // Center silver/pearl cluster (healthy microservice network)
+      {
+        id: 'node-c-silver-top',
+        name: 'urllib3@1.26.5',
+        layer: 'Package',
+        type: 'silver',
+        pos: [-8, 45, -15],
+        radius: 6.5,
+        statusText: 'CLEAN PACKAGE',
+        details: 'HTTP client baseline • Transitive dependency',
+      },
+      {
+        id: 'node-c-silver-1',
+        name: 'certifi@2024.2.2',
+        layer: 'Package',
+        type: 'silver',
+        pos: [5, 25, -10],
+        radius: 7,
+        statusText: 'CLEAN PACKAGE',
+        details: 'Root CA certificate bundle',
+      },
+      {
+        id: 'node-c-silver-2',
+        name: 'charset-normalizer@3.3.2',
+        layer: 'Package',
+        type: 'silver',
+        pos: [-12, 18, -5],
+        radius: 6,
+        statusText: 'CLEAN PACKAGE',
+        details: 'Character encoding detection helper',
+      },
+      {
+        id: 'node-c-silver-3',
+        name: 'idna@3.6',
+        layer: 'Package',
+        type: 'silver',
+        pos: [0, -2, 0],
+        radius: 7.5,
+        statusText: 'CLEAN PACKAGE',
+        details: 'Internationalized Domain Names parser',
+      },
+      {
+        id: 'node-c-silver-4',
+        name: 'requests@2.31.0',
+        layer: 'Package',
+        type: 'silver',
+        pos: [15, -8, 5],
+        radius: 8,
+        statusText: 'CLEAN PACKAGE',
+        details: 'Standard Python HTTP transport',
+      },
+      {
+        id: 'node-c-silver-5',
+        name: 'cryptography@42.0.5',
+        layer: 'Package',
+        type: 'silver',
+        pos: [-5, -18, 10],
+        radius: 7,
+        statusText: 'CLEAN PACKAGE',
+        details: 'Cryptographic recipes & primitives',
+      },
+      {
+        id: 'node-c-silver-6',
+        name: 'pyjwt@2.8.0',
+        layer: 'Package',
+        type: 'silver',
+        pos: [12, -22, 12],
+        radius: 7.5,
+        statusText: 'CLEAN PACKAGE',
+        details: 'JSON Web Token encoding & decoding',
+      },
+      {
+        id: 'node-c-silver-7',
+        name: 'fastapi@0.110.0',
+        layer: 'Application',
+        type: 'silver',
+        pos: [-10, -42, 18],
+        radius: 6.5,
+        statusText: 'CLEAN FRAMEWORK',
+        details: 'Core async REST API framework',
+      },
+      {
+        id: 'node-c-silver-8',
+        name: 'uvicorn@0.28.0',
+        layer: 'Application',
+        type: 'silver',
+        pos: [15, -45, 15],
+        radius: 7.5,
+        statusText: 'CLEAN RUNTIME',
+        details: 'Lightning-fast ASGI server implementation',
+      },
+
+      // Center-Right Obsidian and Purple Nodes
+      {
+        id: 'node-cr-purple-top',
+        name: 'payment-svc@2.4.0',
+        layer: 'Service',
+        type: 'purple',
+        pos: [48, 25, -10],
+        radius: 8.5,
+        hasHalo: false,
+        cvss: 7.2,
+        probPct: 68,
+        statusText: 'PCI COMPLIANCE BOUND',
+        details: 'Stripe & banking payment processing interface',
+      },
+      {
+        id: 'node-cr-obsidian-top',
+        name: 'vault-connector@1.2.0',
+        layer: 'Application',
+        type: 'obsidian',
+        pos: [70, 32, -5],
+        radius: 7.5,
+        statusText: 'SECRET STORAGE',
+        details: 'HashiCorp Vault secret injection daemon',
+      },
+      {
+        id: 'node-cr-obsidian-2',
+        name: 'sql-pool@3.1.1',
+        layer: 'Package',
+        type: 'obsidian',
+        pos: [85, 20, 10],
+        radius: 8.5,
+        statusText: 'DATABASE POOL',
+        details: 'PostgreSQL connection multiplexer',
+      },
+      {
+        id: 'node-cr-purple-mid',
+        name: 'service:checkout',
+        layer: 'Service',
+        type: 'purple',
+        pos: [65, 8, 10],
+        radius: 9,
+        hasHalo: true,
+        haloRadius: 20,
+        cvss: 8.8,
+        probPct: 86.4,
+        statusText: 'EXPOSED PRODUCTION SERVICE',
+        details: 'Core e-commerce checkout service • Blast radius target',
+      },
+      {
+        id: 'node-cr-purple-pair-1',
+        name: 'order-dispatch@2.0.1',
+        layer: 'Service',
+        type: 'purple',
+        pos: [60, -18, 25],
+        radius: 11,
+        hasHalo: false,
+        cvss: 7.8,
+        probPct: 74,
+        statusText: 'ORDER SERVICE',
+        details: 'Order state machine & inventory lock coordinator',
+      },
+      {
+        id: 'node-cr-purple-pair-2',
+        name: 'fulfillment-hub@1.8.0',
+        layer: 'Service',
+        type: 'purple',
+        pos: [78, -20, 20],
+        radius: 12.5,
+        hasHalo: true,
+        haloRadius: 25,
+        cvss: 8.1,
+        probPct: 79,
+        statusText: 'FULFILLMENT DISPATCH',
+        details: 'Automated warehouse & shipping carrier router',
+      },
+      {
+        id: 'node-cr-purple-low',
+        name: 'notification-mgr@1.1.0',
+        layer: 'Service',
+        type: 'purple',
+        pos: [50, -32, 25],
+        radius: 7,
+        hasHalo: false,
+        statusText: 'EVENT CONSUMER',
+        details: 'Email, SMS, and webhook delivery manager',
+      },
+
+      // Prominent Right Perimeter Nodes (Matching the big spheres in screenshot)
+      {
+        id: 'node-r-big-black-top',
+        name: 'cloud-security-sentinel',
+        layer: 'Environment',
+        type: 'obsidian',
+        pos: [115, 42, 5],
+        radius: 12,
+        statusText: 'SECURITY ENCLAVE',
+        details: 'Cluster threat detection & automated intrusion monitor',
+      },
+      {
+        id: 'node-r-conduit-end',
+        name: 'prod-cluster-ap-south-1',
+        layer: 'Environment',
+        type: 'purple',
+        pos: [142, 28, -5],
+        radius: 10,
+        hasHalo: true,
+        haloRadius: 24,
+        cvss: 8.8,
+        probPct: 86.4,
+        statusText: 'BLAST RADIUS TERMINUS',
+        details: 'Critical production Kubernetes cluster reaching 14 microservices',
+      },
+      {
+        id: 'node-r-black-mid',
+        name: 'customer-data-lake',
+        layer: 'Environment',
+        type: 'obsidian',
+        pos: [155, 25, 20],
+        radius: 10,
+        statusText: 'DATA PRIVACY BOUNDARY',
+        details: 'GDPR / HIPAA isolated customer analytic store',
+      },
+      {
+        id: 'node-r-big-black-low',
+        name: 'cold-backup-archive',
+        layer: 'Environment',
+        type: 'obsidian',
+        pos: [160, -30, 40],
+        radius: 14,
+        statusText: 'OFFLINE RECOVERY',
+        details: 'Immutable cryptographic point-in-time snapshot archive',
+      },
+      {
+        id: 'node-r-silver-low',
+        name: 'monitoring-prometheus',
+        layer: 'Application',
+        type: 'silver',
+        pos: [110, -48, 10],
+        radius: 7.5,
+        statusText: 'METRICS COLLECTOR',
+        details: 'Cluster telemetry, memory limits, and node health exporter',
+      },
+    ];
+
+    // Combine with real backend graph nodes if present
+    const nodes = [...defaultNodes];
+    if (graphNodes && graphNodes.length > 0) {
+      const vulnNode = graphNodes.find((n) => (n.cvss && n.cvss >= 7) || n.in_kev);
+      if (vulnNode) {
+        nodes[3].name = vulnNode.label;
+        nodes[3].details = `Live Backend Finding: ${vulnNode.label} • CVSS: ${vulnNode.cvss || 8.8} • Reachability: ${vulnNode.reachability || 'Direct'}`;
+      }
+    }
+
+    // 7. Materials for the 3 Node Types
+    const obsidianMaterial = new THREE.MeshPhysicalMaterial({
+      color: 0x160B28,
+      roughness: 0.08,
+      metalness: 0.35,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.06,
+      reflectivity: 0.95,
+    });
+
+    const purpleMaterial = new THREE.MeshStandardMaterial({
+      color: 0x7A0FE0,
+      emissive: 0x9333EA,
+      emissiveIntensity: 0.8,
+      roughness: 0.18,
+      metalness: 0.35,
+    });
+
+    const silverMaterial = new THREE.MeshStandardMaterial({
+      color: 0xDCE3EC,
+      roughness: 0.22,
+      metalness: 0.82,
+    });
+
+    const haloMaterial = new THREE.MeshBasicMaterial({
+      color: 0x9333EA,
+      transparent: true,
+      opacity: 0.22,
+      side: THREE.DoubleSide,
+    });
+
+    // 8. Create Meshes for Nodes and Halos
+    const nodeMeshes: { mesh: THREE.Mesh; meta: GraphNodeMeta; initialY: number; phase: number }[] = [];
+    const haloMeshes: { mesh: THREE.Mesh; parentMesh: THREE.Mesh; baseScale: number }[] = [];
+
+    nodes.forEach((node, idx) => {
+      const geom = new THREE.SphereGeometry(node.radius, 32, 32);
+      let mat = silverMaterial;
+      if (node.type === 'obsidian') mat = obsidianMaterial;
+      else if (node.type === 'purple') mat = purpleMaterial;
+
+      const mesh = new THREE.Mesh(geom, mat.clone());
+      mesh.position.set(node.pos[0], node.pos[1], node.pos[2]);
+      (mesh as any).nodeMeta = node;
+      graphRoot.add(mesh);
+
+      nodeMeshes.push({
+        mesh,
+        meta: node,
+        initialY: node.pos[1],
+        phase: idx * 0.45,
+      });
+
+      // Add camera-facing pulsating halo disc if node.hasHalo
+      if (node.hasHalo) {
+        const hRadius = node.haloRadius || node.radius * 2.2;
+        const hGeom = new THREE.RingGeometry(node.radius * 1.35, hRadius, 48);
+        const hMesh = new THREE.Mesh(hGeom, haloMaterial.clone());
+        hMesh.position.set(node.pos[0], node.pos[1], node.pos[2]);
+        graphRoot.add(hMesh);
+        haloMeshes.push({ mesh: hMesh, parentMesh: mesh, baseScale: 1 });
+      }
+    });
+
+    // 9. Sweeping Curved Purple Conduit (Spline Tube)
+    const conduitPoints = [
+      new THREE.Vector3(-48, -12, 15),
+      new THREE.Vector3(-25, -28, 22),
+      new THREE.Vector3(5, -45, 28),
+      new THREE.Vector3(38, -42, 22),
+      new THREE.Vector3(68, -10, 15),
+      new THREE.Vector3(98, 12, 8),
+      new THREE.Vector3(142, 28, -5),
+    ];
+    const conduitCurve = new THREE.CatmullRomCurve3(conduitPoints);
+    const conduitGeom = new THREE.TubeGeometry(conduitCurve, 120, 1.6, 24, false);
+    const conduitMat = new THREE.MeshStandardMaterial({
+      color: 0x9333EA,
+      emissive: 0x7A0FE0,
+      emissiveIntensity: 0.9,
+      roughness: 0.15,
+      metalness: 0.15,
+    });
+    const conduitMesh = new THREE.Mesh(conduitGeom, conduitMat);
+    graphRoot.add(conduitMesh);
+
+    // 10. 3D Orbital Elliptical Wire Rings
+    const orbitalGroup = new THREE.Group();
+    graphRoot.add(orbitalGroup);
+
+    const createOrbitalRing = (
+      rx: number,
+      ry: number,
+      rotX: number,
+      rotY: number,
+      rotZ: number,
+      center: THREE.Vector3
+    ) => {
+      const curve = new THREE.EllipseCurve(0, 0, rx, ry, 0, 2 * Math.PI, false, 0);
+      const pts = curve.getPoints(128).map((p) => new THREE.Vector3(p.x, p.y, 0));
+      const geom = new THREE.BufferGeometry().setFromPoints(pts);
+      const mat = new THREE.LineBasicMaterial({
+        color: 0x94A3B8,
+        transparent: true,
+        opacity: 0.45,
+      });
+      const ring = new THREE.LineLoop(geom, mat);
+      ring.position.copy(center);
+      ring.rotation.set(rotX, rotY, rotZ);
+      return ring;
+    };
+
+    const ring1 = createOrbitalRing(115, 48, 0.45, 0.2, -0.2, new THREE.Vector3(45, 0, 5));
+    const ring2 = createOrbitalRing(100, 55, -0.3, 0.5, 0.6, new THREE.Vector3(55, 5, 0));
+    const ring3 = createOrbitalRing(140, 75, 0.2, -0.4, 0.35, new THREE.Vector3(35, -5, 10));
+
+    orbitalGroup.add(ring1);
+    orbitalGroup.add(ring2);
+    orbitalGroup.add(ring3);
+
+    // 11. Connecting Network Edges
+    const edgeCoords: number[] = [];
+    const connectNodes = (idxA: number, idxB: number) => {
+      const a = nodes[idxA].pos;
+      const b = nodes[idxB].pos;
+      edgeCoords.push(a[0], a[1], a[2], b[0], b[1], b[2]);
+    };
+
+    // Connections between nearby logical components
+    connectNodes(0, 1);
+    connectNodes(1, 2);
+    connectNodes(2, 3);
+    connectNodes(3, 4);
+    connectNodes(4, 5);
+    connectNodes(5, 6);
+    connectNodes(6, 7);
+    connectNodes(2, 8);
+    connectNodes(8, 9);
+    connectNodes(9, 10);
+    connectNodes(10, 11);
+    connectNodes(11, 12);
+    connectNodes(12, 13);
+    connectNodes(13, 14);
+    connectNodes(14, 15);
+    connectNodes(15, 16);
+    connectNodes(16, 17);
+    connectNodes(10, 17);
+    connectNodes(17, 18);
+    connectNodes(18, 19);
+    connectNodes(19, 20);
+    connectNodes(20, 21);
+    connectNodes(21, 22);
+    connectNodes(22, 23);
+    connectNodes(19, 24);
+    connectNodes(24, 25);
+    connectNodes(25, 26);
+    connectNodes(26, 27);
+    connectNodes(27, 28);
+
+    const edgeGeom = new THREE.BufferGeometry();
+    edgeGeom.setAttribute('position', new THREE.Float32BufferAttribute(edgeCoords, 3));
+    const edgeMat = new THREE.LineBasicMaterial({
+      color: 0x94A3B8,
+      transparent: true,
+      opacity: 0.32,
+    });
+    const edgeLines = new THREE.LineSegments(edgeGeom, edgeMat);
+    graphRoot.add(edgeLines);
+
+    // 12. Floating Ambient Dust Particles
+    const dustCount = 200;
+    const dustGeom = new THREE.BufferGeometry();
+    const dustPositions = new Float32Array(dustCount * 3);
+    for (let i = 0; i < dustCount; i++) {
+      dustPositions[i * 3] = (Math.random() - 0.5) * 500 + 40;
+      dustPositions[i * 3 + 1] = (Math.random() - 0.5) * 350;
+      dustPositions[i * 3 + 2] = (Math.random() - 0.5) * 400;
+    }
+    dustGeom.setAttribute('position', new THREE.BufferAttribute(dustPositions, 3));
+    const dustMat = new THREE.PointsMaterial({
+      color: 0x7A0FE0,
+      size: 2.0,
+      transparent: true,
+      opacity: 0.35,
+    });
+    const dust = new THREE.Points(dustGeom, dustMat);
+    scene.add(dust);
+
+    // 13. Interactive Raycasting
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2(-999, -999);
+    let targetParallaxX = 0;
+    let targetParallaxY = 0;
+
+    const handlePointerMove = (e: PointerEvent) => {
+      const rect = container.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      const y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+      mouse.x = x;
+      mouse.y = y;
+
+      setTooltipPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+
+      // Parallax target
+      targetParallaxX = x * 6;
+      targetParallaxY = y * 4;
+    };
+
+    const handleClick = () => {
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(
+        nodeMeshes.map((n) => n.mesh)
+      );
+      if (intersects.length > 0) {
+        const hitMesh = intersects[0].object as THREE.Mesh;
+        const meta = (hitMesh as any).nodeMeta as GraphNodeMeta;
+        if (meta && onNodeClick) {
+          onNodeClick(meta.id);
+        }
+      }
+    };
+
+    container.addEventListener('pointermove', handlePointerMove);
+    container.addEventListener('click', handleClick);
+
+    // 14. Animation Loop with Harmonic Floating, Ring Rotation & Parallax
+    let clock = new THREE.Clock();
+
+    const animate = () => {
+      const elapsedTime = clock.getElapsedTime();
+
+      // Continuous gentle harmonic floating
+      if (!prefersReducedMotion) {
+        nodeMeshes.forEach((item) => {
+          const dy = Math.sin(elapsedTime * 1.4 + item.phase) * 1.5;
+          item.mesh.position.y = item.initialY + dy;
+        });
+
+        // Rotate orbital rings
+        ring1.rotation.z += 0.0006;
+        ring2.rotation.z -= 0.0008;
+        ring3.rotation.y += 0.0005;
+
+        // Pulse conduit glow
+        conduitMat.emissiveIntensity = 0.8 + Math.sin(elapsedTime * 2.5) * 0.25;
+
+        // Halo pulsating scale and camera orientation
+        haloMeshes.forEach((h, i) => {
+          h.mesh.position.copy(h.parentMesh.position);
+          h.mesh.quaternion.copy(camera.quaternion);
+          const pScale = 1 + Math.sin(elapsedTime * 2.2 + i * 0.8) * 0.08;
+          h.mesh.scale.set(pScale, pScale, pScale);
+        });
+
+        // Slow dust drift
+        const dPos = dustGeom.attributes.position.array as Float32Array;
+        for (let i = 0; i < dustCount; i++) {
+          dPos[i * 3 + 1] -= 0.12;
+          if (dPos[i * 3 + 1] < -180) dPos[i * 3 + 1] = 180;
+        }
+        dustGeom.attributes.position.needsUpdate = true;
+
+        // Smooth camera tween for stage transitions
+        if (tweenTargetRef.current) {
+          camera.position.lerp(tweenTargetRef.current.cam, 0.04);
+          controls.target.lerp(tweenTargetRef.current.target, 0.04);
+          if (camera.position.distanceTo(tweenTargetRef.current.cam) < 0.2) {
+            tweenTargetRef.current = null;
+          }
+        } else {
+          // Subtle mouse parallax
+          graphRoot.rotation.y += (targetParallaxX * 0.015 - graphRoot.rotation.y) * 0.04;
+          graphRoot.rotation.x += (-targetParallaxY * 0.015 - graphRoot.rotation.x) * 0.04;
+        }
+      }
+
+      controls.update();
+
+      // Raycast check for hover state
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(
+        nodeMeshes.map((n) => n.mesh)
+      );
+
+      if (intersects.length > 0) {
+        const hitMesh = intersects[0].object as THREE.Mesh;
+        const meta = (hitMesh as any).nodeMeta as GraphNodeMeta;
+        setHoveredNode(meta);
+        container.style.cursor = 'pointer';
+        hitMesh.scale.lerp(new THREE.Vector3(1.18, 1.18, 1.18), 0.2);
+      } else {
+        setHoveredNode(null);
+        container.style.cursor = 'default';
+        nodeMeshes.forEach((n) => {
+          n.mesh.scale.lerp(new THREE.Vector3(1, 1, 1), 0.15);
+        });
+      }
+
+      renderer.render(scene, camera);
+      animFrameRef.current = requestAnimationFrame(animate);
+    };
+
+    animate();
+
+    // 15. Resize Observer
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        const newWidth = entry.contentRect.width;
+        const newHeight = entry.contentRect.height;
+        if (newWidth > 0 && newHeight > 0) {
+          camera.aspect = newWidth / newHeight;
+          camera.updateProjectionMatrix();
+          renderer.setSize(newWidth, newHeight);
+        }
+      }
+    });
+    resizeObserver.observe(container);
+
+    return () => {
+      resizeObserver.disconnect();
+      container.removeEventListener('pointermove', handlePointerMove);
+      container.removeEventListener('click', handleClick);
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+      if (renderer.domElement && renderer.domElement.parentNode) {
+        renderer.domElement.parentNode.removeChild(renderer.domElement);
+      }
+      renderer.dispose();
+    };
+  }, [graphNodes]);
+
+  return (
+    <div
+      ref={containerRef}
+      style={{
+        width: '100%',
+        height: '100%',
+        position: 'relative',
+        overflow: 'hidden',
+        userSelect: 'none',
+      }}
+    >
+      {/* Interactive Raycasted HUD Tooltip */}
+      {hoveredNode && (
+        <div
+          style={{
+            position: 'absolute',
+            left: `${tooltipPos.x + 16}px`,
+            top: `${tooltipPos.y - 12}px`,
+            zIndex: 100,
+            pointerEvents: 'none',
+            background: 'rgba(255, 255, 255, 0.94)',
+            backdropFilter: 'blur(16px)',
+            border: '1px solid rgba(122, 15, 224, 0.3)',
+            borderRadius: '12px',
+            padding: '0.85rem 1.15rem',
+            boxShadow: '0 12px 32px rgba(122, 15, 224, 0.18)',
+            maxWidth: '300px',
+            animation: 'fadeIn 0.15s ease-out',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
+            <span
+              style={{
+                fontSize: '0.68rem',
+                fontFamily: 'var(--font-mono)',
+                textTransform: 'uppercase',
+                fontWeight: 700,
+                color: hoveredNode.type === 'purple' ? '#7A0FE0' : '#475569',
+                background: hoveredNode.type === 'purple' ? 'rgba(122, 15, 224, 0.1)' : '#F1F5F9',
+                padding: '0.15rem 0.45rem',
+                borderRadius: '4px',
+              }}
+            >
+              {hoveredNode.layer}
+            </span>
+            {hoveredNode.isVuln && (
+              <span
+                style={{
+                  fontSize: '0.68rem',
+                  fontFamily: 'var(--font-mono)',
+                  fontWeight: 700,
+                  color: '#DC2626',
+                  background: 'rgba(239, 68, 68, 0.1)',
+                  padding: '0.15rem 0.45rem',
+                  borderRadius: '4px',
+                }}
+              >
+                CRITICAL KEV
+              </span>
+            )}
+          </div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.92rem', color: '#0F172A' }}>
+            {hoveredNode.name}
+          </div>
+          <div style={{ fontSize: '0.78rem', color: '#64748B', marginTop: '0.25rem', lineHeight: 1.4 }}>
+            {hoveredNode.details}
+          </div>
+          {hoveredNode.cvss && (
+            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem', borderTop: '1px solid #E2E8F0', paddingTop: '0.45rem', fontSize: '0.75rem', fontFamily: 'var(--font-mono)' }}>
+              <div>CVSS: <strong style={{ color: '#DC2626' }}>{hoveredNode.cvss}</strong></div>
+              <div>Exploit P: <strong style={{ color: '#7A0FE0' }}>{hoveredNode.probPct}%</strong></div>
+            </div>
+          )}
+          <div style={{ fontSize: '0.7rem', color: '#7A0FE0', fontWeight: 600, marginTop: '0.45rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+            <span>Click node to inspect</span>
+            <ArrowRight size={11} />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ThreeHeroScene;

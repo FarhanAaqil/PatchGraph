@@ -347,7 +347,11 @@ export const App: React.FC = () => {
           <Suspense fallback={<PageSkeleton />}>
             {activeTab === 'landing' && (
               <div>
-                <LandingPage onNavigate={(tab) => handleNavigate(tab)} />
+                <LandingPage
+                  onNavigate={(tab) => handleNavigate(tab)}
+                  onToggleSidebar={handleToggleSidebar}
+                  onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+                />
 
                 {/* Scenario Telemetry Specification */}
                 <div style={{ maxWidth: '1100px', margin: '2rem auto 4rem auto', padding: '0 1.5rem' }}>
