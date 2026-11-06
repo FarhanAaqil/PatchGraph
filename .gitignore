@@ -41,6 +41,8 @@ blob-report/
 
 # Databases & local stores
 *.db
+*.db-shm
+*.db-wal
 *.sqlite3
 
 # Node / Frontend
