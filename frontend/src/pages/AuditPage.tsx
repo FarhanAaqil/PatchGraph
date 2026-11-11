@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { PatchGraphApiClient, AuditLogEntry, PlanResponse } from '../api/generated';
+import { PatchGraphApiClient, } from '../api/generated';
 import {
   FileText,
   ShieldCheck,
@@ -8,13 +8,13 @@ import {
   XCircle,
   Download,
   Search,
-  Filter,
-  Clock,
+  
+  
   User,
   ArrowRight,
   AlertCircle,
-  Sparkles,
-  Layers,
+  
+  
   Lock
 } from 'lucide-react';
 
@@ -50,7 +50,7 @@ export const AuditPage: React.FC<AuditPageProps> = ({ apiBaseUrl, initialPlanId 
     refetchInterval: 5000,
   });
 
-  const plans = plansData?.items || [];
+  const plans = React.useMemo(() => plansData?.items ?? [], [plansData]);
   const currentPlan = (selectedPlanId && plans.find((p) => p.id === selectedPlanId)) || (plans.length > 0 ? plans[0] : null);
 
   React.useEffect(() => {

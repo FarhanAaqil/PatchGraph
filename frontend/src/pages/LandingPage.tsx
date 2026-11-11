@@ -11,10 +11,10 @@ import {
   Database,
   Lock,
   Sparkles,
-  ExternalLink,
+  
   Activity,
-  Server,
-  Zap,
+  
+  
   CheckCircle2,
   Search,
 } from 'lucide-react';

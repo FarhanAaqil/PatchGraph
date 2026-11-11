@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any, Dict, List
 
 from experiments.manifest import build_evaluation_manifest_meta
+from experiments.paths import reports_dir
 from intelligence.planner.candidates import CandidateAction
 from intelligence.planner.model import PlannerConstraints
 from intelligence.planner.solve import solve_greedy_baseline, solve_remediation_plan
@@ -77,7 +77,6 @@ def run_planner_evaluation() -> Dict[str, Any]:
         },
     }
 
-    repo_root = Path(__file__).resolve().parent.parent
     md = f"""# PatchGraph Remediation Planner Evaluation Results (RQ2)
 
 - **Dataset Date**: `2026-11-01` · **Engineering Budget**: `10.0 hours` · **Max Downtime**: `30 minutes` · **Manifest**: `snap_01`
@@ -89,7 +88,7 @@ def run_planner_evaluation() -> Dict[str, Any]:
 | `Greedy Risk-per-Hour` | {greedy_rph["risk_removed"]:.2f} | {greedy_rph["effort_hours_used"]:.1f}h | {greedy_rph["downtime_minutes_used"]}m | {greedy_rph["compatibility_penalty"]:.2f} | N/A |
 | `Unconstrained Compatibility Baseline` | {no_compat_plan["risk_removed"]:.2f} | {no_compat_plan["effort_hours_used"]:.1f}h | {no_compat_plan["downtime_minutes_used"]}m | {no_compat_plan["compatibility_penalty"]:.2f} (Violates 0.50 ceiling) | 0.0000 |
 """
-    (repo_root / "reports" / "planner_results.md").write_text(md, encoding="utf-8")
+    (reports_dir() / "planner_results.md").write_text(md, encoding="utf-8")
     return out
 
 

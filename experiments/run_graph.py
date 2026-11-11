@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any, Dict, Set
 
 from backend.app.db.session import DatabaseManager
 from backend.app.graph.build import build_project_supply_chain_graph
 from backend.app.graph.impact import compute_blast_radius
 from experiments.manifest import build_evaluation_manifest_meta
+from experiments.paths import reports_dir
 
 
 def run_graph_evaluation() -> Dict[str, Any]:
@@ -51,7 +51,6 @@ def run_graph_evaluation() -> Dict[str, Any]:
         "incomplete_inventory_85pct": {"precision": prec_inc, "recall": rec_inc, "target_threshold": 0.80},
     }
 
-    repo_root = Path(__file__).resolve().parent.parent
     md = f"""# PatchGraph Graph & Blast-Radius Evaluation Results (RQ3)
 
 - **Dataset Date**: `2026-11-01` · **Manifest**: `snap_01` (`9f86d081...`)
@@ -61,7 +60,7 @@ def run_graph_evaluation() -> Dict[str, Any]:
 | Complete Inventory (Bounded Depth <= 12) | {prec_full:.4f} | {rec_full:.4f} | Yes |
 | Deliberately Incomplete Inventory (85% Edge Coverage) | {prec_inc:.4f} | {rec_inc:.4f} | Yes ({rec_inc * 100:.1f}% >= 80.0%) |
 """
-    (repo_root / "reports" / "graph_results.md").write_text(md, encoding="utf-8")
+    (reports_dir() / "graph_results.md").write_text(md, encoding="utf-8")
     return out
 
 

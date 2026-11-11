@@ -2,20 +2,19 @@ import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { PatchGraphApiClient } from '../api/generated';
-import { APP_ROUTES, AppRoute } from './routes';
+import { APP_ROUTES, } from './routes';
 import { SEVERITY_LABELS, UI_STATE_BANNERS, UiOperationalState } from '../content/terms';
 import { CommandPalette } from '../components/CommandPalette';
 import { Sidebar } from '../components/Sidebar';
-import { useToast } from '../components/Toast';
 import {
   ShieldAlert,
   Search,
   ChevronRight,
-  Database,
-  Lock,
-  Layers,
-  Activity,
-  Loader2,
+  
+  
+  
+  
+  
 } from 'lucide-react';
 
 // Lazy-loaded page components for efficient code splitting & chunking
@@ -60,7 +59,6 @@ const PageSkeleton: React.FC = () => (
 export const App: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const toast = useToast();
 
   const apiClient = new PatchGraphApiClient();
   const { data: liveSources } = useQuery({
@@ -415,7 +413,7 @@ export const App: React.FC = () => {
             {activeTab === 'planner' && (
               <PlannerPage
                 apiBaseUrl={apiBaseUrl}
-                onNavigateToAudit={(planId) => handleNavigate('audit')}
+                onNavigateToAudit={() => handleNavigate('audit')}
               />
             )}
 

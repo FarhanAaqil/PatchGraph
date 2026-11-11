@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import numpy as np
 
+from experiments.paths import model_fixtures_dir, reports_dir
 from experiments.train_exploit import build_time_split_dataset, run_training
 from intelligence.risk.model import (
     CalibratedExploitModel,
@@ -16,8 +15,7 @@ from intelligence.risk.model import (
 
 
 def generate_calibration_report() -> dict:
-    repo_root = Path(__file__).resolve().parent.parent
-    bundle_path = repo_root / "data" / "fixtures" / "model_exploit_v1.json"
+    bundle_path = model_fixtures_dir() / "model_exploit_v1.json"
     bundle = run_training(bundle_path)
     train_rows, test_rows, cutoff = build_time_split_dataset()
     model = CalibratedExploitModel.from_bundle_dict(bundle)
@@ -60,8 +58,7 @@ def generate_calibration_report() -> dict:
 - Small capstone sample sizes introduce variance in tail reliability bins; uncertainty bands remain mandatory on all analyst-facing views.
 - Post-disclosure advisory edits are excluded via frozen `as_of_date` snapshots.
 """
-    report_path = repo_root / "reports" / "calibration.md"
-    report_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path = reports_dir() / "calibration.md"
     report_path.write_text(report_md, encoding="utf-8")
     return {"uncalibrated": uncal_metrics, "calibrated": cal_metrics, "bundle_sha256": bundle["bundle_sha256"]}
 

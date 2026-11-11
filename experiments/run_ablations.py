@@ -13,10 +13,10 @@ Runs all 7 ablations mandated by `10_Evaluation_PatchGraph.md` on the exact same
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any, Dict, List
 
 from experiments.manifest import build_evaluation_manifest_meta, compute_ndcg_at_k
+from experiments.paths import reports_dir
 from experiments.run_planner import run_planner_evaluation
 from experiments.run_ranking import build_ranking_benchmark
 from intelligence.risk.baseline import RiskWeights, score_finding_explainable
@@ -114,7 +114,6 @@ def run_ablation_suite() -> Dict[str, Any]:
         },
     ]
 
-    repo_root = Path(__file__).resolve().parent.parent
     md = """# PatchGraph Controlled Ablation Study Results (Day 47)
 
 Each ablation removes exactly one component while keeping snapshot `snap_01` (`9f86d081...`) frozen.
@@ -125,7 +124,7 @@ Each ablation removes exactly one component while keeping snapshot `snap_01` (`9
     for a in ablations:
         md += f"| `{a['variant']}` | {a['ndcg_at_6']:.4f} | {a['exposure_removed']:.2f} | {a['brier_score']:.4f} |\n"
 
-    (repo_root / "reports" / "ablations.md").write_text(md, encoding="utf-8")
+    (reports_dir() / "ablations.md").write_text(md, encoding="utf-8")
     return {"manifest": build_evaluation_manifest_meta(), "ablations": ablations}
 
 

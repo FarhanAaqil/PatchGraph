@@ -1,22 +1,22 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PatchGraphApiClient, PlanResponse, PlanRequest } from '../api/generated';
 import {
   Sliders,
   Play,
-  CheckCircle,
+  
   AlertCircle,
   Clock,
   ArrowRight,
-  TrendingDown,
+  
   Cpu,
-  Layers,
-  ShieldCheck,
+  
+  
   ChevronRight,
   AlertTriangle,
   RotateCcw,
   GitBranch,
-  Zap
+  
 } from 'lucide-react';
 
 interface PlannerPageProps {
@@ -34,13 +34,13 @@ export const PlannerPage: React.FC<PlannerPageProps> = ({ apiBaseUrl, onNavigate
   const [selectedEnv, setSelectedEnv] = useState<string>('prod');
   const [objective, setObjective] = useState<'weighted_exposure' | 'greedy_risk_per_hour'>('weighted_exposure');
   const [compareMode, setCompareMode] = useState<boolean>(false);
-  const [compareBudget, setCompareBudget] = useState<number>(40);
-  const [compareDowntime, setCompareDowntime] = useState<number>(60);
+  const [compareBudget] = useState<number>(40);
+  const [compareDowntime] = useState<number>(60);
   const [simulationResult, setSimulationResult] = useState<any>(null);
   const [isSimulating, setIsSimulating] = useState<boolean>(false);
 
   // Existing plans query
-  const { data: plansData, isLoading: isLoadingPlans } = useQuery({
+  const { data: plansData } = useQuery({
     queryKey: ['plans'],
     queryFn: () => client.listPlans(),
   });
@@ -50,7 +50,7 @@ export const PlannerPage: React.FC<PlannerPageProps> = ({ apiBaseUrl, onNavigate
     queryFn: () => client.getLatestRiskRun(),
   });
 
-  const existingPlans = plansData?.items || [];
+  const existingPlans = useMemo(() => plansData?.items ?? [], [plansData]);
   const [activePlan, setActivePlan] = useState<PlanResponse | null>(null);
 
   // Set default active plan if available and none selected

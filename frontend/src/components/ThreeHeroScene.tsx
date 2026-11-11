@@ -28,12 +28,17 @@ export interface GraphNodeMeta {
 }
 
 export const ThreeHeroScene: React.FC<Props> = ({
-  onStageSelect,
+  onStageSelect: _onStageSelect,
   onNodeClick,
   graphNodes,
   activeStage = 1,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  // Keep the latest click handler without rebuilding the whole scene when the parent re-renders.
+  const onNodeClickRef = useRef(onNodeClick);
+  useEffect(() => {
+    onNodeClickRef.current = onNodeClick;
+  }, [onNodeClick]);
   const [hoveredNode, setHoveredNode] = useState<GraphNodeMeta | null>(null);
   const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
@@ -703,8 +708,8 @@ export const ThreeHeroScene: React.FC<Props> = ({
       if (intersects.length > 0) {
         const hitMesh = intersects[0].object as THREE.Mesh;
         const meta = (hitMesh as any).nodeMeta as GraphNodeMeta;
-        if (meta && onNodeClick) {
-          onNodeClick(meta.id);
+        if (meta && onNodeClickRef.current) {
+          onNodeClickRef.current(meta.id);
         }
       }
     };
@@ -713,7 +718,7 @@ export const ThreeHeroScene: React.FC<Props> = ({
     container.addEventListener('click', handleClick);
 
     // 14. Animation Loop with Harmonic Floating, Ring Rotation & Parallax
-    let clock = new THREE.Clock();
+    const clock = new THREE.Clock();
 
     const animate = () => {
       const elapsedTime = clock.getElapsedTime();
@@ -793,7 +798,7 @@ export const ThreeHeroScene: React.FC<Props> = ({
 
     // 15. Resize Observer
     const resizeObserver = new ResizeObserver((entries) => {
-      for (let entry of entries) {
+      for (const entry of entries) {
         const newWidth = entry.contentRect.width;
         const newHeight = entry.contentRect.height;
         if (newWidth > 0 && newHeight > 0) {
