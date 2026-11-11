@@ -1,12 +1,30 @@
-# PatchGraph Analyst & Approver User Guide
+# PatchGraph: quick user guide
 
-## 1. Uploading SBOM and VEX Files
-Navigate to `/imports` or `POST /api/v1/imports/sbom` with a CycloneDX 1.4–1.6 or SPDX 2.3 JSON document (capped at 25 MB and nesting depth <= 64). Every upload is hashed with SHA-256 (`content_sha256`); re-uploading an identical document is idempotent.
+PatchGraph helps you decide which software vulnerabilities to fix first, and plans the fixes that fit the time you have. The left menu follows one journey: **Import → Risks → Plan → Review**. The **Home** screen always shows the next step.
 
-## 2. Understanding Explainable Risk Scores
-Every finding exposes all six terms of the scoring equation:
-`w_f = alpha * sev_f + beta * p_hat(exploit_f) + gamma * crit_f + delta * reach_f + epsilon * 1[KEV_f] - lambda * unc_f`.
-Missing CVSS or EPSS values never default to zero — they trigger an explicit uncertainty penalty displayed in the UI.
+![Home](screens/home.webp)
 
-## 3. Simulating and Approving Remediation Plans
-Use `/planner` (`POST /api/v1/plans`) to specify `budget_hours`, `max_downtime_minutes`, and `environments`. Compare alternative constraint settings in `/what-if` (`POST /api/v1/plans/{id}/simulate`). Final plan approval (`POST /api/v1/plans/{id}/decision`) requires the `approver` or `admin` role and writes an immutable entry to `audit_logs`.
+## 1. Import your software
+
+Open **Import**. Drop a software bill of materials (CycloneDX 1.4–1.6 or SPDX 2.3, JSON, up to 25 MB), or paste the JSON. You can also add an OpenVEX file with vendor statements about flaws that do not affect you. Every file is fingerprinted with a SHA-256 hash, and importing the same file again changes nothing. New here? Press **Load sample data**.
+
+## 2. See what matters most
+
+Open **Risks**. Findings are ranked by real-world risk, and you can search, filter by environment and show only flaws that are being actively exploited. Open a row to see why it ranks where it does: a plain sentence first, then six factors with bars, then the formula under **Advanced**.
+
+![Risk explained](screens/risk-explained.webp)
+
+The score combines severity, the calibrated chance of exploitation, how exposed the code is, how important the service is and whether the flaw is on the CISA known-exploited list. Missing evidence lowers confidence; it is never treated as safe.
+
+## 3. Plan the fixes
+
+Open **Plan**. Set your engineering hours, allowed downtime and environments, choose what matters most, and press **Create plan**. You get the upgrades to do, the effort and downtime they need, and why other options were left out. **Compare plans** re-solves with a bigger budget so you can see whether more time would help.
+
+## 4. Review and approve
+
+Open **Review**. Choose a plan, write your reason (required), and approve, request changes or reject. The decision is added to the audit log, which can be filtered and exported as CSV or JSON. Approving needs the approver or admin role; PatchGraph itself never changes your code or systems.
+
+## Also useful
+
+* **Map** shows how packages, services and environments connect, with a list view for screen readers.
+* **Settings** shows the data sources, switches between the light and dark themes and lists the keyboard shortcuts. Press `Ctrl`/`⌘` + `K` anywhere to jump to a screen.
