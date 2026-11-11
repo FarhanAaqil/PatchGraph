@@ -1,11 +1,14 @@
+# SQLite lives on a single volume, so this runs exactly one replica.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: patchgraph-api
+  name: patchgraph
   labels:
     app: patchgraph
 spec:
-  replicas: 2
+  replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: patchgraph
@@ -17,14 +20,31 @@ spec:
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
+        fsGroup: 1000
       containers:
         - name: api
-          image: patchgraph/api:1.0.0
+          image: patchgraph:prod
           ports:
-            - containerPort: 8000
+            - containerPort: 5000
           env:
-            - name: PATCHGRAPH_OFFLINE_DEMO
-              value: "true"
+            - name: PATCHGRAPH_ENV
+              value: production
+            - name: PATCHGRAPH_AUTH_SIGNING_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: patchgraph-auth
+                  key: signing-key
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
           resources:
             requests:
               cpu: "250m"
@@ -32,3 +52,14 @@ spec:
             limits:
               cpu: "1000m"
               memory: "1Gi"
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: patchgraph-data
+        - name: tmp
+          emptyDir: {}

@@ -1,34 +1,23 @@
-version: "3.9"
-
+# Production-style run. Requires a signing key; identity headers are ignored and every request needs a bearer token.
+#   PATCHGRAPH_AUTH_SIGNING_KEY=$(python -c "import secrets; print(secrets.token_hex(32))") \
+#     docker compose -f docker/compose.prod.yml up --build
 services:
-  postgres:
-    image: postgres:16-alpine
+  patchgraph:
+    build:
+      context: ..
+    image: patchgraph:prod
     restart: unless-stopped
-    environment:
-      POSTGRES_USER: patchgraph
-      POSTGRES_PASSWORD_FILE: /run/secrets/pg_password
-      POSTGRES_DB: patchgraph
-    volumes:
-      - pgdata_prod:/var/lib/postgresql/data
-      - ../backend/migrations/001_core.sql:/docker-entrypoint-initdb.d/001_core.sql:ro
-
-  patchgraph-app:
-    image: python:3.12-slim
-    restart: unless-stopped
-    user: "1000:1000"
     read_only: true
     tmpfs:
       - /tmp
-    working_dir: /workspace
-    volumes:
-      - ..:/workspace:ro
-    environment:
-      PATCHGRAPH_OFFLINE_DEMO: "true"
-      PATCHGRAPH_ENV: "production"
-      PATCHGRAPH_AUTH_SIGNING_KEY: "${PATCHGRAPH_AUTH_SIGNING_KEY:?set PATCHGRAPH_AUTH_SIGNING_KEY before starting}"
     ports:
-      - "8000:8000"
-    command: ["uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+      - "5000:5000"
+    environment:
+      PATCHGRAPH_ENV: production
+      PATCHGRAPH_AUTH_SIGNING_KEY: ${PATCHGRAPH_AUTH_SIGNING_KEY:?set PATCHGRAPH_AUTH_SIGNING_KEY before starting}
+      CORS_ORIGINS: ${CORS_ORIGINS:-}
+    volumes:
+      - patchgraph-data:/data
 
 volumes:
-  pgdata_prod:
+  patchgraph-data:

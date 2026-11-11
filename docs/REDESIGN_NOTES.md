@@ -144,7 +144,7 @@ To satisfy the user prompt's design direction, frontend architecture, and backen
 ## 7. Execution Plan
 
 1. **Phase 1: Contract & Backend Extensions**
-   - Update `contracts/openapi.yaml` and `backend/openapi.yaml` to declare all new endpoints (`/audit`, `/audit/export`, `/findings/{id}/explain`, `/graph`, `/graph/nodes/{id}`, `/plans` GET, `/health`, `/sources/status`, `/imports/topology`, `/jobs/{id}`).
+   - Update `contracts/openapi.yaml` to declare all new endpoints (`/audit`, `/audit/export`, `/findings/{id}/explain`, `/graph`, `/graph/nodes/{id}`, `/plans` GET, `/health`, `/sources/status`, `/imports/topology`, `/jobs/{id}`).
    - Update `tests/unit/test_phase1_contracts_and_schema.py` to match the enhanced contract.
    - Implement the corresponding router endpoints in `backend/app/api/routes.py`.
    - Add `scripts/seed_demo.py` for reproducible demo environment initialization.

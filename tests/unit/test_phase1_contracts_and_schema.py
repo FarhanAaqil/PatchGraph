@@ -55,11 +55,8 @@ class TestPhase1SchemaAndContracts(unittest.TestCase):
             )
 
     def test_openapi_contract_matches_all_12_endpoints(self) -> None:
-        backend_spec = (REPO_ROOT / "backend" / "openapi.yaml").read_text(encoding="utf-8")
-        shared_spec = (REPO_ROOT / "contracts" / "openapi.yaml").read_text(encoding="utf-8")
-        self.assertEqual(backend_spec, shared_spec)
-
-        parsed = yaml.safe_load(backend_spec)
+        spec = (REPO_ROOT / "contracts" / "openapi.yaml").read_text(encoding="utf-8")
+        parsed = yaml.safe_load(spec)
         self.assertEqual(parsed["servers"][0]["url"], "/api/v1")
         expected_paths = {
             "/imports/sbom": "post",

@@ -1,0 +1,16 @@
+.git
+.github
+.venv
+.ruff_cache
+**/__pycache__
+**/node_modules
+frontend/dist
+test-results
+playwright-report
+reports
+release
+docs
+tests
+experiments
+*.db
+.env

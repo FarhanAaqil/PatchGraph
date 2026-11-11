@@ -19,7 +19,7 @@ REQUIRED_56_DAY_PATHS = [
     "frontend/src/content/terms.ts",
     "docs/adr/001-architecture.md",
     "frontend/src/app/routes.tsx",
-    "backend/openapi.yaml",
+    "contracts/openapi.yaml",
     "frontend/src/api/generated.ts",
     "backend/migrations/001_core.sql",
     "docs/data_examples.md",
