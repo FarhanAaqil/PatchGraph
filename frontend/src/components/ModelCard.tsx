@@ -15,10 +15,18 @@ export const ModelCard: React.FC<{
 }) => (
   <aside aria-label="Exploit Model Metadata Card" data-testid="model-card">
     <h3>Model One: Calibrated Exploit Likelihood ({modelVersion})</h3>
-    <p>Bundle SHA-256: <code>{bundleSha256.slice(0, 16)}...</code></p>
-    <p>Leakage Control: Disclosure cutoff <code>{cutoffDate}</code> + disjoint package-family split.</p>
-    <p>Calibration: Brier Score = {brierScore.toFixed(4)} · ECE = {ece.toFixed(4)}</p>
-    <p><em>Deterministic Policy Boundary:</em> Matching, graph traversal, VEX, RBAC, and CP-SAT constraints never use ML.</p>
+    <p>
+      Bundle SHA-256: <code>{bundleSha256.slice(0, 16)}...</code>
+    </p>
+    <p>
+      Leakage Control: Disclosure cutoff <code>{cutoffDate}</code> + disjoint package-family split.
+    </p>
+    <p>
+      Calibration: Brier Score = {brierScore.toFixed(4)} · ECE = {ece.toFixed(4)}
+    </p>
+    <p>
+      <em>Deterministic Policy Boundary:</em> Matching, graph traversal, VEX, RBAC, and CP-SAT constraints never use ML.
+    </p>
   </aside>
 );
 export default ModelCard;

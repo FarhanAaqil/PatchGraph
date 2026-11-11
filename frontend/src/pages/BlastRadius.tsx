@@ -16,11 +16,21 @@ export const BlastRadiusPage: React.FC<{
 }) => (
   <section aria-labelledby="blast-radius-heading">
     <h1 id="blast-radius-heading">Blast Radius Impact Summary</h1>
-    <p>Root Component: <code>{packageVersionId}</code></p>
+    <p>
+      Root Component: <code>{packageVersionId}</code>
+    </p>
     <ul>
-      <li><strong>Production Services Affected ({productionServices.length}):</strong> {productionServices.join(', ') || 'None'}</li>
-      <li><strong>Non-Production Services Affected ({nonProductionServices.length}):</strong> {nonProductionServices.join(', ') || 'None'}</li>
-      <li><strong>Routed Service Owners:</strong> {owners.join(', ')}</li>
+      <li>
+        <strong>Production Services Affected ({productionServices.length}):</strong>{' '}
+        {productionServices.join(', ') || 'None'}
+      </li>
+      <li>
+        <strong>Non-Production Services Affected ({nonProductionServices.length}):</strong>{' '}
+        {nonProductionServices.join(', ') || 'None'}
+      </li>
+      <li>
+        <strong>Routed Service Owners:</strong> {owners.join(', ')}
+      </li>
     </ul>
     <PathExplorer paths={paths} />
   </section>

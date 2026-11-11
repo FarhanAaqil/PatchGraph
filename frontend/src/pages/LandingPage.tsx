@@ -11,10 +11,7 @@ import {
   Database,
   Lock,
   Sparkles,
-  
   Activity,
-  
-  
   CheckCircle2,
   Search,
 } from 'lucide-react';
@@ -25,11 +22,7 @@ interface Props {
   onOpenCommandPalette?: () => void;
 }
 
-export const LandingPage: React.FC<Props> = ({
-  onNavigate,
-  onToggleSidebar,
-  onOpenCommandPalette,
-}) => {
+export const LandingPage: React.FC<Props> = ({ onNavigate, onToggleSidebar, onOpenCommandPalette }) => {
   const [activeStage, setActiveStage] = useState<number>(1);
   const [searchQuery, setSearchQuery] = useState('');
   const client = new PatchGraphApiClient();
@@ -400,9 +393,7 @@ export const LandingPage: React.FC<Props> = ({
                     background: isActive ? '#7A0FE0' : '#FFFFFF',
                     color: isActive ? '#FFFFFF' : '#0F172A',
                     border: isActive ? 'none' : '1.5px solid #CBD5E1',
-                    boxShadow: isActive
-                      ? '0 4px 14px rgba(122, 15, 224, 0.45)'
-                      : '0 2px 6px rgba(0, 0, 0, 0.04)',
+                    boxShadow: isActive ? '0 4px 14px rgba(122, 15, 224, 0.45)' : '0 2px 6px rgba(0, 0, 0, 0.04)',
                     fontWeight: 700,
                     fontSize: '0.85rem',
                     fontFamily: 'var(--font-mono)',
@@ -459,7 +450,8 @@ export const LandingPage: React.FC<Props> = ({
                 fontWeight: 450,
               }}
             >
-              Explainable, constrained remediation planning across your dependency and deployment graph. Humans approve every step.
+              Explainable, constrained remediation planning across your dependency and deployment graph. Humans approve
+              every step.
             </p>
           </div>
         </div>
@@ -555,7 +547,16 @@ export const LandingPage: React.FC<Props> = ({
       {/* ========================================================== */}
       {/* SECONDARY WORKING PRODUCT TELEMETRY & 5-STAGE PIPELINE RAIL */}
       {/* ========================================================== */}
-      <div style={{ maxWidth: '1360px', margin: '0 auto', padding: '3.5rem 2rem 5rem 2rem', display: 'flex', flexDirection: 'column', gap: '3.5rem' }}>
+      <div
+        style={{
+          maxWidth: '1360px',
+          margin: '0 auto',
+          padding: '3.5rem 2rem 5rem 2rem',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '3.5rem',
+        }}
+      >
         {/* Security Posture Telemetry Grid */}
         <section
           data-testid="security-posture-telemetry"
@@ -578,12 +579,41 @@ export const LandingPage: React.FC<Props> = ({
               boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
             }}
           >
-            <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'rgba(122, 15, 224, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-violet)' }}>
+            <div
+              style={{
+                width: '42px',
+                height: '42px',
+                borderRadius: '10px',
+                background: 'rgba(122, 15, 224, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--color-violet)',
+              }}
+            >
               <Activity size={20} />
             </div>
             <div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--color-steel-gray)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>Pipeline Runtime</div>
-              <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-ink)', fontFamily: 'var(--font-display)' }}>{syncedFeedsCount} Threat Feeds Active</div>
+              <div
+                style={{
+                  fontSize: '0.75rem',
+                  color: 'var(--color-steel-gray)',
+                  textTransform: 'uppercase',
+                  fontFamily: 'var(--font-mono)',
+                }}
+              >
+                Pipeline Runtime
+              </div>
+              <div
+                style={{
+                  fontSize: '1.1rem',
+                  fontWeight: 800,
+                  color: 'var(--color-ink)',
+                  fontFamily: 'var(--font-display)',
+                }}
+              >
+                {syncedFeedsCount} Threat Feeds Active
+              </div>
             </div>
           </div>
 
@@ -599,12 +629,41 @@ export const LandingPage: React.FC<Props> = ({
               boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
             }}
           >
-            <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'rgba(239, 68, 68, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#EF4444' }}>
+            <div
+              style={{
+                width: '42px',
+                height: '42px',
+                borderRadius: '10px',
+                background: 'rgba(239, 68, 68, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#EF4444',
+              }}
+            >
               <ShieldCheck size={20} />
             </div>
             <div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--color-steel-gray)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>Vulnerability Index</div>
-              <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-ink)', fontFamily: 'var(--font-display)' }}>{totalFindings} Prioritized Findings</div>
+              <div
+                style={{
+                  fontSize: '0.75rem',
+                  color: 'var(--color-steel-gray)',
+                  textTransform: 'uppercase',
+                  fontFamily: 'var(--font-mono)',
+                }}
+              >
+                Vulnerability Index
+              </div>
+              <div
+                style={{
+                  fontSize: '1.1rem',
+                  fontWeight: 800,
+                  color: 'var(--color-ink)',
+                  fontFamily: 'var(--font-display)',
+                }}
+              >
+                {totalFindings} Prioritized Findings
+              </div>
             </div>
           </div>
 
@@ -620,12 +679,41 @@ export const LandingPage: React.FC<Props> = ({
               boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
             }}
           >
-            <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'rgba(59, 130, 246, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3B82F6' }}>
+            <div
+              style={{
+                width: '42px',
+                height: '42px',
+                borderRadius: '10px',
+                background: 'rgba(59, 130, 246, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#3B82F6',
+              }}
+            >
               <Layers size={20} />
             </div>
             <div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--color-steel-gray)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>Supply-Chain Graph</div>
-              <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-ink)', fontFamily: 'var(--font-display)' }}>{totalAssets} Deployment Assets</div>
+              <div
+                style={{
+                  fontSize: '0.75rem',
+                  color: 'var(--color-steel-gray)',
+                  textTransform: 'uppercase',
+                  fontFamily: 'var(--font-mono)',
+                }}
+              >
+                Supply-Chain Graph
+              </div>
+              <div
+                style={{
+                  fontSize: '1.1rem',
+                  fontWeight: 800,
+                  color: 'var(--color-ink)',
+                  fontFamily: 'var(--font-display)',
+                }}
+              >
+                {totalAssets} Deployment Assets
+              </div>
             </div>
           </div>
 
@@ -641,12 +729,41 @@ export const LandingPage: React.FC<Props> = ({
               boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
             }}
           >
-            <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'rgba(16, 185, 129, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10B981' }}>
+            <div
+              style={{
+                width: '42px',
+                height: '42px',
+                borderRadius: '10px',
+                background: 'rgba(16, 185, 129, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#10B981',
+              }}
+            >
               <CheckCircle2 size={20} />
             </div>
             <div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--color-steel-gray)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>Audit Ledger</div>
-              <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-ink)', fontFamily: 'var(--font-display)' }}>{totalAudit} Audit Events</div>
+              <div
+                style={{
+                  fontSize: '0.75rem',
+                  color: 'var(--color-steel-gray)',
+                  textTransform: 'uppercase',
+                  fontFamily: 'var(--font-mono)',
+                }}
+              >
+                Audit Ledger
+              </div>
+              <div
+                style={{
+                  fontSize: '1.1rem',
+                  fontWeight: 800,
+                  color: 'var(--color-ink)',
+                  fontFamily: 'var(--font-display)',
+                }}
+              >
+                {totalAudit} Audit Events
+              </div>
             </div>
           </div>
         </section>
@@ -654,14 +771,26 @@ export const LandingPage: React.FC<Props> = ({
         {/* Five-Stage Remediation Architecture */}
         <section data-testid="interactive-pipeline-rail">
           <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-            <span className="pill-chip" style={{ background: 'rgba(122, 15, 224, 0.08)', color: 'var(--color-violet)', marginBottom: '0.5rem' }}>
+            <span
+              className="pill-chip"
+              style={{ background: 'rgba(122, 15, 224, 0.08)', color: 'var(--color-violet)', marginBottom: '0.5rem' }}
+            >
               Remediation Pipeline
             </span>
-            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 800, margin: '0.5rem 0', letterSpacing: '-0.03em' }}>
+            <h2
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: '2rem',
+                fontWeight: 800,
+                margin: '0.5rem 0',
+                letterSpacing: '-0.03em',
+              }}
+            >
               Five-Stage Remediation Architecture
             </h2>
             <p style={{ color: 'var(--color-steel-gray)', maxWidth: '620px', margin: '0 auto', fontSize: '0.95rem' }}>
-              Each phase provides explicit mathematical diagnostics and explainable justifications before moving to execution.
+              Each phase provides explicit mathematical diagnostics and explainable justifications before moving to
+              execution.
             </p>
           </div>
 
@@ -685,15 +814,46 @@ export const LandingPage: React.FC<Props> = ({
                 }}
               >
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-                    <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'rgba(122, 15, 224, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '1.25rem',
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: '42px',
+                        height: '42px',
+                        borderRadius: '10px',
+                        background: 'rgba(122, 15, 224, 0.08)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
                       {step.icon}
                     </div>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: 800, color: 'var(--color-steel-gray)' }}>
+                    <span
+                      style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '1.25rem',
+                        fontWeight: 800,
+                        color: 'var(--color-steel-gray)',
+                      }}
+                    >
                       {step.num}
                     </span>
                   </div>
-                  <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.15rem', fontWeight: 700, fontFamily: 'var(--font-display)' }}>
+                  <h3
+                    style={{
+                      margin: '0 0 0.5rem 0',
+                      fontSize: '1.15rem',
+                      fontWeight: 700,
+                      fontFamily: 'var(--font-display)',
+                    }}
+                  >
                     {step.title}
                   </h3>
                   <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--color-steel-gray)', lineHeight: 1.5 }}>
@@ -701,8 +861,23 @@ export const LandingPage: React.FC<Props> = ({
                   </p>
                 </div>
 
-                <div style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span className="pill-chip" style={{ fontSize: '0.7rem', background: '#F8FAFC', color: 'var(--color-ink)', border: '1px solid #E2E8F0' }}>
+                <div
+                  style={{
+                    marginTop: '1.5rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <span
+                    className="pill-chip"
+                    style={{
+                      fontSize: '0.7rem',
+                      background: '#F8FAFC',
+                      color: 'var(--color-ink)',
+                      border: '1px solid #E2E8F0',
+                    }}
+                  >
                     {step.badge}
                   </span>
                   <ArrowRight size={14} style={{ color: 'var(--color-violet)' }} />

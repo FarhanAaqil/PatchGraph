@@ -1,20 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { PatchGraphApiClient } from '../api/generated';
-import {
-  Settings,
-  Database,
-  Globe,
-  Sun,
-  Moon,
-  
-  CheckCircle,
-  
-  RefreshCw,
-  
-  
-  Eye
-} from 'lucide-react';
+import { Settings, Database, Globe, Sun, Moon, CheckCircle, RefreshCw, Eye } from 'lucide-react';
 
 interface SettingsPageProps {
   apiBaseUrl?: string;
@@ -35,7 +22,11 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
 
   const client = new PatchGraphApiClient({ baseUrl: apiBaseUrl });
 
-  const { data: sourcesData, isLoading: isLoadingSources, refetch } = useQuery({
+  const {
+    data: sourcesData,
+    isLoading: isLoadingSources,
+    refetch,
+  } = useQuery({
     queryKey: ['sourcesStatus'],
     queryFn: () => client.getSourcesStatus(),
   });
@@ -56,18 +47,37 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       {/* Header */}
       <div style={{ marginBottom: '2.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-          <span className="pill-chip" style={{ background: 'rgba(122, 15, 224, 0.1)', color: 'var(--pg-violet)', border: '1px solid rgba(122, 15, 224, 0.25)' }}>
+          <span
+            className="pill-chip"
+            style={{
+              background: 'rgba(122, 15, 224, 0.1)',
+              color: 'var(--pg-violet)',
+              border: '1px solid rgba(122, 15, 224, 0.25)',
+            }}
+          >
             <Settings size={14} style={{ marginRight: '0.35rem' }} /> System Configuration
           </span>
-          <span className="pill-chip" style={{ background: '#FFF', color: 'var(--pg-steel)', border: '1px solid #CBD5E1' }}>
+          <span
+            className="pill-chip"
+            style={{ background: '#FFF', color: 'var(--pg-steel)', border: '1px solid #CBD5E1' }}
+          >
             Demo data
           </span>
         </div>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2.25rem', letterSpacing: '-0.03em', margin: 0, fontWeight: 800 }}>
+        <h1
+          style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: '2.25rem',
+            letterSpacing: '-0.03em',
+            margin: 0,
+            fontWeight: 800,
+          }}
+        >
           Environment & Connector Settings
         </h1>
         <p style={{ color: 'var(--pg-steel)', marginTop: '0.5rem', fontSize: '1rem', maxWidth: '640px' }}>
-          Inspect upstream threat intelligence connectors, adjust runtime connectivity, and customize display rendering and motion preferences.
+          Inspect upstream threat intelligence connectors, adjust runtime connectivity, and customize display rendering
+          and motion preferences.
         </p>
       </div>
 
@@ -83,7 +93,16 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             boxShadow: 'var(--shadow-card)',
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '1.5rem',
+              flexWrap: 'wrap',
+              gap: '1rem',
+            }}
+          >
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               <Database size={20} style={{ color: 'var(--pg-violet)' }} />
               <div>
@@ -138,7 +157,15 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, fontSize: '1rem', textTransform: 'uppercase', color: 'var(--pg-ink)' }}>
+                      <div
+                        style={{
+                          fontFamily: 'var(--font-mono)',
+                          fontWeight: 800,
+                          fontSize: '1rem',
+                          textTransform: 'uppercase',
+                          color: 'var(--pg-ink)',
+                        }}
+                      >
                         {key}
                       </div>
                       <span
@@ -157,9 +184,25 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                       </span>
                     </div>
 
-                    <div style={{ marginTop: '0.75rem', fontSize: '0.75rem', color: 'var(--pg-steel)', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                      <div>Records indexed: <strong style={{ color: 'var(--pg-ink)', fontFamily: 'var(--font-mono)' }}>{item.records}</strong></div>
-                      <div>Parser version: <span style={{ fontFamily: 'var(--font-mono)' }}>{item.parser_version}</span></div>
+                    <div
+                      style={{
+                        marginTop: '0.75rem',
+                        fontSize: '0.75rem',
+                        color: 'var(--pg-steel)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.2rem',
+                      }}
+                    >
+                      <div>
+                        Records indexed:{' '}
+                        <strong style={{ color: 'var(--pg-ink)', fontFamily: 'var(--font-mono)' }}>
+                          {item.records}
+                        </strong>
+                      </div>
+                      <div>
+                        Parser version: <span style={{ fontFamily: 'var(--font-mono)' }}>{item.parser_version}</span>
+                      </div>
                       <div>Last sync: {new Date(item.last_sync).toLocaleTimeString()}</div>
                     </div>
                   </div>
@@ -169,9 +212,24 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           )}
 
           {sourcesData?.snapshot_sha256 && (
-            <div style={{ marginTop: '1.5rem', padding: '0.85rem 1.25rem', background: '#F8FAFC', borderRadius: 'var(--radius-card)', border: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+            <div
+              style={{
+                marginTop: '1.5rem',
+                padding: '0.85rem 1.25rem',
+                background: '#F8FAFC',
+                borderRadius: 'var(--radius-card)',
+                border: '1px solid #E2E8F0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                fontSize: '0.8rem',
+              }}
+            >
               <div style={{ color: 'var(--pg-steel)' }}>
-                Evidence Snapshot Content Hash: <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--pg-ink)', fontWeight: 600 }}>{sourcesData.snapshot_sha256}</span>
+                Evidence Snapshot Content Hash:{' '}
+                <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--pg-ink)', fontWeight: 600 }}>
+                  {sourcesData.snapshot_sha256}
+                </span>
               </div>
               <div style={{ color: 'var(--pg-violet)', fontWeight: 600 }}>
                 {sourcesData.offline_demo_mode ? 'Deterministic Offline Mode Active' : 'Online Streaming Mode'}
@@ -201,7 +259,10 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             </div>
           </div>
 
-          <form onSubmit={handleSaveUrl} style={{ display: 'flex', gap: '1rem', alignItems: 'center', maxWidth: '640px' }}>
+          <form
+            onSubmit={handleSaveUrl}
+            style={{ display: 'flex', gap: '1rem', alignItems: 'center', maxWidth: '640px' }}
+          >
             <input
               type="text"
               placeholder="e.g. http://localhost:5000"
@@ -235,7 +296,16 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           </form>
 
           {isSaved && (
-            <div style={{ marginTop: '0.75rem', fontSize: '0.8rem', color: '#16A34A', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            <div
+              style={{
+                marginTop: '0.75rem',
+                fontSize: '0.8rem',
+                color: '#16A34A',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+              }}
+            >
               <CheckCircle size={14} /> Base URL updated successfully.
             </div>
           )}
@@ -264,7 +334,17 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', maxWidth: '640px' }}>
             {/* Motion Sensitivity Toggle */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: '#F8FAFC', borderRadius: 'var(--radius-card)', border: '1px solid #E2E8F0' }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '1rem',
+                background: '#F8FAFC',
+                borderRadius: 'var(--radius-card)',
+                border: '1px solid #E2E8F0',
+              }}
+            >
               <div>
                 <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>Three.js 3D & Ambient Particle Motion</div>
                 <div style={{ fontSize: '0.8rem', color: 'var(--pg-steel)' }}>
@@ -290,7 +370,17 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             </div>
 
             {/* Surface Theme */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: '#F8FAFC', borderRadius: 'var(--radius-card)', border: '1px solid #E2E8F0' }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '1rem',
+                background: '#F8FAFC',
+                borderRadius: 'var(--radius-card)',
+                border: '1px solid #E2E8F0',
+              }}
+            >
               <div>
                 <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>Color Palette Theme</div>
                 <div style={{ fontSize: '0.8rem', color: 'var(--pg-steel)' }}>
@@ -346,4 +436,3 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
 };
 
 export default SettingsPage;
-

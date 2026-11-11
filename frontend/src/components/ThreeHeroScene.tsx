@@ -90,7 +90,7 @@ export const ThreeHeroScene: React.FC<Props> = ({
 
     // 1. Scene with clean platinum/silver background & depth fog
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0xEAEDF2, 0.0016);
+    scene.fog = new THREE.FogExp2(0xeaedf2, 0.0016);
 
     // 2. Camera setup framing right 60% for graph, left 40% for hero text
     const camera = new THREE.PerspectiveCamera(45, width / height, 1, 2500);
@@ -106,7 +106,7 @@ export const ThreeHeroScene: React.FC<Props> = ({
     });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(width, height);
-    renderer.setClearColor(0xEAEDF2, 0);
+    renderer.setClearColor(0xeaedf2, 0);
     container.appendChild(renderer.domElement);
 
     // 4. OrbitControls with soft damping and constrained angles
@@ -121,22 +121,22 @@ export const ThreeHeroScene: React.FC<Props> = ({
     controlsRef.current = controls;
 
     // 5. Lighting matching the screenshot
-    const ambientLight = new THREE.AmbientLight(0xFFFFFF, 1.25);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.25);
     scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0xFFFFFF, 2.0);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 2.0);
     dirLight.position.set(120, 160, 140);
     scene.add(dirLight);
 
-    const pointPurple = new THREE.PointLight(0x9333EA, 4.5, 350);
+    const pointPurple = new THREE.PointLight(0x9333ea, 4.5, 350);
     pointPurple.position.set(70, 15, 60);
     scene.add(pointPurple);
 
-    const pointSecondary = new THREE.PointLight(0x7A0FE0, 3.2, 280);
+    const pointSecondary = new THREE.PointLight(0x7a0fe0, 3.2, 280);
     pointSecondary.position.set(-35, -25, 45);
     scene.add(pointSecondary);
 
-    const fillBlue = new THREE.PointLight(0x3B82F6, 1.5, 300);
+    const fillBlue = new THREE.PointLight(0x3b82f6, 1.5, 300);
     fillBlue.position.set(140, -40, 70);
     scene.add(fillBlue);
 
@@ -494,7 +494,7 @@ export const ThreeHeroScene: React.FC<Props> = ({
 
     // 7. Materials for the 3 Node Types
     const obsidianMaterial = new THREE.MeshPhysicalMaterial({
-      color: 0x160B28,
+      color: 0x160b28,
       roughness: 0.08,
       metalness: 0.35,
       clearcoat: 1.0,
@@ -503,21 +503,21 @@ export const ThreeHeroScene: React.FC<Props> = ({
     });
 
     const purpleMaterial = new THREE.MeshStandardMaterial({
-      color: 0x7A0FE0,
-      emissive: 0x9333EA,
+      color: 0x7a0fe0,
+      emissive: 0x9333ea,
       emissiveIntensity: 0.8,
       roughness: 0.18,
       metalness: 0.35,
     });
 
     const silverMaterial = new THREE.MeshStandardMaterial({
-      color: 0xDCE3EC,
+      color: 0xdce3ec,
       roughness: 0.22,
       metalness: 0.82,
     });
 
     const haloMaterial = new THREE.MeshBasicMaterial({
-      color: 0x9333EA,
+      color: 0x9333ea,
       transparent: true,
       opacity: 0.22,
       side: THREE.DoubleSide,
@@ -569,8 +569,8 @@ export const ThreeHeroScene: React.FC<Props> = ({
     const conduitCurve = new THREE.CatmullRomCurve3(conduitPoints);
     const conduitGeom = new THREE.TubeGeometry(conduitCurve, 120, 1.6, 24, false);
     const conduitMat = new THREE.MeshStandardMaterial({
-      color: 0x9333EA,
-      emissive: 0x7A0FE0,
+      color: 0x9333ea,
+      emissive: 0x7a0fe0,
       emissiveIntensity: 0.9,
       roughness: 0.15,
       metalness: 0.15,
@@ -588,13 +588,13 @@ export const ThreeHeroScene: React.FC<Props> = ({
       rotX: number,
       rotY: number,
       rotZ: number,
-      center: THREE.Vector3
+      center: THREE.Vector3,
     ) => {
       const curve = new THREE.EllipseCurve(0, 0, rx, ry, 0, 2 * Math.PI, false, 0);
       const pts = curve.getPoints(128).map((p) => new THREE.Vector3(p.x, p.y, 0));
       const geom = new THREE.BufferGeometry().setFromPoints(pts);
       const mat = new THREE.LineBasicMaterial({
-        color: 0x94A3B8,
+        color: 0x94a3b8,
         transparent: true,
         opacity: 0.45,
       });
@@ -654,7 +654,7 @@ export const ThreeHeroScene: React.FC<Props> = ({
     const edgeGeom = new THREE.BufferGeometry();
     edgeGeom.setAttribute('position', new THREE.Float32BufferAttribute(edgeCoords, 3));
     const edgeMat = new THREE.LineBasicMaterial({
-      color: 0x94A3B8,
+      color: 0x94a3b8,
       transparent: true,
       opacity: 0.32,
     });
@@ -672,7 +672,7 @@ export const ThreeHeroScene: React.FC<Props> = ({
     }
     dustGeom.setAttribute('position', new THREE.BufferAttribute(dustPositions, 3));
     const dustMat = new THREE.PointsMaterial({
-      color: 0x7A0FE0,
+      color: 0x7a0fe0,
       size: 2.0,
       transparent: true,
       opacity: 0.35,
@@ -702,9 +702,7 @@ export const ThreeHeroScene: React.FC<Props> = ({
 
     const handleClick = () => {
       raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObjects(
-        nodeMeshes.map((n) => n.mesh)
-      );
+      const intersects = raycaster.intersectObjects(nodeMeshes.map((n) => n.mesh));
       if (intersects.length > 0) {
         const hitMesh = intersects[0].object as THREE.Mesh;
         const meta = (hitMesh as any).nodeMeta as GraphNodeMeta;
@@ -772,9 +770,7 @@ export const ThreeHeroScene: React.FC<Props> = ({
 
       // Raycast check for hover state
       raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObjects(
-        nodeMeshes.map((n) => n.mesh)
-      );
+      const intersects = raycaster.intersectObjects(nodeMeshes.map((n) => n.mesh));
 
       if (intersects.length > 0) {
         const hitMesh = intersects[0].object as THREE.Mesh;
@@ -890,12 +886,36 @@ export const ThreeHeroScene: React.FC<Props> = ({
             {hoveredNode.details}
           </div>
           {hoveredNode.cvss && (
-            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem', borderTop: '1px solid #E2E8F0', paddingTop: '0.45rem', fontSize: '0.75rem', fontFamily: 'var(--font-mono)' }}>
-              <div>CVSS: <strong style={{ color: '#DC2626' }}>{hoveredNode.cvss}</strong></div>
-              <div>Exploit P: <strong style={{ color: '#7A0FE0' }}>{hoveredNode.probPct}%</strong></div>
+            <div
+              style={{
+                display: 'flex',
+                gap: '0.75rem',
+                marginTop: '0.5rem',
+                borderTop: '1px solid #E2E8F0',
+                paddingTop: '0.45rem',
+                fontSize: '0.75rem',
+                fontFamily: 'var(--font-mono)',
+              }}
+            >
+              <div>
+                CVSS: <strong style={{ color: '#DC2626' }}>{hoveredNode.cvss}</strong>
+              </div>
+              <div>
+                Exploit P: <strong style={{ color: '#7A0FE0' }}>{hoveredNode.probPct}%</strong>
+              </div>
             </div>
           )}
-          <div style={{ fontSize: '0.7rem', color: '#7A0FE0', fontWeight: 600, marginTop: '0.45rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+          <div
+            style={{
+              fontSize: '0.7rem',
+              color: '#7A0FE0',
+              fontWeight: 600,
+              marginTop: '0.45rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.25rem',
+            }}
+          >
             <span>Click node to inspect</span>
             <ArrowRight size={11} />
           </div>

@@ -1,10 +1,8 @@
-import React, { } from 'react';
+import React from 'react';
 import {
   ShieldAlert,
-  
   GitBranch,
   Sliders,
-  
   Settings,
   Database,
   Search,
@@ -12,8 +10,6 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Lock,
-  
-  
 } from 'lucide-react';
 import { UiOperationalState } from '../content/terms';
 
@@ -373,11 +369,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               flexShrink: 0,
             }}
           />
-          {!isCollapsed ? (
-            <span>Snapshot: snap_01</span>
-          ) : (
-            <span style={{ fontSize: '0.65rem' }}>snap_01</span>
-          )}
+          {!isCollapsed ? <span>Snapshot: snap_01</span> : <span style={{ fontSize: '0.65rem' }}>snap_01</span>}
         </div>
 
         {/* Role Selector */}

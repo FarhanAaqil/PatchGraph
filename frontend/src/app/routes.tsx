@@ -1,4 +1,3 @@
-
 export interface AppRoute {
   path: string;
   id: string;

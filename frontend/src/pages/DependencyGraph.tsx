@@ -13,8 +13,12 @@ export const DependencyGraphPage: React.FC<{ edges?: GraphEdgeRow[] }> = ({ edge
     <section aria-labelledby="dep-graph-heading">
       <h1 id="dep-graph-heading">Typed Dependency & Deployment Graph</h1>
       <div>
-        <button type="button" onClick={() => setViewMode('canvas')}>Cytoscape Graph View</button>
-        <button type="button" onClick={() => setViewMode('table')}>Accessible Table Alternative</button>
+        <button type="button" onClick={() => setViewMode('canvas')}>
+          Cytoscape Graph View
+        </button>
+        <button type="button" onClick={() => setViewMode('table')}>
+          Accessible Table Alternative
+        </button>
       </div>
       {viewMode === 'canvas' && (
         <div role="region" aria-label="Interactive Cytoscape Topology Container" data-testid="cytoscape-container">
@@ -33,9 +37,13 @@ export const DependencyGraphPage: React.FC<{ edges?: GraphEdgeRow[] }> = ({ edge
         <tbody>
           {edges.map((e, idx) => (
             <tr key={idx}>
-              <td><code>{e.source}</code></td>
+              <td>
+                <code>{e.source}</code>
+              </td>
               <td>{e.kind}</td>
-              <td><code>{e.target}</code></td>
+              <td>
+                <code>{e.target}</code>
+              </td>
               <td>{e.scope ?? 'runtime'}</td>
             </tr>
           ))}

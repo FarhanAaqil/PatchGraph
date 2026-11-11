@@ -1,9 +1,5 @@
 import React, { useState } from 'react';
-import {
-  ImportStatusResponse,
-  FieldError,
-  ApiErrorEnvelope,
-} from '../api/generated';
+import { ImportStatusResponse, FieldError, ApiErrorEnvelope } from '../api/generated';
 import { UI_STATE_BANNERS, UiOperationalState } from '../content/terms';
 
 export interface ImportsPageProps {
@@ -67,8 +63,8 @@ export const ImportsPage: React.FC<ImportsPageProps> = ({
         components: [{ name: 'example-lib', version: '1.4.0', purl: 'pkg:pypi/example-lib@1.4.0' }],
       },
       null,
-      2
-    )
+      2,
+    ),
   );
   const [fieldErrors, setFieldErrors] = useState<FieldError[]>([]);
   const [lastRequestId, setLastRequestId] = useState<string>('req_seed_imp_01');
@@ -104,7 +100,7 @@ export const ImportsPage: React.FC<ImportsPageProps> = ({
             issue: err instanceof Error ? err.message : 'Invalid JSON payload',
             location: 'line 1',
           },
-        ]
+        ],
       );
       if (apiErr?.request_id) {
         setLastRequestId(apiErr.request_id);
@@ -122,7 +118,10 @@ export const ImportsPage: React.FC<ImportsPageProps> = ({
       </header>
 
       <div role="status" aria-live="polite" className={`pg-state-banner pg-state-${uiState}`}>
-        <strong>[{uiState.toUpperCase()}] {banner.title}:</strong> {banner.guidance}
+        <strong>
+          [{uiState.toUpperCase()}] {banner.title}:
+        </strong>{' '}
+        {banner.guidance}
       </div>
 
       <form onSubmit={handleValidateAndImport} aria-label="Upload or Validate SBOM/VEX Fixture">
@@ -199,11 +198,15 @@ export const ImportsPage: React.FC<ImportsPageProps> = ({
           <tbody>
             {imports.map((imp) => (
               <tr key={imp.id}>
-                <td><code>{imp.id}</code></td>
+                <td>
+                  <code>{imp.id}</code>
+                </td>
                 <td>{imp.kind.toUpperCase()}</td>
                 <td>{imp.source_name}</td>
                 <td>[{imp.status.toUpperCase()}]</td>
-                <td><code>{imp.content_sha256.slice(0, 16)}...</code></td>
+                <td>
+                  <code>{imp.content_sha256.slice(0, 16)}...</code>
+                </td>
                 <td>{imp.parser_version}</td>
                 <td>{imp.created_at}</td>
               </tr>

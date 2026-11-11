@@ -9,8 +9,13 @@ export const RiskFactors: React.FC<{
   factors: FactorBreakdown;
 }> = ({ findingId, finalScore, baselineScore, uncertainty, factors }) => (
   <div aria-label={`Risk Factor Contributions for ${findingId}`} data-testid="risk-factors-panel">
-    <h4>Explainable Score Breakdown — Final: {finalScore.toFixed(2)} (Baseline: {baselineScore.toFixed(2)})</h4>
-    <p><strong>Uncertainty Band:</strong> {(uncertainty * 100).toFixed(0)}% (Explicit penalty -{factors.uncertainty_penalty.toFixed(2)})</p>
+    <h4>
+      Explainable Score Breakdown — Final: {finalScore.toFixed(2)} (Baseline: {baselineScore.toFixed(2)})
+    </h4>
+    <p>
+      <strong>Uncertainty Band:</strong> {(uncertainty * 100).toFixed(0)}% (Explicit penalty -
+      {factors.uncertainty_penalty.toFixed(2)})
+    </p>
     <ul>
       <li>Severity Contribution (+): {factors.severity.toFixed(2)}</li>
       <li>Calibrated Exploit Likelihood (+): {factors.exploit_probability.toFixed(2)}</li>

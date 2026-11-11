@@ -2,20 +2,11 @@ import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { PatchGraphApiClient } from '../api/generated';
-import { APP_ROUTES, } from './routes';
+import { APP_ROUTES } from './routes';
 import { SEVERITY_LABELS, UI_STATE_BANNERS, UiOperationalState } from '../content/terms';
 import { CommandPalette } from '../components/CommandPalette';
 import { Sidebar } from '../components/Sidebar';
-import {
-  ShieldAlert,
-  Search,
-  ChevronRight,
-  
-  
-  
-  
-  
-} from 'lucide-react';
+import { ShieldAlert, Search, ChevronRight } from 'lucide-react';
 
 // Lazy-loaded page components for efficient code splitting & chunking
 const LandingPage = lazy(() => import('../pages/LandingPage'));
@@ -50,9 +41,7 @@ const PageSkeleton: React.FC = () => (
         animation: 'spin-slow 0.8s linear infinite',
       }}
     />
-    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem' }}>
-      Loading intelligence workspace...
-    </span>
+    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem' }}>Loading intelligence workspace...</span>
   </div>
 );
 
@@ -146,19 +135,11 @@ export const App: React.FC = () => {
       routeId === 'explainability'
     ) {
       target = '/risk';
-    } else if (
-      routeId === 'remediation-planner' ||
-      routeId === 'planner' ||
-      routeId === 'what-if'
-    ) {
+    } else if (routeId === 'remediation-planner' || routeId === 'planner' || routeId === 'what-if') {
       target = '/planner';
     } else if (routeId === 'audit' || routeId === 'review' || routeId === 'runs') {
       target = '/audit';
-    } else if (
-      routeId === 'data-health' ||
-      routeId === 'settings' ||
-      routeId === 'health'
-    ) {
+    } else if (routeId === 'data-health' || routeId === 'settings' || routeId === 'health') {
       target = '/settings';
     } else if (routeId === 'assets') {
       target = '/assets';
@@ -179,8 +160,7 @@ export const App: React.FC = () => {
   ];
 
   const currentTabLabel =
-    navItems.find((n) => n.id === activeTab)?.label ||
-    (activeTab === 'assets' ? 'Assets Inventory' : 'Overview');
+    navItems.find((n) => n.id === activeTab)?.label || (activeTab === 'assets' ? 'Assets Inventory' : 'Overview');
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--color-silver)', display: 'flex' }}>
@@ -220,9 +200,7 @@ export const App: React.FC = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.85rem' }}>
             <span style={{ color: 'var(--color-steel-gray)', fontWeight: 500 }}>Workbench</span>
             <ChevronRight size={14} style={{ color: 'var(--color-steel-gray)' }} />
-            <span style={{ color: 'var(--color-ink)', fontWeight: 700 }}>
-              {currentTabLabel}
-            </span>
+            <span style={{ color: 'var(--color-ink)', fontWeight: 700 }}>{currentTabLabel}</span>
           </div>
 
           {/* Right Status Controls & Search */}
@@ -275,7 +253,15 @@ export const App: React.FC = () => {
             >
               <Search size={14} />
               <span className="hidden sm:inline">Search...</span>
-              <kbd style={{ background: '#E2E8F0', padding: '0.1rem 0.35rem', borderRadius: '4px', fontSize: '0.7rem', fontFamily: 'var(--font-mono)' }}>
+              <kbd
+                style={{
+                  background: '#E2E8F0',
+                  padding: '0.1rem 0.35rem',
+                  borderRadius: '4px',
+                  fontSize: '0.7rem',
+                  fontFamily: 'var(--font-mono)',
+                }}
+              >
                 ⌘K
               </kbd>
             </button>
@@ -289,7 +275,10 @@ export const App: React.FC = () => {
           data-testid="global-state-banner"
           style={{
             background: uiState === 'stale' || uiState === 'unauthorized' ? '#FEF2F2' : 'rgba(122, 15, 224, 0.06)',
-            borderBottom: uiState === 'stale' || uiState === 'unauthorized' ? '1px solid #FCA5A5' : '1px solid rgba(122, 15, 224, 0.12)',
+            borderBottom:
+              uiState === 'stale' || uiState === 'unauthorized'
+                ? '1px solid #FCA5A5'
+                : '1px solid rgba(122, 15, 224, 0.12)',
             padding: '0.45rem 2rem',
             fontSize: '0.8rem',
             color: 'var(--color-ink)',
@@ -301,21 +290,24 @@ export const App: React.FC = () => {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <strong style={{ color: uiState === 'stale' || uiState === 'unauthorized' ? '#DC2626' : 'var(--color-violet)' }}>
+            <strong
+              style={{ color: uiState === 'stale' || uiState === 'unauthorized' ? '#DC2626' : 'var(--color-violet)' }}
+            >
               {uiState === 'stale'
                 ? '[STALE] Stale External Evidence Warning'
                 : uiState === 'unauthorized'
-                ? '[UNAUTHORIZED] Read-Only Role Active'
-                : 'Data Freshness:'}
+                  ? '[UNAUTHORIZED] Read-Only Role Active'
+                  : 'Data Freshness:'}
             </strong>{' '}
             <span style={{ color: 'var(--text-dark-secondary)' }}>
-              {uiState === 'stale' || uiState === 'unauthorized'
-                ? banner?.guidance || ''
-                : (
-                  <>
-                    Pinned Evidence Snapshot <code>snap_01</code> • NVD, EPSS, OSV, CISA KEV Cached • Verified Ground Truth
-                  </>
-                )}
+              {uiState === 'stale' || uiState === 'unauthorized' ? (
+                banner?.guidance || ''
+              ) : (
+                <>
+                  Pinned Evidence Snapshot <code>snap_01</code> • NVD, EPSS, OSV, CISA KEV Cached • Verified Ground
+                  Truth
+                </>
+              )}
             </span>
           </div>
           <div style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--color-steel-gray)' }}>
@@ -328,11 +320,7 @@ export const App: React.FC = () => {
           <ul>
             {APP_ROUTES.filter((r) => !navItems.some((n) => n.routeId === r.id)).map((route) => (
               <li key={route.id}>
-                <button
-                  type="button"
-                  onClick={() => handleNavigate(route.id)}
-                  data-testid={`nav-${route.id}`}
-                >
+                <button type="button" onClick={() => handleNavigate(route.id)} data-testid={`nav-${route.id}`}>
                   {route.title}
                 </button>
               </li>
@@ -363,7 +351,16 @@ export const App: React.FC = () => {
                       boxShadow: 'var(--shadow-soft-silver)',
                     }}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: '1rem',
+                        flexWrap: 'wrap',
+                        gap: '0.5rem',
+                      }}
+                    >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <ShieldAlert size={18} style={{ color: 'var(--color-violet)' }} />
                         <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700 }}>
@@ -375,13 +372,23 @@ export const App: React.FC = () => {
                       </span>
                     </div>
 
-                    <ul style={{ margin: 0, paddingLeft: '1.25rem', fontSize: '0.85rem', color: 'var(--text-dark-secondary)', lineHeight: '1.7' }}>
+                    <ul
+                      style={{
+                        margin: 0,
+                        paddingLeft: '1.25rem',
+                        fontSize: '0.85rem',
+                        color: 'var(--text-dark-secondary)',
+                        lineHeight: '1.7',
+                      }}
+                    >
                       <li>
                         <strong>Vulnerable Transitive Package:</strong> <code>example-lib@1.4.0</code> via{' '}
-                        <code>checkout-sdk@2.1.0</code> ({SEVERITY_LABELS.HIGH.badgeText} CVSS 8.8, EPSS 0.86, CISA KEV=true)
+                        <code>checkout-sdk@2.1.0</code> ({SEVERITY_LABELS.HIGH.badgeText} CVSS 8.8, EPSS 0.86, CISA
+                        KEV=true)
                       </li>
                       <li>
-                        <strong>Affected Production Service:</strong> <code>checkout</code> (Criticality 5, max downtime 30m, final score 10.57)
+                        <strong>Affected Production Service:</strong> <code>checkout</code> (Criticality 5, max downtime
+                        30m, final score 10.57)
                       </li>
                       <li>
                         <strong>VEX-Qualified Staging Service:</strong> <code>analytics-worker</code> (OpenVEX status:{' '}
@@ -411,10 +418,7 @@ export const App: React.FC = () => {
             {activeTab === 'risk' && <RiskPage apiBaseUrl={apiBaseUrl} />}
 
             {activeTab === 'planner' && (
-              <PlannerPage
-                apiBaseUrl={apiBaseUrl}
-                onNavigateToAudit={() => handleNavigate('audit')}
-              />
+              <PlannerPage apiBaseUrl={apiBaseUrl} onNavigateToAudit={() => handleNavigate('audit')} />
             )}
 
             {activeTab === 'audit' && <AuditPage apiBaseUrl={apiBaseUrl} />}

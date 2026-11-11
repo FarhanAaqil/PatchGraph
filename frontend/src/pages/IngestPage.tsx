@@ -2,22 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useToast } from '../components/Toast';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { PatchGraphApiClient } from '../api/generated';
-import {
-  UploadCloud,
-  
-  CheckCircle2,
-  
-  
-  Database,
-  
-  
-  Sparkles,
-  Copy,
-  Check,
-  FileCode,
-  
-  Server
-} from 'lucide-react';
+import { UploadCloud, CheckCircle2, Database, Sparkles, Copy, Check, FileCode, Server } from 'lucide-react';
 
 const api = new PatchGraphApiClient();
 
@@ -56,7 +41,9 @@ export const IngestPage: React.FC = () => {
       const res = await api.uploadSbomFile(file);
       setProgress(100);
       const count = res.components_discovered || 1;
-      setUploadStatus(`Ingestion Successful! ${res.source_name}: ${count} components discovered. SHA-256: ${res.content_sha256.slice(0, 16)}...`);
+      setUploadStatus(
+        `Ingestion Successful! ${res.source_name}: ${count} components discovered. SHA-256: ${res.content_sha256.slice(0, 16)}...`,
+      );
       queryClient.invalidateQueries({ queryKey: ['imports'] });
       queryClient.invalidateQueries({ queryKey: ['findings'] });
       queryClient.invalidateQueries({ queryKey: ['assets'] });
@@ -80,7 +67,9 @@ export const IngestPage: React.FC = () => {
     try {
       const res = await api.loadSampleData();
       setProgress(100);
-      setUploadStatus(`Sample Data Loaded: ${res.packages_loaded} packages registered, ${res.findings_loaded} calibrated findings created. Pinned to snapshot ${res.snapshot_id}.`);
+      setUploadStatus(
+        `Sample Data Loaded: ${res.packages_loaded} packages registered, ${res.findings_loaded} calibrated findings created. Pinned to snapshot ${res.snapshot_id}.`,
+      );
       queryClient.invalidateQueries({ queryKey: ['imports'] });
       queryClient.invalidateQueries({ queryKey: ['findings'] });
       queryClient.invalidateQueries({ queryKey: ['assets'] });
@@ -169,7 +158,16 @@ export const IngestPage: React.FC = () => {
   return (
     <div style={{ padding: '2.5rem', maxWidth: '1440px', margin: '0 auto', color: 'var(--color-ink)' }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2.5rem', flexWrap: 'wrap', gap: '1.5rem' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          marginBottom: '2.5rem',
+          flexWrap: 'wrap',
+          gap: '1.5rem',
+        }}
+      >
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
             <span className="pill-chip pill-chip-violet">
@@ -177,11 +175,20 @@ export const IngestPage: React.FC = () => {
             </span>
             <span className="pill-chip pill-chip-demo">Demo data</span>
           </div>
-          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2.25rem', letterSpacing: '-0.03em', margin: 0, fontWeight: 800 }}>
+          <h1
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: '2.25rem',
+              letterSpacing: '-0.03em',
+              margin: 0,
+              fontWeight: 800,
+            }}
+          >
             Artifact & Topology Ingest
           </h1>
           <p style={{ color: 'var(--color-steel-gray)', marginTop: '0.5rem', fontSize: '1rem', maxWidth: '720px' }}>
-            Upload or sync CycloneDX/SPDX Software Bills of Materials (SBOMs), machine-readable OpenVEX statements, and microservice deployment topologies.
+            Upload or sync CycloneDX/SPDX Software Bills of Materials (SBOMs), machine-readable OpenVEX statements, and
+            microservice deployment topologies.
           </p>
         </div>
 
@@ -272,7 +279,9 @@ export const IngestPage: React.FC = () => {
       </div>
 
       {/* Main Grid: Left Upload Zone, Right Ingest Log */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(340px, 460px) 1fr', gap: '2rem', alignItems: 'start' }}>
+      <div
+        style={{ display: 'grid', gridTemplateColumns: 'minmax(340px, 460px) 1fr', gap: '2rem', alignItems: 'start' }}
+      >
         {/* Left: Drag & Drop Dropzone */}
         <div
           className="pg-card"
@@ -283,7 +292,16 @@ export const IngestPage: React.FC = () => {
           }}
         >
           {/* Format Selector Tabs */}
-          <div style={{ display: 'flex', background: '#F1F5F9', padding: '0.35rem', borderRadius: 'var(--radius-pill)', marginBottom: '1.75rem', gap: '0.25rem' }}>
+          <div
+            style={{
+              display: 'flex',
+              background: '#F1F5F9',
+              padding: '0.35rem',
+              borderRadius: 'var(--radius-pill)',
+              marginBottom: '1.75rem',
+              gap: '0.25rem',
+            }}
+          >
             {(['sbom', 'vex', 'topology'] as const).map((tab) => (
               <button
                 key={tab}
@@ -368,7 +386,14 @@ export const IngestPage: React.FC = () => {
             </div>
 
             <div>
-              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.1rem', color: 'var(--color-ink)' }}>
+              <div
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 800,
+                  fontSize: '1.1rem',
+                  color: 'var(--color-ink)',
+                }}
+              >
                 Drag & Drop {activeTab.toUpperCase()} File
               </div>
               <p style={{ fontSize: '0.85rem', color: 'var(--color-steel-gray)', margin: '0.35rem 0 0 0' }}>
@@ -384,11 +409,21 @@ export const IngestPage: React.FC = () => {
           {/* Progress & Live Ingest Status */}
           {isUploading && (
             <div style={{ marginTop: '1.5rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.35rem' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  marginBottom: '0.35rem',
+                }}
+              >
                 <span style={{ color: 'var(--color-violet)' }}>Parsing Spec...</span>
                 <span>{progress}%</span>
               </div>
-              <div style={{ width: '100%', height: '8px', background: '#E2E8F0', borderRadius: '4px', overflow: 'hidden' }}>
+              <div
+                style={{ width: '100%', height: '8px', background: '#E2E8F0', borderRadius: '4px', overflow: 'hidden' }}
+              >
                 <div
                   style={{
                     width: `${progress}%`,
@@ -431,7 +466,9 @@ export const IngestPage: React.FC = () => {
             borderRadius: 'var(--radius-frame)',
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <div
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}
+          >
             <div>
               <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800 }}>Recorded Ingest Manifest</h3>
               <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem', color: 'var(--color-steel-gray)' }}>
@@ -446,7 +483,16 @@ export const IngestPage: React.FC = () => {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
               <thead>
-                <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', color: 'var(--color-steel-gray)', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.05em' }}>
+                <tr
+                  style={{
+                    background: '#F8FAFC',
+                    borderBottom: '1px solid #E2E8F0',
+                    color: 'var(--color-steel-gray)',
+                    textTransform: 'uppercase',
+                    fontSize: '0.75rem',
+                    letterSpacing: '0.05em',
+                  }}
+                >
                   <th style={{ padding: '0.85rem 1rem', fontWeight: 600 }}>Format / Artifact</th>
                   <th style={{ padding: '0.85rem 1rem', fontWeight: 600 }}>Content SHA-256</th>
                   <th style={{ padding: '0.85rem 1rem', fontWeight: 600 }}>Components</th>
@@ -465,9 +511,7 @@ export const IngestPage: React.FC = () => {
 
                     <td style={{ padding: '1rem', fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={{ color: 'var(--color-steel-gray)' }}>
-                          {item.sha256.slice(0, 16)}...
-                        </span>
+                        <span style={{ color: 'var(--color-steel-gray)' }}>{item.sha256.slice(0, 16)}...</span>
                         <button
                           type="button"
                           onClick={() => copyToClipboard(item.sha256)}
@@ -485,7 +529,14 @@ export const IngestPage: React.FC = () => {
                       </div>
                     </td>
 
-                    <td style={{ padding: '1rem', fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--color-ink)' }}>
+                    <td
+                      style={{
+                        padding: '1rem',
+                        fontFamily: 'var(--font-mono)',
+                        fontWeight: 700,
+                        color: 'var(--color-ink)',
+                      }}
+                    >
                       {item.components} assets
                     </td>
 

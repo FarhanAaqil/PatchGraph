@@ -4,7 +4,6 @@ Serves:
 - All `/api/v1/*` JSON contract endpoints
 - Top-level `/health` endpoint
 - Full React + Vite + Three.js single-page application from `frontend/dist`
-- Legacy HTML routes at `/pages/{page_id}`
 """
 
 from __future__ import annotations
@@ -26,8 +25,6 @@ from backend.app.main import app
 
 DIST_DIR = REPO_ROOT / "frontend" / "dist"
 ASSETS_DIR = DIST_DIR / "assets"
-PAGES_DIR = REPO_ROOT / "frontend" / "pages"
-PREVIEW_HTML_PATH = REPO_ROOT / "frontend" / "standalone_preview.html"
 
 # Mount static Vite assets if built
 if ASSETS_DIR.exists():
@@ -39,17 +36,9 @@ async def serve_root_app() -> HTMLResponse:
     dist_index = DIST_DIR / "index.html"
     if dist_index.exists():
         return HTMLResponse(dist_index.read_text(encoding="utf-8"))
-    if PREVIEW_HTML_PATH.exists():
-        return HTMLResponse(PREVIEW_HTML_PATH.read_text(encoding="utf-8"))
-    return HTMLResponse("<h1>PatchGraph v1.0 Running</h1>")
-
-
-@app.get("/pages/{page_id}", response_class=HTMLResponse)
-async def serve_multipage_route(page_id: str) -> HTMLResponse:
-    target = PAGES_DIR / f"{page_id}.html"
-    if not target.exists():
-        raise HTTPException(status_code=404, detail=f"Page '/pages/{page_id}' not found")
-    return HTMLResponse(target.read_text(encoding="utf-8"))
+    return HTMLResponse(
+        '<h1>PatchGraph API is running</h1><p>Build the UI with <code>cd frontend &amp;&amp; npm run build</code>, or browse <a href="/docs">/docs</a>.</p>'
+    )
 
 
 # Fallback SPA routing for client-side pages

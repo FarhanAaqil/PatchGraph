@@ -2,25 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import cytoscape from 'cytoscape';
 import { PatchGraphApiClient, GraphNode, GraphEdge } from '../api/generated';
 import { ThreeHeroScene } from '../components/ThreeHeroScene';
-import {
-  GitBranch,
-  
-  
-  ZoomIn,
-  ZoomOut,
-  Maximize2,
-  ShieldAlert,
-  
-  
-  
-  
-  
-  ArrowRight,
-  
-  RotateCcw,
-  User,
-  
-} from 'lucide-react';
+import { GitBranch, ZoomIn, ZoomOut, Maximize2, ShieldAlert, ArrowRight, RotateCcw, User } from 'lucide-react';
 
 const api = new PatchGraphApiClient();
 
@@ -44,187 +26,190 @@ export const GraphPage: React.FC<GraphPageProps> = ({ onNavigateToPlanner }) => 
     if (viewMode !== '2d' || !cyContainerRef.current) return;
 
     // Load graph data from real API
-    api.getFullGraph({
-      environment: envFilter !== 'all' ? envFilter : undefined,
-      in_kev: kevOnly ? true : undefined,
-    }).then((res) => {
-      setNodeCount(res.nodes.length);
-      setEdgeCount(res.edges.length);
+    api
+      .getFullGraph({
+        environment: envFilter !== 'all' ? envFilter : undefined,
+        in_kev: kevOnly ? true : undefined,
+      })
+      .then((res) => {
+        setNodeCount(res.nodes.length);
+        setEdgeCount(res.edges.length);
 
-      const cyElements: any[] = [];
+        const cyElements: any[] = [];
 
-      res.nodes.forEach((n: GraphNode) => {
-        let bgColor = '#8A929C'; // Steel Gray
-        let shape: cytoscape.Css.NodeShape = 'ellipse';
-        let borderColor = '#CBD5E1';
-        let borderWidth = 2;
+        res.nodes.forEach((n: GraphNode) => {
+          let bgColor = '#8A929C'; // Steel Gray
+          let shape: cytoscape.Css.NodeShape = 'ellipse';
+          let borderColor = '#CBD5E1';
+          let borderWidth = 2;
 
-        if (n.severity === 'critical' || (n.cvss && n.cvss >= 8.0) || n.in_kev) {
-          bgColor = '#7A0FE0'; // Violet
-          shape = 'diamond';
-          borderColor = '#E6E9EE';
-          borderWidth = 3;
-        } else if (n.kind === 'service') {
-          bgColor = '#4B0F9E'; // Indigo
-          shape = 'round-rectangle';
-          borderColor = '#93C5FD';
-          borderWidth = 2.5;
-        } else if (n.kind === 'application') {
-          bgColor = '#1A1220'; // Ink
-          shape = 'hexagon';
-          borderColor = '#E6E9EE';
-          borderWidth = 2.5;
-        }
+          if (n.severity === 'critical' || (n.cvss && n.cvss >= 8.0) || n.in_kev) {
+            bgColor = '#7A0FE0'; // Violet
+            shape = 'diamond';
+            borderColor = '#E6E9EE';
+            borderWidth = 3;
+          } else if (n.kind === 'service') {
+            bgColor = '#4B0F9E'; // Indigo
+            shape = 'round-rectangle';
+            borderColor = '#93C5FD';
+            borderWidth = 2.5;
+          } else if (n.kind === 'application') {
+            bgColor = '#1A1220'; // Ink
+            shape = 'hexagon';
+            borderColor = '#E6E9EE';
+            borderWidth = 2.5;
+          }
 
-        cyElements.push({
-          data: {
-            id: n.id,
-            label: n.label,
-            kind: n.kind,
-            severity: n.severity || 'safe',
-            cvss: n.cvss || 0,
-            reachability: n.reachability || 'reachable_prod',
-            in_kev: n.in_kev || false,
-            color: bgColor,
-            shape: shape,
-            borderColor: borderColor,
-            borderWidth: borderWidth,
-          },
-        });
-      });
-
-      res.edges.forEach((e: GraphEdge, idx: number) => {
-        const isPatchPath = e.is_patch_path || false;
-        cyElements.push({
-          data: {
-            id: `edge_${idx}`,
-            source: e.source,
-            target: e.target,
-            is_patch_path: isPatchPath,
-            lineColor: isPatchPath ? '#7A0FE0' : 'rgba(138, 146, 156, 0.45)',
-            lineWidth: isPatchPath ? 3.5 : 2,
-          },
-        });
-      });
-
-      if (cyRef.current) {
-        cyRef.current.destroy();
-      }
-
-      const cy = cytoscape({
-        container: cyContainerRef.current,
-        elements: cyElements,
-        style: [
-          {
-            selector: 'node',
-            style: {
-              'background-color': 'data(color)',
-              label: 'data(label)',
-              'font-family': 'DM Sans, sans-serif',
-              'font-size': '11px',
-              'font-weight': 700,
-              color: '#FFFFFF',
-              'text-valign': 'bottom',
-              'text-margin-y': 8,
-              'text-background-color': '#1A1220',
-              'text-background-opacity': 0.85,
-              'text-background-padding': '3px',
-              'text-background-shape': 'roundrectangle',
-              shape: 'data(shape)' as any,
-              width: 44,
-              height: 44,
-              'border-width': 'data(borderWidth)',
-              'border-color': 'data(borderColor)',
-              'transition-property': 'background-color, border-color, width, height, opacity',
-              'transition-duration': 0.2,
+          cyElements.push({
+            data: {
+              id: n.id,
+              label: n.label,
+              kind: n.kind,
+              severity: n.severity || 'safe',
+              cvss: n.cvss || 0,
+              reachability: n.reachability || 'reachable_prod',
+              in_kev: n.in_kev || false,
+              color: bgColor,
+              shape: shape,
+              borderColor: borderColor,
+              borderWidth: borderWidth,
             },
-          },
-          {
-            selector: 'edge',
-            style: {
-              width: 'data(lineWidth)',
-              'line-color': 'data(lineColor)',
-              'target-arrow-color': 'data(lineColor)',
-              'target-arrow-shape': 'triangle',
-              'curve-style': 'bezier',
-              opacity: 0.85,
-              'arrow-scale': 1.2,
-              'transition-property': 'line-color, opacity, width',
-              'transition-duration': 0.2,
-            },
-          },
-          {
-            selector: 'node.highlighted',
-            style: {
-              'border-width': 4,
-              'border-color': '#FFFFFF',
-              'background-color': '#7A0FE0',
-              width: 52,
-              height: 52,
-              opacity: 1,
-              'z-index': 100,
-            },
-          },
-          {
-            selector: 'edge.highlighted',
-            style: {
-              width: 4.5,
-              'line-color': '#7A0FE0',
-              'target-arrow-color': '#7A0FE0',
-              opacity: 1,
-              'z-index': 90,
-            },
-          },
-          {
-            selector: '.faded',
-            style: {
-              opacity: 0.15,
-            },
-          },
-        ],
-        layout: {
-          name: 'breadthfirst',
-          directed: true,
-          padding: 50,
-          spacingFactor: 1.4,
-        },
-      });
-
-      // Interactive node tap handler with path highlighting
-      cy.on('tap', 'node', (evt) => {
-        const node = evt.target;
-        const data = node.data();
-
-        // Highlight neighborhood
-        const neighborhood = node.neighborhood().add(node);
-        cy.elements().removeClass('highlighted faded');
-        cy.elements().difference(neighborhood).addClass('faded');
-        neighborhood.addClass('highlighted');
-
-        setIsLoadingNode(true);
-        api.getGraphNode(data.id)
-          .then((detail) => {
-            setSelectedNode(detail);
-          })
-          .catch((err) => {
-            console.error('Failed to load node detail', err);
-            setSelectedNode(data);
-          })
-          .finally(() => {
-            setIsLoadingNode(false);
           });
-      });
+        });
 
-      // Background tap clears selection
-      cy.on('tap', (evt) => {
-        if (evt.target === cy) {
-          cy.elements().removeClass('highlighted faded');
-          setSelectedNode(null);
+        res.edges.forEach((e: GraphEdge, idx: number) => {
+          const isPatchPath = e.is_patch_path || false;
+          cyElements.push({
+            data: {
+              id: `edge_${idx}`,
+              source: e.source,
+              target: e.target,
+              is_patch_path: isPatchPath,
+              lineColor: isPatchPath ? '#7A0FE0' : 'rgba(138, 146, 156, 0.45)',
+              lineWidth: isPatchPath ? 3.5 : 2,
+            },
+          });
+        });
+
+        if (cyRef.current) {
+          cyRef.current.destroy();
         }
-      });
 
-      cyRef.current = cy;
-    });
+        const cy = cytoscape({
+          container: cyContainerRef.current,
+          elements: cyElements,
+          style: [
+            {
+              selector: 'node',
+              style: {
+                'background-color': 'data(color)',
+                label: 'data(label)',
+                'font-family': 'DM Sans, sans-serif',
+                'font-size': '11px',
+                'font-weight': 700,
+                color: '#FFFFFF',
+                'text-valign': 'bottom',
+                'text-margin-y': 8,
+                'text-background-color': '#1A1220',
+                'text-background-opacity': 0.85,
+                'text-background-padding': '3px',
+                'text-background-shape': 'roundrectangle',
+                shape: 'data(shape)' as any,
+                width: 44,
+                height: 44,
+                'border-width': 'data(borderWidth)',
+                'border-color': 'data(borderColor)',
+                'transition-property': 'background-color, border-color, width, height, opacity',
+                'transition-duration': 0.2,
+              },
+            },
+            {
+              selector: 'edge',
+              style: {
+                width: 'data(lineWidth)',
+                'line-color': 'data(lineColor)',
+                'target-arrow-color': 'data(lineColor)',
+                'target-arrow-shape': 'triangle',
+                'curve-style': 'bezier',
+                opacity: 0.85,
+                'arrow-scale': 1.2,
+                'transition-property': 'line-color, opacity, width',
+                'transition-duration': 0.2,
+              },
+            },
+            {
+              selector: 'node.highlighted',
+              style: {
+                'border-width': 4,
+                'border-color': '#FFFFFF',
+                'background-color': '#7A0FE0',
+                width: 52,
+                height: 52,
+                opacity: 1,
+                'z-index': 100,
+              },
+            },
+            {
+              selector: 'edge.highlighted',
+              style: {
+                width: 4.5,
+                'line-color': '#7A0FE0',
+                'target-arrow-color': '#7A0FE0',
+                opacity: 1,
+                'z-index': 90,
+              },
+            },
+            {
+              selector: '.faded',
+              style: {
+                opacity: 0.15,
+              },
+            },
+          ],
+          layout: {
+            name: 'breadthfirst',
+            directed: true,
+            padding: 50,
+            spacingFactor: 1.4,
+          },
+        });
+
+        // Interactive node tap handler with path highlighting
+        cy.on('tap', 'node', (evt) => {
+          const node = evt.target;
+          const data = node.data();
+
+          // Highlight neighborhood
+          const neighborhood = node.neighborhood().add(node);
+          cy.elements().removeClass('highlighted faded');
+          cy.elements().difference(neighborhood).addClass('faded');
+          neighborhood.addClass('highlighted');
+
+          setIsLoadingNode(true);
+          api
+            .getGraphNode(data.id)
+            .then((detail) => {
+              setSelectedNode(detail);
+            })
+            .catch((err) => {
+              console.error('Failed to load node detail', err);
+              setSelectedNode(data);
+            })
+            .finally(() => {
+              setIsLoadingNode(false);
+            });
+        });
+
+        // Background tap clears selection
+        cy.on('tap', (evt) => {
+          if (evt.target === cy) {
+            cy.elements().removeClass('highlighted faded');
+            setSelectedNode(null);
+          }
+        });
+
+        cyRef.current = cy;
+      });
 
     return () => {
       if (cyRef.current) cyRef.current.destroy();
@@ -259,12 +244,14 @@ export const GraphPage: React.FC<GraphPageProps> = ({ onNavigateToPlanner }) => 
     if (!cyRef.current) return;
     cyRef.current.elements().removeClass('highlighted faded');
     setSelectedNode(null);
-    cyRef.current.layout({
-      name: 'breadthfirst',
-      directed: true,
-      padding: 50,
-      spacingFactor: 1.4,
-    }).run();
+    cyRef.current
+      .layout({
+        name: 'breadthfirst',
+        directed: true,
+        padding: 50,
+        spacingFactor: 1.4,
+      })
+      .run();
     handleFit();
   };
 
@@ -288,28 +275,61 @@ export const GraphPage: React.FC<GraphPageProps> = ({ onNavigateToPlanner }) => 
   return (
     <div style={{ padding: '2.5rem', maxWidth: '1440px', margin: '0 auto', color: 'var(--color-ink)' }}>
       {/* Header & Controls */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem', flexWrap: 'wrap', gap: '1.5rem' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          marginBottom: '2rem',
+          flexWrap: 'wrap',
+          gap: '1.5rem',
+        }}
+      >
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-            <span className="pill-chip" style={{ background: 'rgba(122, 15, 224, 0.1)', color: 'var(--color-violet)', border: '1px solid rgba(122, 15, 224, 0.25)' }}>
+            <span
+              className="pill-chip"
+              style={{
+                background: 'rgba(122, 15, 224, 0.1)',
+                color: 'var(--color-violet)',
+                border: '1px solid rgba(122, 15, 224, 0.25)',
+              }}
+            >
               <GitBranch size={14} style={{ marginRight: '0.35rem' }} /> Topology Analysis
             </span>
             <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--color-steel-gray)' }}>
               {nodeCount} Nodes • {edgeCount} Ingress Edges
             </span>
           </div>
-          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2.25rem', letterSpacing: '-0.03em', margin: 0, fontWeight: 800 }}>
+          <h1
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: '2.25rem',
+              letterSpacing: '-0.03em',
+              margin: 0,
+              fontWeight: 800,
+            }}
+          >
             Dependency & Deployment Graph
           </h1>
           <p style={{ color: 'var(--color-steel-gray)', marginTop: '0.5rem', fontSize: '1rem', maxWidth: '700px' }}>
-            Bounded reverse traversal with reachability hop decay across packages, services, runtime clusters, and asset owners. Click any node to inspect blast radius and exploit reachability.
+            Bounded reverse traversal with reachability hop decay across packages, services, runtime clusters, and asset
+            owners. Click any node to inspect blast radius and exploit reachability.
           </p>
         </div>
 
         {/* View Mode & Filter Bar */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
           {/* 2D / 3D Toggle */}
-          <div style={{ display: 'flex', background: '#FFFFFF', padding: '0.25rem', borderRadius: 'var(--radius-pill)', border: '1px solid #CBD5E1' }}>
+          <div
+            style={{
+              display: 'flex',
+              background: '#FFFFFF',
+              padding: '0.25rem',
+              borderRadius: 'var(--radius-pill)',
+              border: '1px solid #CBD5E1',
+            }}
+          >
             <button
               type="button"
               onClick={() => setViewMode('2d')}
@@ -446,7 +466,18 @@ export const GraphPage: React.FC<GraphPageProps> = ({ onNavigateToPlanner }) => 
                 <button
                   type="button"
                   onClick={handleZoomIn}
-                  style={{ width: '34px', height: '34px', borderRadius: '50%', border: 'none', background: 'rgba(255, 255, 255, 0.08)', color: '#FFFFFF', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  style={{
+                    width: '34px',
+                    height: '34px',
+                    borderRadius: '50%',
+                    border: 'none',
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    color: '#FFFFFF',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
                   title="Zoom In"
                 >
                   <ZoomIn size={16} />
@@ -454,7 +485,18 @@ export const GraphPage: React.FC<GraphPageProps> = ({ onNavigateToPlanner }) => 
                 <button
                   type="button"
                   onClick={handleZoomOut}
-                  style={{ width: '34px', height: '34px', borderRadius: '50%', border: 'none', background: 'rgba(255, 255, 255, 0.08)', color: '#FFFFFF', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  style={{
+                    width: '34px',
+                    height: '34px',
+                    borderRadius: '50%',
+                    border: 'none',
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    color: '#FFFFFF',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
                   title="Zoom Out"
                 >
                   <ZoomOut size={16} />
@@ -462,7 +504,18 @@ export const GraphPage: React.FC<GraphPageProps> = ({ onNavigateToPlanner }) => 
                 <button
                   type="button"
                   onClick={handleFit}
-                  style={{ width: '34px', height: '34px', borderRadius: '50%', border: 'none', background: 'rgba(255, 255, 255, 0.08)', color: '#FFFFFF', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  style={{
+                    width: '34px',
+                    height: '34px',
+                    borderRadius: '50%',
+                    border: 'none',
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    color: '#FFFFFF',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
                   title="Fit to Canvas"
                 >
                   <Maximize2 size={16} />
@@ -470,7 +523,18 @@ export const GraphPage: React.FC<GraphPageProps> = ({ onNavigateToPlanner }) => 
                 <button
                   type="button"
                   onClick={handleReset}
-                  style={{ width: '34px', height: '34px', borderRadius: '50%', border: 'none', background: 'rgba(255, 255, 255, 0.08)', color: '#FFFFFF', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  style={{
+                    width: '34px',
+                    height: '34px',
+                    borderRadius: '50%',
+                    border: 'none',
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    color: '#FFFFFF',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
                   title="Reset Layout & Highlights"
                 >
                   <RotateCcw size={16} />
@@ -497,22 +561,56 @@ export const GraphPage: React.FC<GraphPageProps> = ({ onNavigateToPlanner }) => 
                   zIndex: 20,
                 }}
               >
-                <div style={{ fontWeight: 800, color: 'var(--color-silver)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.2rem' }}>
+                <div
+                  style={{
+                    fontWeight: 800,
+                    color: 'var(--color-silver)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                    marginBottom: '0.2rem',
+                  }}
+                >
                   Topology Legend
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span style={{ width: '10px', height: '10px', transform: 'rotate(45deg)', background: 'var(--color-violet)', boxShadow: '0 0 8px var(--color-violet)' }} />
+                  <span
+                    style={{
+                      width: '10px',
+                      height: '10px',
+                      transform: 'rotate(45deg)',
+                      background: 'var(--color-violet)',
+                      boxShadow: '0 0 8px var(--color-violet)',
+                    }}
+                  />
                   <span>Critical Vulnerability Node</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span style={{ width: '10px', height: '10px', borderRadius: '2px', background: 'var(--color-indigo)' }} />
+                  <span
+                    style={{ width: '10px', height: '10px', borderRadius: '2px', background: 'var(--color-indigo)' }}
+                  />
                   <span>Production Microservice</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'var(--color-steel-gray)' }} />
+                  <span
+                    style={{
+                      width: '10px',
+                      height: '10px',
+                      borderRadius: '50%',
+                      background: 'var(--color-steel-gray)',
+                    }}
+                  />
                   <span>Upstream Dependency</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.2rem', paddingTop: '0.4rem', borderTop: '1px solid rgba(138, 146, 156, 0.2)' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    marginTop: '0.2rem',
+                    paddingTop: '0.4rem',
+                    borderTop: '1px solid rgba(138, 146, 156, 0.2)',
+                  }}
+                >
                   <span style={{ width: '16px', height: '3px', background: '#7A0FE0' }} />
                   <span>Remediation Patch Path</span>
                 </div>
@@ -573,8 +671,18 @@ export const GraphPage: React.FC<GraphPageProps> = ({ onNavigateToPlanner }) => 
           >
             <div>
               {/* Header */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-                <span className="pill-chip" style={{ background: 'rgba(122, 15, 224, 0.1)', color: 'var(--color-violet)', fontWeight: 700 }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '1.25rem',
+                }}
+              >
+                <span
+                  className="pill-chip"
+                  style={{ background: 'rgba(122, 15, 224, 0.1)', color: 'var(--color-violet)', fontWeight: 700 }}
+                >
                   Node Inspector
                 </span>
                 <button
@@ -601,48 +709,126 @@ export const GraphPage: React.FC<GraphPageProps> = ({ onNavigateToPlanner }) => 
                 </button>
               </div>
 
-              <h3 style={{ margin: '0 0 0.25rem 0', fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: 800 }}>
+              <h3
+                style={{
+                  margin: '0 0 0.25rem 0',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '1.25rem',
+                  fontWeight: 800,
+                }}
+              >
                 {selectedNode.label || selectedNode.id}
               </h3>
-              <div style={{ fontSize: '0.75rem', color: 'var(--color-steel-gray)', marginBottom: '1.5rem', fontFamily: 'var(--font-mono)' }}>
+              <div
+                style={{
+                  fontSize: '0.75rem',
+                  color: 'var(--color-steel-gray)',
+                  marginBottom: '1.5rem',
+                  fontFamily: 'var(--font-mono)',
+                }}
+              >
                 ID: {selectedNode.id} • Kind: {selectedNode.kind || 'package_version'}
               </div>
 
               {/* Metric & Diagnostics Cards */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                 {/* Reachability & Why Affected */}
-                <div style={{ padding: '1rem', background: '#F8FAFC', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--color-steel-gray)', textTransform: 'uppercase', fontWeight: 700, marginBottom: '0.25rem' }}>
+                <div
+                  style={{ padding: '1rem', background: '#F8FAFC', borderRadius: '12px', border: '1px solid #E2E8F0' }}
+                >
+                  <div
+                    style={{
+                      fontSize: '0.75rem',
+                      color: 'var(--color-steel-gray)',
+                      textTransform: 'uppercase',
+                      fontWeight: 700,
+                      marginBottom: '0.25rem',
+                    }}
+                  >
                     Reachability State
                   </div>
                   <div style={{ fontWeight: 700, color: 'var(--color-ink)', fontSize: '0.9rem' }}>
-                    {selectedNode.reachability === 'reachable_prod' ? 'Public Ingress Reachable (1 hop)' : (selectedNode.reachability || 'Active in Staging')}
+                    {selectedNode.reachability === 'reachable_prod'
+                      ? 'Public Ingress Reachable (1 hop)'
+                      : selectedNode.reachability || 'Active in Staging'}
                   </div>
-                  <p style={{ margin: '0.4rem 0 0 0', fontSize: '0.8rem', color: 'var(--color-steel-gray)', lineHeight: '1.4' }}>
-                    {selectedNode.vex_statement?.justification || 'Transitive requirement of service:checkout reachable via public API gateway.'}
+                  <p
+                    style={{
+                      margin: '0.4rem 0 0 0',
+                      fontSize: '0.8rem',
+                      color: 'var(--color-steel-gray)',
+                      lineHeight: '1.4',
+                    }}
+                  >
+                    {selectedNode.vex_statement?.justification ||
+                      'Transitive requirement of service:checkout reachable via public API gateway.'}
                   </p>
                 </div>
 
                 {/* Blast Radius Score */}
-                <div style={{ padding: '1rem', background: '#F8FAFC', borderRadius: '12px', border: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div
+                  style={{
+                    padding: '1rem',
+                    background: '#F8FAFC',
+                    borderRadius: '12px',
+                    border: '1px solid #E2E8F0',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}
+                >
                   <div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--color-steel-gray)', textTransform: 'uppercase', fontWeight: 700 }}>
+                    <div
+                      style={{
+                        fontSize: '0.75rem',
+                        color: 'var(--color-steel-gray)',
+                        textTransform: 'uppercase',
+                        fontWeight: 700,
+                      }}
+                    >
                       Blast Radius Score
                     </div>
-                    <div style={{ fontSize: '1.25rem', fontFamily: 'var(--font-mono)', fontWeight: 800, color: 'var(--color-violet)', marginTop: '0.2rem' }}>
+                    <div
+                      style={{
+                        fontSize: '1.25rem',
+                        fontFamily: 'var(--font-mono)',
+                        fontWeight: 800,
+                        color: 'var(--color-violet)',
+                        marginTop: '0.2rem',
+                      }}
+                    >
                       {selectedNode.blast_radius_score || selectedNode.blast_radius || '14.2'} pts
                     </div>
                   </div>
                   <div style={{ textAlign: 'right', fontSize: '0.8rem', color: 'var(--color-steel-gray)' }}>
-                    <div><strong>2</strong> Services</div>
-                    <div><strong>1</strong> Prod Cluster</div>
+                    <div>
+                      <strong>2</strong> Services
+                    </div>
+                    <div>
+                      <strong>1</strong> Prod Cluster
+                    </div>
                   </div>
                 </div>
 
                 {/* Upstream Callers */}
                 {selectedNode.upstream_callers && selectedNode.upstream_callers.length > 0 && (
-                  <div style={{ padding: '1rem', background: '#F8FAFC', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--color-steel-gray)', textTransform: 'uppercase', fontWeight: 700, marginBottom: '0.4rem' }}>
+                  <div
+                    style={{
+                      padding: '1rem',
+                      background: '#F8FAFC',
+                      borderRadius: '12px',
+                      border: '1px solid #E2E8F0',
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: '0.75rem',
+                        color: 'var(--color-steel-gray)',
+                        textTransform: 'uppercase',
+                        fontWeight: 700,
+                        marginBottom: '0.4rem',
+                      }}
+                    >
                       Upstream Ingress Callers
                     </div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
@@ -667,13 +853,37 @@ export const GraphPage: React.FC<GraphPageProps> = ({ onNavigateToPlanner }) => 
                 )}
 
                 {/* Asset Owner Team */}
-                <div style={{ padding: '1rem', background: '#F8FAFC', borderRadius: '12px', border: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <div
+                  style={{
+                    padding: '1rem',
+                    background: '#F8FAFC',
+                    borderRadius: '12px',
+                    border: '1px solid #E2E8F0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.6rem',
+                  }}
+                >
                   <User size={16} style={{ color: 'var(--color-violet)' }} />
                   <div>
-                    <div style={{ fontSize: '0.7rem', color: 'var(--color-steel-gray)', textTransform: 'uppercase', fontWeight: 700 }}>
+                    <div
+                      style={{
+                        fontSize: '0.7rem',
+                        color: 'var(--color-steel-gray)',
+                        textTransform: 'uppercase',
+                        fontWeight: 700,
+                      }}
+                    >
                       Asset Owner
                     </div>
-                    <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-ink)', fontFamily: 'var(--font-mono)' }}>
+                    <div
+                      style={{
+                        fontSize: '0.85rem',
+                        fontWeight: 600,
+                        color: 'var(--color-ink)',
+                        fontFamily: 'var(--font-mono)',
+                      }}
+                    >
                       {selectedNode.owner || 'payments-team@patchgraph.local'}
                     </div>
                   </div>

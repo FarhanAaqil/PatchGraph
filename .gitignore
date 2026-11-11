@@ -72,3 +72,10 @@ PLAN*.md
 *_plan.md
 *.plan.md
 plans/
+
+# Working notes, demo rehearsal material and release checklists stay local
+docs/presentation/
+docs/demo/
+docs/REDESIGN_NOTES.md
+docs/claim_evidence_map.md
+release/

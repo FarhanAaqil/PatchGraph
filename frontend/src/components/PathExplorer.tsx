@@ -24,11 +24,15 @@ export const PathExplorer: React.FC<{ paths: PathRecordView[] }> = ({ paths }) =
       <tbody>
         {paths.map((p, idx) => (
           <tr key={idx}>
-            <td><strong>{p.service}</strong></td>
+            <td>
+              <strong>{p.service}</strong>
+            </td>
             <td>{p.environment}</td>
             <td>{p.decay_factor.toFixed(2)}</td>
             <td>{p.owner_email}</td>
-            <td><code>{p.path_nodes.join(' -> ')}</code></td>
+            <td>
+              <code>{p.path_nodes.join(' -> ')}</code>
+            </td>
           </tr>
         ))}
       </tbody>

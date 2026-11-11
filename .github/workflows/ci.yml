@@ -60,6 +60,8 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
+      - name: Prettier
+        run: npm run format:check
       - name: ESLint
         run: npm run lint
       - name: Unit tests

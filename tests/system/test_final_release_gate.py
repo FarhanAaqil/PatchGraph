@@ -110,20 +110,12 @@ REQUIRED_56_DAY_PATHS = [
     "experiments/run_stress.py",
     "tests/e2e/stress.spec.ts",
     "reports/result_manifest.json",
-    "docs/claim_evidence_map.md",
     "CHANGELOG.md",
     "frontend/src/content/release.ts",
     "scripts/reset_demo.py",
-    "docs/demo/operator_script.md",
     "docs/figures/architecture_and_evaluation_summary.png",
-    "docs/presentation/outline.md",
     "README.md",
     "docs/user_guide.md",
-    "docs/demo/timing_log.md",
-    "docs/demo/usability_log.md",
-    "docs/demo/fallback_runbook.md",
-    "docs/demo/backup_assets/approved_plan_01_export.json",
-    "release/final_checklist.md",
 ]
 
 

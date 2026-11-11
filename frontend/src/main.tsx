@@ -26,6 +26,6 @@ if (rootElement) {
           </ToastProvider>
         </BrowserRouter>
       </QueryClientProvider>
-    </React.StrictMode>
+    </React.StrictMode>,
   );
 }

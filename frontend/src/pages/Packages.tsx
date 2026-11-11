@@ -23,9 +23,15 @@ export const PackagesPage: React.FC<{ items?: PackageRow[] }> = ({ items = [] })
         {items.map((pkg) => (
           <tr key={pkg.purl}>
             <td>{pkg.ecosystem}</td>
-            <td><code>{pkg.normalized_name}</code></td>
-            <td><code>{pkg.version}</code></td>
-            <td><code>{pkg.purl}</code></td>
+            <td>
+              <code>{pkg.normalized_name}</code>
+            </td>
+            <td>
+              <code>{pkg.version}</code>
+            </td>
+            <td>
+              <code>{pkg.purl}</code>
+            </td>
           </tr>
         ))}
       </tbody>

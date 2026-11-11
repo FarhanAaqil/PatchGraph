@@ -7,7 +7,11 @@ export const PatchCandidates: React.FC<{ actions: PlanActionItem[] }> = ({ actio
     <ul>
       {actions.map((a, idx) => (
         <li key={idx}>
-          <code>{a.package}</code>: <code>{a.from} -&gt; {a.to}</code> · Effort: {a.hours}h · Services: {a.services.join(', ')}
+          <code>{a.package}</code>:{' '}
+          <code>
+            {a.from} -&gt; {a.to}
+          </code>{' '}
+          · Effort: {a.hours}h · Services: {a.services.join(', ')}
         </li>
       ))}
     </ul>

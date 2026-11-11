@@ -13,7 +13,7 @@ export const AssetsPage: React.FC<{ items?: AssetItem[] }> = ({ items: propItems
     enabled: !propItems || propItems.length === 0,
   });
 
-  const items = propItems && propItems.length > 0 ? propItems : (assetsData?.items || []);
+  const items = propItems && propItems.length > 0 ? propItems : assetsData?.items || [];
   const filtered = envFilter === 'all' ? items : items.filter((a) => a.environment === envFilter);
 
   return (
@@ -22,7 +22,9 @@ export const AssetsPage: React.FC<{ items?: AssetItem[] }> = ({ items: propItems
         Deployment Context & Asset Inventory
       </h1>
       <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-        <label htmlFor="env-filter" style={{ fontWeight: 600 }}>Environment Filter:</label>
+        <label htmlFor="env-filter" style={{ fontWeight: 600 }}>
+          Environment Filter:
+        </label>
         <select
           id="env-filter"
           value={envFilter}
@@ -35,9 +37,28 @@ export const AssetsPage: React.FC<{ items?: AssetItem[] }> = ({ items: propItems
         </select>
         <span style={{ fontSize: '0.85rem', color: '#64748B' }}>{filtered.length} Assets Registered</span>
       </div>
-      <table aria-label="Filtered Assets Table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', background: '#FFF', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+      <table
+        aria-label="Filtered Assets Table"
+        style={{
+          width: '100%',
+          borderCollapse: 'collapse',
+          textAlign: 'left',
+          background: '#FFF',
+          borderRadius: '12px',
+          overflow: 'hidden',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+        }}
+      >
         <thead>
-          <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', textTransform: 'uppercase', fontSize: '0.75rem', color: '#64748B' }}>
+          <tr
+            style={{
+              background: '#F8FAFC',
+              borderBottom: '1px solid #E2E8F0',
+              textTransform: 'uppercase',
+              fontSize: '0.75rem',
+              color: '#64748B',
+            }}
+          >
             <th style={{ padding: '0.85rem 1rem' }}>Asset Key</th>
             <th style={{ padding: '0.85rem 1rem' }}>Environment</th>
             <th style={{ padding: '0.85rem 1rem' }}>Criticality</th>
@@ -49,8 +70,12 @@ export const AssetsPage: React.FC<{ items?: AssetItem[] }> = ({ items: propItems
         <tbody>
           {filtered.map((a) => (
             <tr key={a.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
-              <td style={{ padding: '0.85rem 1rem', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>{a.external_key}</td>
-              <td style={{ padding: '0.85rem 1rem' }}>{a.environment} {a.production ? '[PROD]' : '[NON-PROD]'}</td>
+              <td style={{ padding: '0.85rem 1rem', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
+                {a.external_key}
+              </td>
+              <td style={{ padding: '0.85rem 1rem' }}>
+                {a.environment} {a.production ? '[PROD]' : '[NON-PROD]'}
+              </td>
               <td style={{ padding: '0.85rem 1rem' }}>{a.criticality} / 5</td>
               <td style={{ padding: '0.85rem 1rem' }}>{a.max_downtime_minutes}m</td>
               <td style={{ padding: '0.85rem 1rem' }}>{a.services.join(', ')}</td>

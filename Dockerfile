@@ -21,8 +21,6 @@ COPY backend ./backend
 COPY intelligence ./intelligence
 COPY data/fixtures ./data/fixtures
 COPY scripts/run_standalone_server.py ./scripts/run_standalone_server.py
-COPY frontend/pages ./frontend/pages
-COPY frontend/standalone_preview.html ./frontend/standalone_preview.html
 COPY --from=frontend /build/dist ./frontend/dist
 
 RUN useradd --uid 1000 --create-home patchgraph && mkdir /data && chown patchgraph /data
