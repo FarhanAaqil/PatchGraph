@@ -1,5 +1,23 @@
 # Changelog — PatchGraph
 
+## [2.0.0] — 2026-11-12
+### New interface
+- The whole web interface was rebuilt from scratch: a guided Import → Risks → Plan → Review journey, plain-language explanations with the formula tucked under "Advanced", skeleton loading, empty and error states, a quick-jump menu (Ctrl/Cmd+K), light and dark themes, reduced-motion support and a layout that works on phones. Only the five brand colours are used.
+- Removed the 3D scene and Recharts. The first screen now ships about 80 kB of gzipped JavaScript instead of about 270 kB, and fonts are self-hosted.
+- Lighthouse: 100 / 100 / 100 / 100 on desktop and 95–96 / 100 / 100 / 100 on mobile.
+
+### Backend performance
+- Findings, imports, assets and plans are filtered, searched, sorted and paged in SQL; finding detail is a single-row query; the plan list no longer runs two queries per plan.
+- Per-app response cache that every write invalidates, ETag revalidation with empty 304s, gzip, `Server-Timing`, immutable caching for hashed assets, twelve new indexes and tuned SQLite settings.
+
+### Fixed
+- Plan endpoints returned invented numbers (a constant 18.4 in several places, a `simulate` that never solved anything, and a phantom `plan_01`). They now report what the solver actually produced, and the "objective" choice is honoured and validated.
+- Risk removed on the Review screen differed from the Plan screen because the list used the penalty-adjusted solver objective instead of the sum of the chosen fixes.
+- File inputs on the Import screen had no accessible label.
+
+### Tests
+- 85 backend, 21 frontend and 16 end-to-end tests. The end-to-end suite now also checks accessibility basics on every screen, a JavaScript size budget, compression and caching headers, layout stability, and that no screen mentions the API. CI runs it on every pull request.
+
 ## [1.1.0] — 2026-11-11
 ### Interface
 - The web interface no longer shows endpoint URLs or backend wording, and the Settings screen no longer has an "API Gateway Endpoint" field. `/docs`, `/redoc` and `/openapi.json` are not served unless `PATCHGRAPH_ENABLE_DOCS=true`.
