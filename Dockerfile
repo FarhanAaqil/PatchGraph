@@ -1,5 +1,5 @@
 # Build the React bundle, then ship it next to the FastAPI app in a slim Python image.
-FROM node:20-alpine AS frontend
+FROM node:26-alpine AS frontend
 WORKDIR /build
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
