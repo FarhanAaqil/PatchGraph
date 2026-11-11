@@ -194,16 +194,18 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                         gap: '0.2rem',
                       }}
                     >
-                      <div>
-                        Records indexed:{' '}
-                        <strong style={{ color: 'var(--pg-ink)', fontFamily: 'var(--font-mono)' }}>
-                          {item.records}
-                        </strong>
-                      </div>
+                      {item.content_sha256 && (
+                        <div>
+                          Content SHA-256:{' '}
+                          <strong style={{ color: 'var(--pg-ink)', fontFamily: 'var(--font-mono)' }}>
+                            {item.content_sha256.slice(0, 12)}…
+                          </strong>
+                        </div>
+                      )}
                       <div>
                         Parser version: <span style={{ fontFamily: 'var(--font-mono)' }}>{item.parser_version}</span>
                       </div>
-                      <div>Last sync: {new Date(item.last_sync).toLocaleTimeString()}</div>
+                      <div>Last sync: {item.last_sync ? new Date(item.last_sync).toLocaleTimeString() : 'never'}</div>
                     </div>
                   </div>
                 );

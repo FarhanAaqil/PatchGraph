@@ -73,7 +73,9 @@ def wait_for_checks(s: requests.Session, sha: str) -> None:
     """Block until all check runs on `sha` finish; exit non-zero if any did not succeed."""
     deadline = time.time() + CHECK_TIMEOUT_SECONDS
     while time.time() < deadline:
-        runs = s.get(f"{BASE_URL}/commits/{sha}/check-runs", params={"per_page": 100}).json().get("check_runs", [])
+        all_runs = s.get(f"{BASE_URL}/commits/{sha}/check-runs", params={"per_page": 100}).json().get("check_runs", [])
+        # Only the CI workflow gates the merge; bot-owned checks (e.g. Dependabot's config job) can queue for a long time.
+        runs = [r for r in all_runs if (r.get("app") or {}).get("slug") == "github-actions"]
         if runs and all(r["status"] == "completed" for r in runs):
             failed = [r for r in runs if r["conclusion"] not in ("success", "skipped", "neutral")]
             for r in runs:

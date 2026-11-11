@@ -68,24 +68,35 @@ async def get_sources_status(
     db: DatabaseManager = Depends(get_db),
 ) -> Dict[str, Any]:
 
-    now = datetime.now(timezone.utc).isoformat()
+    snap = db.conn.execute(
+        "SELECT id, source_cutoffs, manifest_sha256 FROM evidence_snapshots WHERE project_id = ? ORDER BY created_at DESC LIMIT 1",
+        (ctx["project_id"],),
+    ).fetchone()
+    cutoffs = json.loads(snap["source_cutoffs"]) if snap else {}
+
+    sources = {
+        name: {
+            "status": "stale" if meta.get("stale") else "synced",
+            "last_sync": meta.get("fetched_at"),
+            "stale": bool(meta.get("stale")),
+            "parser_version": meta.get("parser_version", "1.0.0"),
+            "content_sha256": meta.get("content_sha256"),
+            "source_url": meta.get("source_url"),
+        }
+        for name, meta in cutoffs.items()
+    }
+    if not snap:
+        freshness = "unavailable"
+    elif any(src["stale"] for src in sources.values()):
+        freshness = "stale"
+    else:
+        freshness = "synchronized"
 
     return {
-        "sources": {
-            "osv": {"status": "synced", "last_sync": now, "stale": False, "records": 18450, "parser_version": "1.0.0"},
-            "nvd": {"status": "synced", "last_sync": now, "stale": False, "records": 24100, "parser_version": "2.0.0"},
-            "epss": {
-                "status": "synced",
-                "last_sync": now,
-                "stale": False,
-                "records": 192000,
-                "parser_version": "1.0.0",
-            },
-            "kev": {"status": "synced", "last_sync": now, "stale": False, "records": 1150, "parser_version": "1.0.0"},
-        },
-        "snapshot_sha256": "5d5112f2ede415e41e8e56c5177516b031701b7d8beffeba04ff415f8a6aa3e9",
-        "data_freshness": "synchronized",
-        "snapshot_id": "snap_01",
+        "sources": sources,
+        "snapshot_sha256": snap["manifest_sha256"] if snap else None,
+        "data_freshness": freshness,
+        "snapshot_id": snap["id"] if snap else None,
         "request_id": ctx["request_id"],
     }
 

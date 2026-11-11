@@ -52,6 +52,8 @@ class ThreadSafeConnection:
         return getattr(self._conn, name)
 
 
+IDENTITY_TABLES = frozenset({"projects", "users", "memberships"})
+
 MIGRATION_SQL_PATH = Path(__file__).resolve().parent.parent.parent / "migrations" / "001_core.sql"
 
 CANONICAL_TABLES = [
@@ -168,7 +170,11 @@ class DatabaseManager:
         """Seed the deterministic Phase 1 Architecture Skeleton scenario."""
         cur = self.conn.cursor()
         if force:
+            # Identity tables are left in place: wiping memberships even briefly makes every concurrent
+            # request look like a non-member and fail with 403 while the sample data is reloaded.
             for tbl in reversed(CANONICAL_TABLES):
+                if tbl in IDENTITY_TABLES:
+                    continue
                 cur.execute(f"DELETE FROM {tbl}")
             self.conn.commit()
         else:

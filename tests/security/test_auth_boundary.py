@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 import os
 import unittest
 from unittest import mock
@@ -23,6 +24,13 @@ def build_client(db: DatabaseManager) -> TestClient:
     app = create_app()
     app.dependency_overrides[api_routes.get_db] = lambda: db
     return TestClient(app)
+
+
+class TestRequestContextThreading(unittest.TestCase):
+    def test_context_dependency_stays_on_the_event_loop(self) -> None:
+        """A sync dependency would query the shared SQLite connection from a worker thread while handlers
+        commit on the loop thread, which produced intermittent FORBIDDEN_PROJECT_SCOPE errors."""
+        self.assertTrue(inspect.iscoroutinefunction(api_routes.get_request_context))
 
 
 class TestRoleEscalation(unittest.TestCase):
