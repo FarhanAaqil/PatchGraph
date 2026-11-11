@@ -987,6 +987,8 @@ export interface PatchGraphClientOptions {
 
 
   baseUrl?: string;
+  /** Signed bearer token. Required when the server runs in production mode. */
+  token?: string;
 
 
 
@@ -1546,6 +1548,7 @@ export class PatchGraphApiClient {
 
 
 
+      ...(options.token ? { Authorization: `Bearer ${options.token}` } : {}),
     };
 
 
@@ -1621,9 +1624,12 @@ export class PatchGraphApiClient {
   async uploadSbomFile(file: File) {
     const formData = new FormData();
     formData.append('file', file);
+    // Let the browser set the multipart boundary; everything else (identity, token) is shared.
+    const { 'Content-Type': _contentType, ...identityHeaders } = this.headers;
     const res = await fetch(`${this.baseUrl}/sbom/upload`, {
       method: 'POST',
       headers: {
+        ...identityHeaders,
         'x-filename': file.name,
       },
       body: formData,

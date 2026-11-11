@@ -46,6 +46,7 @@ from fastapi.responses import JSONResponse
 
 from backend.app.db.session import DatabaseManager, get_db
 from backend.app.jobs.shell import JOB_QUEUE
+from backend.app.security.auth import cap_role, demo_identity_allowed, verify_local_oidc_token
 
 router = APIRouter(prefix="/api/v1")
 
@@ -96,42 +97,64 @@ def compute_json_depth(obj: Any, current: int = 0) -> int:
     return current
 
 
+DEMO_PROJECT_ID = "00000000-0000-0000-0000-000000000001"
+DEMO_USER_ID = "00000000-0000-0000-0000-000000000010"
+
+
 def get_request_context(
     request: Request,
-    x_project_id: Optional[str] = Header(default="00000000-0000-0000-0000-000000000001"),
-    x_user_id: Optional[str] = Header(default="00000000-0000-0000-0000-000000000010"),
+    authorization: Optional[str] = Header(default=None),
+    x_project_id: Optional[str] = Header(default=None),
+    x_user_id: Optional[str] = Header(default=None),
     x_user_role: Optional[str] = Header(default=None),
     db: DatabaseManager = Depends(get_db),
 ) -> Dict[str, str]:
+    """Resolve who is calling and what they may do.
 
+    A signed bearer token is the real credential. Plain identity headers are only honoured while
+    demo identity is enabled (never in production), and in both cases the role comes from the
+    project membership table. `X-User-Role` can narrow that role but can never raise it.
+    """
     request_id = getattr(request.state, "request_id", f"req_{uuid.uuid4().hex[:12]}")
 
-    if not x_project_id or not x_user_id:
+    if authorization:
+        scheme, _, credential = authorization.partition(" ")
+        if scheme.lower() != "bearer" or not credential:
+            raise ContractError(status_code=401, code="UNAUTHORIZED", message="Authorization must be a Bearer token.")
+        try:
+            principal = verify_local_oidc_token(credential.strip())
+        except PermissionError as exc:
+            raise ContractError(status_code=401, code="UNAUTHORIZED", message=str(exc)) from exc
+        project_id, user_id = principal.project_id, principal.sub
+        requested_role = principal.role
+    elif demo_identity_allowed():
+        project_id = x_project_id or DEMO_PROJECT_ID
+        user_id = x_user_id or DEMO_USER_ID
+        requested_role = x_user_role
+    else:
         raise ContractError(
             status_code=401,
             code="UNAUTHORIZED",
-            message="Missing project or user identity headers.",
+            message="A Bearer token is required.",
         )
 
     row = db.conn.execute(
         "SELECT role FROM memberships WHERE project_id = ? AND user_id = ?",
-        (x_project_id, x_user_id),
+        (project_id, user_id),
     ).fetchone()
 
     if row is None:
         raise ContractError(
             status_code=403,
             code="FORBIDDEN_PROJECT_SCOPE",
-            message=f"User {x_user_id} is not a member of project {x_project_id}.",
+            message=f"User {user_id} is not a member of project {project_id}.",
         )
-
-    effective_role = x_user_role if x_user_role in ("viewer", "analyst", "approver", "admin") else row["role"]
 
     return {
         "request_id": request_id,
-        "project_id": x_project_id,
-        "user_id": x_user_id,
-        "role": effective_role,
+        "project_id": project_id,
+        "user_id": user_id,
+        "role": cap_role(requested_role, row["role"]),
     }
 
 
@@ -1565,29 +1588,32 @@ async def list_audit_logs(
     db: DatabaseManager = Depends(get_db),
 ) -> Dict[str, Any]:
 
-    query = "SELECT id, project_id, actor_id, action, entity_type, entity_id, request_id, before_state, after_state, created_at FROM audit_logs WHERE project_id = ?"
-
+    where = ["project_id = ?"]
     params: List[Any] = [ctx["project_id"]]
 
     if action:
-        query += " AND action LIKE ?"
-
+        where.append("action LIKE ?")
         params.append(f"%{action}%")
 
     if entity_type:
-        query += " AND entity_type = ?"
-
+        where.append("entity_type = ?")
         params.append(entity_type)
 
-    count_row = db.conn.execute(f"SELECT COUNT(*) FROM ({query})", params).fetchone()
+    # `where` only ever holds the fixed fragments above; every user-supplied value is bound as a parameter.
+    where_sql = " AND ".join(where)
 
+    count_row = db.conn.execute(f"SELECT COUNT(*) FROM audit_logs WHERE {where_sql}", params).fetchone()
     total = count_row[0] if count_row else 0
 
-    query += " ORDER BY created_at DESC LIMIT ? OFFSET ?"
-
+    query = (
+        "SELECT id, project_id, actor_id, action, entity_type, entity_id, request_id, before_state, after_state, "
+        f"created_at FROM audit_logs WHERE {where_sql} ORDER BY created_at DESC LIMIT ? OFFSET ?"
+    )
     params.extend([limit, offset])
 
     rows = db.conn.execute(query, params).fetchall()
+
+    emails = {u["id"]: u["email"] for u in db.conn.execute("SELECT id, email FROM users").fetchall()}
 
     items = []
 
@@ -1597,7 +1623,7 @@ async def list_audit_logs(
                 "id": r["id"],
                 "project_id": r["project_id"],
                 "actor_id": r["actor_id"],
-                "actor_email": "farhan@patchgraph.local",
+                "actor_email": emails.get(r["actor_id"], "unknown"),
                 "action": r["action"],
                 "entity_type": r["entity_type"],
                 "entity_id": r["entity_id"],

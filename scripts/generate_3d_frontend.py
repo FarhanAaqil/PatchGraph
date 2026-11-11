@@ -1345,7 +1345,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     const DEFAULT_HEADERS = {
       'X-Project-Id': '00000000-0000-0000-0000-000000000001',
       'X-User-Id': '00000000-0000-0000-0000-000000000010',
-      'X-User-Role': 'admin',
+      'X-User-Role': 'approver',
       'Content-Type': 'application/json',
     };
 
