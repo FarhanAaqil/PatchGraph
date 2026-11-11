@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Query, Request
 
 from backend.app.api.common import (
     ContractError,
@@ -17,6 +17,68 @@ from backend.app.api.common import (
 from backend.app.db.session import DatabaseManager, get_db
 
 router = APIRouter()
+
+
+VALID_OBJECTIVES = ("weighted_exposure", "greedy_risk_per_hour", "greedy_risk_desc")
+
+
+def _solve(constraints: Any, objective: str) -> Dict[str, Any]:
+    """Run the exact CP-SAT solver, or a greedy ordering when the caller asked for one."""
+    from intelligence.planner.candidates import build_seeded_candidates
+    from intelligence.planner.solve import solve_remediation_plan
+
+    result = solve_remediation_plan(constraints=constraints)
+    if objective == "weighted_exposure" or result["status"] == "infeasible":
+        return result
+
+    alternative = result["alternatives"][0 if objective == "greedy_risk_per_hour" else 1]
+    by_id = {c.action_id: c for c in build_seeded_candidates()}
+    chosen = [by_id[i] for i in alternative["selected_action_ids"] if i in by_id]
+    return {
+        **result,
+        "status": "feasible" if chosen else "infeasible",
+        "selected_actions": [
+            {
+                "action_id": c.action_id,
+                "package": c.package_name,
+                "from": c.from_version,
+                "to": c.to_version,
+                "services": c.services,
+                "hours": c.effort_hours,
+                "downtime_minutes": c.downtime_minutes,
+                "compatibility_risk": c.compatibility_risk,
+                "risk_removed": c.risk_removed,
+                "rationale": {"resolved_findings": c.resolved_findings, "action_type": c.action_type},
+            }
+            for c in chosen
+        ],
+        "rejected_actions": [],
+        "binding_constraints": [],
+        "risk_removed": alternative["risk_removed"],
+        "effort_hours_used": alternative["effort_hours_used"],
+        "downtime_minutes_used": alternative["downtime_minutes_used"],
+        "objective_value": alternative["risk_removed"],
+    }
+
+
+def _plan_view(plan_id: str, result: Dict[str, Any], request_id: str, approval_state: str) -> Dict[str, Any]:
+    return {
+        "id": plan_id,
+        "status": result["status"],
+        "actions": result["selected_actions"],
+        "rejected_actions": result["rejected_actions"],
+        "binding_constraints": result["binding_constraints"],
+        "risk_removed": result["risk_removed"],
+        "effort_hours_used": result.get("effort_hours_used", 0.0),
+        "downtime_minutes_used": result.get("downtime_minutes_used", 0),
+        "warnings": [],
+        "evidence_snapshot": "snap_01",
+        "objective_value": result["objective_value"],
+        "best_bound": result["best_bound"],
+        "runtime_ms": result["runtime_ms"],
+        "approval_state": approval_state,
+        "request_id": request_id,
+    }
 
 
 @router.post("/plans")
@@ -97,7 +159,21 @@ async def create_plan(
         )
 
     from intelligence.planner.model import PlannerConstraints
-    from intelligence.planner.solve import solve_remediation_plan
+
+    objective = str(payload.get("objective", "weighted_exposure"))
+    if objective not in VALID_OBJECTIVES:
+        raise ContractError(
+            status_code=400,
+            code="INVALID_PLAN_CONSTRAINTS",
+            message="Plan request failed validation.",
+            field_errors=[
+                {
+                    "field": "objective",
+                    "issue": f"Objective must be one of {VALID_OBJECTIVES}",
+                    "location": "$.objective",
+                }
+            ],
+        )
 
     constraints = PlannerConstraints(
         budget_hours=float(budget_hours),
@@ -105,7 +181,7 @@ async def create_plan(
         environments=normalized_envs,
     )
 
-    plan_result = solve_remediation_plan(constraints=constraints)
+    plan_result = _solve(constraints, objective)
 
     if plan_result["status"] == "infeasible" or not plan_result["selected_actions"]:
         rejected = plan_result.get("rejected_actions", [])
@@ -167,6 +243,7 @@ async def create_plan(
                     "budget_hours": float(budget_hours),
                     "max_downtime_minutes": int(max_downtime),
                     "environments": normalized_envs,
+                    "objective": objective,
                 }
             ),
             now,
@@ -200,21 +277,7 @@ async def create_plan(
 
     db.conn.commit()
 
-    return {
-        "id": plan_id,
-        "status": plan_result["status"],
-        "actions": plan_result["selected_actions"],
-        "rejected_actions": plan_result["rejected_actions"],
-        "binding_constraints": plan_result["binding_constraints"],
-        "risk_removed": plan_result["risk_removed"],
-        "warnings": [],
-        "evidence_snapshot": "snap_01",
-        "objective_value": plan_result["objective_value"],
-        "best_bound": plan_result["best_bound"],
-        "runtime_ms": plan_result["runtime_ms"],
-        "approval_state": "pending_human_approval",
-        "request_id": ctx["request_id"],
-    }
+    return _plan_view(plan_id, plan_result, ctx["request_id"], "pending_human_approval")
 
 
 @router.post("/plans/{plan_id}/simulate")
@@ -224,54 +287,50 @@ async def simulate_plan(
     ctx: Dict[str, str] = Depends(get_request_context),
     db: DatabaseManager = Depends(get_db),
 ) -> Dict[str, Any]:
-
+    """Re-solve the plan under new limits and compare it with the plan's own saved limits."""
     require_role(ctx, ["analyst", "approver", "admin"])
+    from intelligence.planner.model import PlannerConstraints
 
     payload = await request.json()
+    row = db.conn.execute(
+        "SELECT constraints FROM planning_runs WHERE id = ? AND project_id = ?", (plan_id, ctx["project_id"])
+    ).fetchone()
+    if row is None:
+        raise ContractError(status_code=404, code="PLAN_NOT_FOUND", message=f"Plan '{plan_id}' not found.")
+    saved = json.loads(row["constraints"] or "{}")
+    objective = str(payload.get("objective") or saved.get("objective") or "weighted_exposure")
+    if objective not in VALID_OBJECTIVES:
+        objective = "weighted_exposure"
 
-    budget_hours = float(payload.get("budget_hours", 40))
+    def constraints_from(source: Dict[str, Any]) -> PlannerConstraints:
+        return PlannerConstraints(
+            budget_hours=float(source.get("budget_hours", 40)),
+            max_downtime_minutes=int(source.get("max_downtime_minutes", 30)),
+            environments=list(source.get("environments") or ["prod"]),
+        )
 
-    max_downtime = int(payload.get("max_downtime_minutes", 30))
+    base_cons = constraints_from(saved)
+    sim_cons = constraints_from(payload)
+    baseline = _solve(base_cons, objective)
+    simulated = _solve(sim_cons, objective)
+    greedy = _solve(sim_cons, "greedy_risk_per_hour")
 
-    baseline_plan = {
-        "id": plan_id,
-        "status": "optimal",
-        "actions": [{"package": "example-lib", "from": "1.4.0", "to": "1.4.3", "services": ["checkout"], "hours": 6}],
-        "risk_removed": 18.4,
-        "warnings": [],
-        "evidence_snapshot": "snap_01",
-    }
-
-    if budget_hours >= 6 and max_downtime >= 10:
-        simulated_plan = dict(baseline_plan, id=f"{plan_id}_sim")
-
-        risk_delta = 0.0
-
-    else:
-        simulated_plan = {
-            "id": f"{plan_id}_sim",
-            "status": "infeasible",
-            "actions": [],
-            "risk_removed": 0.0,
-            "warnings": ["Constraint tightened below minimum action threshold (6h / 10m)."],
-            "evidence_snapshot": "snap_01",
-        }
-
-        risk_delta = -18.4
+    def view(pid: str, result: Dict[str, Any]) -> Dict[str, Any]:
+        return _plan_view(pid, result, ctx["request_id"], "pending_human_approval")
 
     return {
-        "baseline_plan": baseline_plan,
-        "simulated_plan": simulated_plan,
+        "baseline_plan": view(plan_id, baseline),
+        "simulated_plan": view(f"{plan_id}_sim", simulated),
         "greedy_comparison": {
             "strategy": "greedy_risk_per_hour",
-            "risk_removed": 18.4 if budget_hours >= 6 else 0.0,
-            "hours_used": 6.0 if budget_hours >= 6 else 0.0,
-            "downtime_used": 10 if budget_hours >= 6 else 0,
+            "risk_removed": greedy["risk_removed"],
+            "hours_used": greedy.get("effort_hours_used", 0.0),
+            "downtime_used": greedy.get("downtime_minutes_used", 0),
         },
         "deltas": {
-            "risk_removed_delta": risk_delta,
-            "hours_delta": 0.0 if budget_hours >= 6 else -6.0,
-            "downtime_delta": 0 if budget_hours >= 6 else -10,
+            "risk_removed_delta": round(simulated["risk_removed"] - baseline["risk_removed"], 2),
+            "hours_delta": round(simulated.get("effort_hours_used", 0.0) - baseline.get("effort_hours_used", 0.0), 2),
+            "downtime_delta": simulated.get("downtime_minutes_used", 0) - baseline.get("downtime_minutes_used", 0),
         },
         "request_id": ctx["request_id"],
     }
@@ -382,115 +441,109 @@ async def record_plan_decision(
     }
 
 
+def _stored_plan(
+    db: DatabaseManager,
+    row: Any,
+    request_id: str,
+    action_rows: Any = None,
+    approval_state: Any = None,
+) -> Dict[str, Any]:
+    """A plan as it was actually saved: its own actions, limits and decision, never placeholder numbers."""
+    if action_rows is None:
+        action_rows = db.conn.execute(
+            """SELECT package_id, from_version, to_version, action_type, effort_hours, downtime_minutes,
+                      compatibility_risk, risk_removed, rationale
+               FROM remediation_actions WHERE planning_run_id = ? AND selected = 1 ORDER BY risk_removed DESC""",
+            (row["id"],),
+        ).fetchall()
+    actions = []
+    for a in action_rows:
+        name = a["package_id"].replace("pkg_", "").replace("_", "-")
+        rationale = json.loads(a["rationale"]) if a["rationale"] else {}
+        actions.append(
+            {
+                "package": name,
+                "from": a["from_version"],
+                "to": a["to_version"],
+                "services": rationale.get("services", []),
+                "hours": float(a["effort_hours"] or 0),
+                "downtime_minutes": int(a["downtime_minutes"] or 0),
+                "compatibility_risk": float(a["compatibility_risk"] or 0),
+                "risk_removed": float(a["risk_removed"] or 0),
+                "action_type": a["action_type"],
+                "rationale": rationale,
+            }
+        )
+    constraints = json.loads(row["constraints"] or "{}")
+    risk_removed = round(sum(a["risk_removed"] for a in actions), 2)
+    return {
+        "id": row["id"],
+        "project_id": row["project_id"],
+        "status": row["status"],
+        "actions": actions,
+        "rejected_actions": [],
+        "binding_constraints": [],
+        "risk_removed": risk_removed,
+        "effort_hours_used": round(sum(a["hours"] for a in actions), 2),
+        "downtime_minutes_used": sum(a["downtime_minutes"] for a in actions),
+        "budget_hours": constraints.get("budget_hours"),
+        "max_downtime_minutes": constraints.get("max_downtime_minutes"),
+        "warnings": [],
+        "evidence_snapshot": "snap_01",
+        "objective_value": row["objective_value"],
+        "best_bound": row["best_bound"],
+        "runtime_ms": row["runtime_ms"],
+        "approval_state": approval_state if approval_state is not None else _approval_state(db, row["id"]),
+        "created_at": row["created_at"],
+        "request_id": request_id,
+    }
+
+
 @router.get("/plans")
 async def list_plans(
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
     ctx: Dict[str, str] = Depends(get_request_context),
     db: DatabaseManager = Depends(get_db),
 ) -> Dict[str, Any]:
-
     rows = db.conn.execute(
-        "SELECT id, project_id, status, objective_value, runtime_ms, created_at FROM planning_runs WHERE project_id = ? ORDER BY created_at DESC",
-        (ctx["project_id"],),
+        """SELECT id, project_id, status, objective_value, best_bound, runtime_ms, constraints, created_at
+           FROM planning_runs WHERE project_id = ? ORDER BY created_at DESC, rowid DESC LIMIT ? OFFSET ?""",
+        (ctx["project_id"], limit, offset),
     ).fetchall()
-
-    items = []
-
-    for r in rows:
-        act_rows = db.conn.execute(
-            "SELECT package_id, from_version, to_version, action_type, effort_hours, downtime_minutes, compatibility_risk, risk_removed FROM remediation_actions WHERE planning_run_id = ? AND selected = 1",
-            (r["id"],),
-        ).fetchall()
-
-        actions = []
-
-        for a in act_rows:
-            pkg_name = a["package_id"].replace("pkg_", "").replace("_", "-")
-
-            actions.append(
-                {
-                    "package": pkg_name,
-                    "package_name": pkg_name,
-                    "from": a["from_version"],
-                    "to": a["to_version"],
-                    "current_version": a["from_version"],
-                    "target_version": a["to_version"],
-                    "action_type": a["action_type"],
-                    "hours": float(a["effort_hours"] or 0),
-                    "downtime_minutes": int(a["downtime_minutes"] or 0),
-                    "breaking_risk": float(a["compatibility_risk"] or 0),
-                    "risk_reduction": float(a["risk_removed"] or 0),
-                }
-            )
-
-        if not actions:
-            actions = [
-                {
-                    "package": "example-lib",
-                    "package_name": "example-lib",
-                    "from": "1.4.0",
-                    "to": "1.4.3",
-                    "current_version": "1.4.0",
-                    "target_version": "1.4.3",
-                    "action_type": "upgrade",
-                    "hours": 6.0,
-                    "downtime_minutes": 10,
-                    "breaking_risk": 0.1,
-                    "risk_reduction": float(r["objective_value"] or 18.4),
-                }
-            ]
-
-        items.append(
-            {
-                "id": r["id"],
-                "project_id": r["project_id"],
-                "status": r["status"],
-                "budget_hours": 40.0,
-                "max_downtime_minutes": 30,
-                "objective_value": r["objective_value"],
-                "risk_removed": r["objective_value"],
-                "runtime_ms": r["runtime_ms"],
-                "actions": actions,
-                "approval_state": _approval_state(db, r["id"]),
-                "created_at": r["created_at"],
-                "is_demo": True,
-            }
+    total = db.conn.execute("SELECT COUNT(*) FROM planning_runs WHERE project_id = ?", (ctx["project_id"],)).fetchone()[
+        0
+    ]
+    # Two batched queries for the whole page instead of two per plan (no N+1).
+    ids = [r["id"] for r in rows]
+    marks = ",".join("?" * len(ids))
+    actions_by_plan: Dict[str, list] = {i: [] for i in ids}
+    latest_decision: Dict[str, str] = {}
+    if ids:
+        for a in db.conn.execute(
+            f"""SELECT planning_run_id, package_id, from_version, to_version, action_type, effort_hours,
+                       downtime_minutes, compatibility_risk, risk_removed, rationale
+                FROM remediation_actions WHERE selected = 1 AND planning_run_id IN ({marks})
+                ORDER BY risk_removed DESC""",
+            ids,
+        ).fetchall():
+            actions_by_plan[a["planning_run_id"]].append(a)
+        for d in db.conn.execute(
+            f"SELECT planning_run_id, decision FROM plan_decisions WHERE planning_run_id IN ({marks}) ORDER BY created_at, rowid",
+            ids,
+        ).fetchall():
+            latest_decision[d["planning_run_id"]] = d["decision"]  # later rows overwrite earlier ones
+    items = [
+        _stored_plan(
+            db,
+            r,
+            ctx["request_id"],
+            action_rows=actions_by_plan[r["id"]],
+            approval_state=latest_decision.get(r["id"], "pending_human_approval"),
         )
-
-    if not items:
-        default_actions = [
-            {
-                "package": "example-lib",
-                "package_name": "example-lib",
-                "from": "1.4.0",
-                "to": "1.4.3",
-                "current_version": "1.4.0",
-                "target_version": "1.4.3",
-                "action_type": "upgrade",
-                "hours": 6.0,
-                "downtime_minutes": 10,
-                "breaking_risk": 0.1,
-                "risk_reduction": 18.4,
-            }
-        ]
-
-        items.append(
-            {
-                "id": "plan_01",
-                "project_id": ctx["project_id"],
-                "status": "optimal",
-                "budget_hours": 40.0,
-                "max_downtime_minutes": 30,
-                "objective_value": 18.4,
-                "risk_removed": 18.4,
-                "runtime_ms": 12,
-                "actions": default_actions,
-                "approval_state": _approval_state(db, "plan_01"),
-                "created_at": "2026-11-01T00:00:00Z",
-                "is_demo": True,
-            }
-        )
-
-    return {"items": items, "total": len(items), "request_id": ctx["request_id"]}
+        for r in rows
+    ]
+    return {"items": items, "total": total, "limit": limit, "offset": offset, "request_id": ctx["request_id"]}
 
 
 @router.get("/plans/{plan_id}")
@@ -499,57 +552,11 @@ async def get_plan_detail(
     ctx: Dict[str, str] = Depends(get_request_context),
     db: DatabaseManager = Depends(get_db),
 ) -> Dict[str, Any]:
-
-    plan_row = db.conn.execute(
-        "SELECT * FROM planning_runs WHERE id = ? AND project_id = ?",
+    row = db.conn.execute(
+        """SELECT id, project_id, status, objective_value, best_bound, runtime_ms, constraints, created_at
+           FROM planning_runs WHERE id = ? AND project_id = ?""",
         (plan_id, ctx["project_id"]),
     ).fetchone()
-
-    if plan_row is None and plan_id != "plan_01":
+    if row is None:
         raise ContractError(status_code=404, code="PLAN_NOT_FOUND", message=f"Plan '{plan_id}' not found.")
-
-    return {
-        "id": plan_id,
-        "status": "optimal",
-        "actions": [
-            {
-                "package": "example-lib",
-                "from": "1.4.0",
-                "to": "1.4.3",
-                "services": ["checkout"],
-                "hours": 6,
-                "downtime_minutes": 10,
-                "compatibility_risk": 0.08,
-                "risk_removed": 18.4,
-                "rationale": {
-                    "resolved_findings": ["finding_seed_01", "finding_seed_02"],
-                    "version_jump": "patch",
-                },
-            }
-        ],
-        "rejected_actions": [
-            {
-                "package": "example-lib",
-                "from": "1.4.0",
-                "to": "2.0.0",
-                "services": ["checkout"],
-                "hours": 16,
-                "downtime_minutes": 45,
-                "compatibility_risk": 0.65,
-                "risk_removed": 18.4,
-                "rationale": {
-                    "rejected_reason": "Violates max_downtime_minutes <= 30 and higher breaking-change risk (0.65)."
-                },
-            }
-        ],
-        "binding_constraints": ["max_downtime_minutes <= 30", "one_version_per_package(example-lib)"],
-        "risk_removed": 18.4,
-        "warnings": [],
-        "evidence_snapshot": "snap_01",
-        "objective_value": 18.4,
-        "best_bound": 18.4,
-        "runtime_ms": 12,
-        "approval_state": _approval_state(db, plan_id),
-        "request_id": ctx["request_id"],
-        "is_demo": True,
-    }
+    return _stored_plan(db, row, ctx["request_id"])
