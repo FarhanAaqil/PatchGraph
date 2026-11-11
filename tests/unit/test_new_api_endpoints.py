@@ -114,6 +114,7 @@ class TestExtendedApiEndpoints(unittest.TestCase):
             "UPDATE evidence_snapshots SET source_cutoffs = ? WHERE id = ?", (json.dumps(cutoffs), row["id"])
         )
         self.db.conn.commit()
+        self.client.app.state.response_cache.invalidate()  # the edit above bypassed the API
 
         stale = self.client.get("/api/v1/sources/status", headers=self.headers).json()
         self.assertEqual(stale["data_freshness"], "stale")

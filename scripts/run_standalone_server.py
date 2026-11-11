@@ -1,9 +1,12 @@
-"""Production Multi-Page & API Server Launcher (`scripts/run_standalone_server.py`).
+"""Standalone launcher: the JSON backend and the built web interface on one port (`scripts/run_standalone_server.py`).
 
 Serves:
-- All `/api/v1/*` JSON contract endpoints
-- Top-level `/health` endpoint
-- Full React + Vite + Three.js single-page application from `frontend/dist`
+- every `/api/v1/*` route and the top-level `/health` check
+- the compiled single-page application from `frontend/dist`
+
+Caching policy for the static side:
+- `/assets/*` files carry a content hash in their name, so they are cacheable for a year (`immutable`)
+- `index.html` and other root files are revalidated on every load so a new build is picked up immediately
 """
 
 from __future__ import annotations
@@ -18,37 +21,69 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from fastapi import HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 from backend.app.main import app
 
 DIST_DIR = REPO_ROOT / "frontend" / "dist"
 ASSETS_DIR = DIST_DIR / "assets"
+IMMUTABLE = "public, max-age=31536000, immutable"
+REVALIDATE = "no-cache"
 
-# Mount static Vite assets if built
+
+class ImmutableStaticFiles(StaticFiles):
+    """Static files whose names are content-hashed, so browsers and CDNs may keep them indefinitely."""
+
+    def file_response(self, *args, **kwargs):  # type: ignore[no-untyped-def]
+        response = super().file_response(*args, **kwargs)
+        response.headers["Cache-Control"] = IMMUTABLE
+        return response
+
+
 if ASSETS_DIR.exists():
-    app.mount("/assets", StaticFiles(directory=str(ASSETS_DIR)), name="assets")
+    app.mount("/assets", ImmutableStaticFiles(directory=str(ASSETS_DIR)), name="assets")
+
+_index_cache: dict[str, object] = {"mtime": 0.0, "html": ""}
+
+
+def _index_html() -> str | None:
+    """index.html is tiny and read on every navigation, so keep it in memory until the file changes."""
+    path = DIST_DIR / "index.html"
+    if not path.exists():
+        return None
+    mtime = path.stat().st_mtime
+    if _index_cache["mtime"] != mtime:
+        _index_cache["html"] = path.read_text(encoding="utf-8")
+        _index_cache["mtime"] = mtime
+    return str(_index_cache["html"])
+
+
+def _page(html: str) -> HTMLResponse:
+    return HTMLResponse(html, headers={"Cache-Control": REVALIDATE})
 
 
 @app.get("/", response_class=HTMLResponse)
 async def serve_root_app() -> HTMLResponse:
-    dist_index = DIST_DIR / "index.html"
-    if dist_index.exists():
-        return HTMLResponse(dist_index.read_text(encoding="utf-8"))
+    html = _index_html()
+    if html is not None:
+        return _page(html)
     return HTMLResponse(
         "<h1>PatchGraph is running</h1><p>The web interface has not been built yet: run <code>cd frontend &amp;&amp; npm run build</code>.</p>"
     )
 
 
-# Fallback SPA routing for client-side pages
-@app.get("/{full_path:path}", response_class=HTMLResponse)
-async def serve_spa_fallback(full_path: str) -> HTMLResponse:
+# Client-side routes fall back to index.html; real files in dist (favicon, manifest) are served as they are.
+@app.get("/{full_path:path}")
+async def serve_spa_fallback(full_path: str):
     if full_path.startswith("api/") or full_path.startswith("assets/") or full_path == "health":
         raise HTTPException(status_code=404, detail="Not Found")
-    dist_index = DIST_DIR / "index.html"
-    if dist_index.exists():
-        return HTMLResponse(dist_index.read_text(encoding="utf-8"))
+    candidate = (DIST_DIR / full_path).resolve()
+    if full_path and candidate.is_file() and DIST_DIR.resolve() in candidate.parents:
+        return FileResponse(candidate, headers={"Cache-Control": REVALIDATE})
+    html = _index_html()
+    if html is not None:
+        return _page(html)
     raise HTTPException(status_code=404, detail="Page not found")
 
 

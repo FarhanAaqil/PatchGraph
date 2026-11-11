@@ -19,84 +19,74 @@ from backend.app.db.session import DatabaseManager, get_db
 router = APIRouter()
 
 
-@router.get("/findings")
-async def list_findings(
-    sort: str = Query(default="final_score"),
-    environment: Optional[str] = Query(default=None),
-    status: Optional[str] = Query(default=None),
-    ctx: Dict[str, str] = Depends(get_request_context),
-    db: DatabaseManager = Depends(get_db),
-) -> Dict[str, Any]:
+_SORT_COLUMNS = {
+    "final_score": "fs.final_score",
+    "baseline_score": "fs.baseline_score",
+    "epss": "fs.probability",
+}
 
+
+def query_findings(
+    db: DatabaseManager,
+    ctx: Dict[str, str],
+    *,
+    sort: str = "final_score",
+    environment: Optional[str] = None,
+    status: Optional[str] = None,
+    q: Optional[str] = None,
+    kev_only: bool = False,
+    limit: int = 50,
+    offset: int = 0,
+    finding_id: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Ranked findings, filtered and paged in SQL so large projects never ship every row to the browser."""
     snap = db.conn.execute(
         "SELECT id, source_cutoffs FROM evidence_snapshots WHERE project_id = ? ORDER BY created_at DESC LIMIT 1",
         (ctx["project_id"],),
     ).fetchone()
-
     cutoffs = json.loads(snap["source_cutoffs"]) if snap else {}
 
-    rows = db.conn.execute(
-        """SELECT f.id, f.vulnerability_id, v.canonical_id, p.normalized_name AS package_name,
+    where = ["f.project_id = ?"]
+    params: List[Any] = [ctx["project_id"]]
+    if finding_id:
+        where.append("f.id = ?")
+        params.append(finding_id)
+    if environment:
+        where.append("e.name = ?")
+        params.append(environment)
+    if status:
+        where.append("f.status = ?")
+        params.append(status)
+    if q:
+        where.append("(v.canonical_id LIKE ? OR p.normalized_name LIKE ? OR s.name LIKE ?)")
+        params.extend([f"%{q}%"] * 3)
+    if kev_only:
+        where.append("json_extract(fs.factors, '$.raw_inputs.known_exploited') = 1")
+    # Only fixed fragments are joined into the SQL text; every user value is a bound parameter.
+    where_sql = " AND ".join(where)
+    order_sql = _SORT_COLUMNS.get(sort, "fs.final_score")
 
-
-
-                  pv.version AS package_version, p.ecosystem, s.name AS service_name, s.owner_email,
-
-
-
-                  e.name AS environment, f.applicability, f.status,
-
-
-
-                  fs.probability, fs.baseline_score, fs.final_score, fs.uncertainty, fs.factors
-
-
-
-           FROM findings f
-
-
-
+    joins = """FROM findings f
            JOIN vulnerabilities v ON f.vulnerability_id = v.id
-
-
-
            JOIN package_versions pv ON f.package_version_id = pv.id
-
-
-
            JOIN packages p ON pv.package_id = p.id
-
-
-
            LEFT JOIN services s ON f.service_id = s.id
-
-
-
            LEFT JOIN environments e ON f.environment_id = e.id
+           LEFT JOIN finding_scores fs ON fs.finding_id = f.id"""
 
-
-
-           LEFT JOIN finding_scores fs ON fs.finding_id = f.id
-
-
-
-           WHERE f.project_id = ?
-
-
-
-           ORDER BY fs.final_score DESC""",
-        (ctx["project_id"],),
+    total = db.conn.execute(f"SELECT COUNT(*) {joins} WHERE {where_sql}", params).fetchone()[0]
+    rows = db.conn.execute(
+        f"""SELECT f.id, f.vulnerability_id, v.canonical_id, p.normalized_name AS package_name,
+                  pv.version AS package_version, p.ecosystem, s.name AS service_name, s.owner_email,
+                  e.name AS environment, f.applicability, f.status,
+                  fs.probability, fs.baseline_score, fs.final_score, fs.uncertainty, fs.factors
+           {joins} WHERE {where_sql}
+           ORDER BY {order_sql} DESC, f.id LIMIT ? OFFSET ?""",
+        [*params, limit, offset],
     ).fetchall()
 
     items: List[Dict[str, Any]] = []
-
     for r in rows:
-        if environment and r["environment"] != environment:
-            continue
-
-        if status and r["status"] != status:
-            continue
-
         items.append(
             {
                 "id": r["id"],
@@ -115,23 +105,36 @@ async def list_findings(
                 "final_score": r["final_score"],
                 "probability": r["probability"],
                 "uncertainty": r["uncertainty"],
-                "factors": json.loads(r["factors"]),
-                "source_freshness": cutoffs,
+                "factors": json.loads(r["factors"]) if r["factors"] else {},
             }
         )
 
-    if sort == "baseline_score":
-        items.sort(key=lambda x: x["baseline_score"], reverse=True)
-
-    elif sort == "epss":
-        items.sort(key=lambda x: x["probability"], reverse=True)
-
     return {
         "items": items,
-        "total": len(items),
-        "evidence_snapshot": snap["id"] if snap else "snap_01",
+        "total": total,
+        "limit": limit,
+        "offset": offset,
+        "source_freshness": cutoffs,
+        "evidence_snapshot": snap["id"] if snap else None,
         "request_id": ctx["request_id"],
     }
+
+
+@router.get("/findings")
+async def list_findings(
+    sort: str = Query(default="final_score"),
+    environment: Optional[str] = Query(default=None),
+    status: Optional[str] = Query(default=None),
+    q: Optional[str] = Query(default=None, max_length=100),
+    kev_only: bool = Query(default=False),
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+    ctx: Dict[str, str] = Depends(get_request_context),
+    db: DatabaseManager = Depends(get_db),
+) -> Dict[str, Any]:
+    return query_findings(
+        db, ctx, sort=sort, environment=environment, status=status, q=q, kev_only=kev_only, limit=limit, offset=offset
+    )
 
 
 @router.get("/findings/{finding_id}")
@@ -141,7 +144,7 @@ async def get_finding_detail(
     db: DatabaseManager = Depends(get_db),
 ) -> Dict[str, Any]:
 
-    listing = await list_findings(sort="final_score", environment=None, status=None, ctx=ctx, db=db)
+    listing = query_findings(db, ctx, finding_id=finding_id, limit=1)
 
     match = next((item for item in listing["items"] if item["id"] == finding_id), None)
 
