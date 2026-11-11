@@ -352,7 +352,7 @@ export const AuditPage: React.FC<AuditPageProps> = ({ initialPlanId }) => {
                         color: 'var(--pg-violet)',
                       }}
                     >
-                      -{currentPlan.risk_removed.toFixed(1)} pts
+                      {currentPlan.risk_removed.toFixed(1)} pts
                     </div>
                   </div>
                   <div>

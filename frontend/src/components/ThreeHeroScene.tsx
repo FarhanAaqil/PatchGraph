@@ -325,7 +325,7 @@ export const ThreeHeroScene: React.FC<Props> = ({
         pos: [-10, -42, 18],
         radius: 6.5,
         statusText: 'CLEAN FRAMEWORK',
-        details: 'Core async REST API framework',
+        details: 'Core async web framework',
       },
       {
         id: 'node-c-silver-8',

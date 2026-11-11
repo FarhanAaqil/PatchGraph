@@ -469,7 +469,7 @@ async def get_graph_node_detail(
         "downstream_dependencies": ["urllib3>=1.26.5", "cryptography>=3.4.7"],
         "vex_statement": {
             "status": "affected",
-            "justification": "Reachable via checkout API unauthenticated HTTP ingress.",
+            "justification": "Reachable through the checkout service's unauthenticated public ingress.",
             "statement_time": "2026-11-01T00:00:00Z",
         },
         "request_id": ctx["request_id"],

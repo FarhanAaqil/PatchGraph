@@ -592,7 +592,7 @@ export const PlannerPage: React.FC<PlannerPageProps> = ({ onNavigateToAudit }) =
                           style={{ display: 'flex', gap: '1rem', fontSize: '0.8rem', fontFamily: 'var(--font-mono)' }}
                         >
                           <div>
-                            Risk: <strong>{simulationResult.baseline_plan?.risk_removed || 18.4} pts</strong>
+                            Risk: <strong>{(simulationResult.baseline_plan?.risk_removed ?? 0).toFixed(1)} pts</strong>
                           </div>
                           <div>
                             Effort: <strong>6.0h</strong>
@@ -627,7 +627,7 @@ export const PlannerPage: React.FC<PlannerPageProps> = ({ onNavigateToAudit }) =
                           style={{ display: 'flex', gap: '1rem', fontSize: '0.8rem', fontFamily: 'var(--font-mono)' }}
                         >
                           <div>
-                            Risk: <strong>{simulationResult.simulated_plan?.risk_removed || 18.4} pts</strong>
+                            Risk: <strong>{(simulationResult.simulated_plan?.risk_removed ?? 0).toFixed(1)} pts</strong>
                           </div>
                           <div>
                             Effort: <strong>{simulationResult.simulated_plan?.effort_hours || 6.0}h</strong>
@@ -712,7 +712,7 @@ export const PlannerPage: React.FC<PlannerPageProps> = ({ onNavigateToAudit }) =
                         marginTop: '0.25rem',
                       }}
                     >
-                      -{planToDisplay.risk_removed.toFixed(1)}
+                      {planToDisplay.risk_removed.toFixed(1)}
                     </div>
                     <div style={{ fontSize: '0.7rem', color: 'var(--pg-steel)' }}>Weighted exposure pts</div>
                   </div>
@@ -936,7 +936,7 @@ export const PlannerPage: React.FC<PlannerPageProps> = ({ onNavigateToAudit }) =
                                 color: 'var(--pg-violet)',
                               }}
                             >
-                              +{action.risk_removed ? action.risk_removed.toFixed(1) : '18.4'}
+                              +{(action.risk_removed ?? 0).toFixed(1)}
                             </div>
                           </div>
                         </div>

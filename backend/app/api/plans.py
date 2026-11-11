@@ -277,6 +277,15 @@ async def simulate_plan(
     }
 
 
+def _approval_state(db: DatabaseManager, plan_id: str) -> str:
+    """Latest human decision on a plan, or pending if nobody has decided yet."""
+    row = db.conn.execute(
+        "SELECT decision FROM plan_decisions WHERE planning_run_id = ? ORDER BY created_at DESC, rowid DESC LIMIT 1",
+        (plan_id,),
+    ).fetchone()
+    return row["decision"] if row else "pending_human_approval"
+
+
 @router.post("/plans/{plan_id}/decision")
 async def record_plan_decision(
     plan_id: str,
@@ -441,7 +450,7 @@ async def list_plans(
                 "risk_removed": r["objective_value"],
                 "runtime_ms": r["runtime_ms"],
                 "actions": actions,
-                "approval_state": "pending_human_approval",
+                "approval_state": _approval_state(db, r["id"]),
                 "created_at": r["created_at"],
                 "is_demo": True,
             }
@@ -475,7 +484,7 @@ async def list_plans(
                 "risk_removed": 18.4,
                 "runtime_ms": 12,
                 "actions": default_actions,
-                "approval_state": "pending_human_approval",
+                "approval_state": _approval_state(db, "plan_01"),
                 "created_at": "2026-11-01T00:00:00Z",
                 "is_demo": True,
             }
@@ -540,7 +549,7 @@ async def get_plan_detail(
         "objective_value": 18.4,
         "best_bound": 18.4,
         "runtime_ms": 12,
-        "approval_state": "pending_human_approval",
+        "approval_state": _approval_state(db, plan_id),
         "request_id": ctx["request_id"],
         "is_demo": True,
     }

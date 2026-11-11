@@ -13,6 +13,7 @@
 - Removed the unused `httpx2` requirement.
 
 ### Fixed
+- Found while clicking through the app in Chrome: "Risk removed" showed as a negative number on the Planner and Audit screens, an approved plan kept showing PENDING_HUMAN_APPROVAL (approval state was hardcoded and now follows the recorded decision), Settings claimed "Online Streaming Mode" in offline demo mode, the command palette showed a stale hardcoded score, and the plan comparison fell back to a made-up 18.4 when data was missing.
 - Intermittent `403 FORBIDDEN_PROJECT_SCOPE` responses: the auth dependency ran in a worker thread against the shared SQLite connection while handlers committed on the event loop. It now runs on the loop, and reloading sample data no longer deletes users, projects or memberships.
 - `/jobs/{id}` answered "completed" for any id; jobs now record whether they finished or failed, are project-scoped, and unknown ids return 404.
 - `/sources/status` returned invented record counts and a made-up snapshot hash; it now reflects the stored evidence snapshot.
