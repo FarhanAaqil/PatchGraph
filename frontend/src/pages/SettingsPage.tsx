@@ -7,12 +7,12 @@ import {
   Globe,
   Sun,
   Moon,
-  Sparkles,
+  
   CheckCircle,
-  AlertTriangle,
+  
   RefreshCw,
-  Sliders,
-  ShieldCheck,
+  
+  
   Eye
 } from 'lucide-react';
 

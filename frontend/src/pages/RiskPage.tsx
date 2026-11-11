@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { PatchGraphApiClient, FindingSummary, FindingExplainResponse } from '../api/generated';
+import { PatchGraphApiClient, } from '../api/generated';
 import { 
   ShieldAlert, 
   Search, 
@@ -8,11 +8,11 @@ import {
   ChevronRight, 
   X, 
   Sparkles, 
-  ExternalLink, 
+  
   AlertTriangle, 
   Activity, 
   Info,
-  Layers,
+  
   ArrowUpDown
 } from 'lucide-react';
 

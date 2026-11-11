@@ -4,18 +4,18 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { PatchGraphApiClient } from '../api/generated';
 import {
   UploadCloud,
-  FileCheck2,
+  
   CheckCircle2,
-  AlertCircle,
-  Clock,
+  
+  
   Database,
-  Layers,
-  ArrowRight,
+  
+  
   Sparkles,
   Copy,
   Check,
   FileCode,
-  ShieldAlert,
+  
   Server
 } from 'lucide-react';
 
@@ -32,7 +32,7 @@ export const IngestPage: React.FC = () => {
   const toast = useToast();
 
   const queryClient = useQueryClient();
-  const { data: importsData, isLoading: isLoadingImports } = useQuery({
+  const { data: importsData } = useQuery({
     queryKey: ['imports'],
     queryFn: () => api.listImports(),
   });

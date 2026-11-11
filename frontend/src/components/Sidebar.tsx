@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { } from 'react';
 import {
   ShieldAlert,
-  Layers,
+  
   GitBranch,
   Sliders,
-  FileText,
+  
   Settings,
   Database,
   Search,
@@ -12,8 +12,8 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Lock,
-  ChevronRight,
-  Server
+  
+  
 } from 'lucide-react';
 import { UiOperationalState } from '../content/terms';
 

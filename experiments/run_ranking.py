@@ -6,12 +6,12 @@ operational urgency labels (1 = exploitable in reachable production service, 0 =
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any, Dict, List
 
 import numpy as np
 
 from experiments.manifest import bootstrap_ci, build_evaluation_manifest_meta, compute_ndcg_at_k
+from experiments.paths import reports_dir
 from intelligence.risk.baseline import score_finding_explainable
 from intelligence.risk.model import compute_binary_classification_metrics
 
@@ -111,7 +111,6 @@ def run_ranking_evaluation() -> Dict[str, Any]:
         "per_ecosystem_top1_precision": eco_slices,
     }
 
-    repo_root = Path(__file__).resolve().parent.parent
     md = f"""# PatchGraph Ranking Evaluation Results (RQ1)
 
 - **Dataset Date**: `2026-11-01` · **Sample Size**: `n={len(rows)}` findings across 4 ecosystems · **Manifest**: `snap_01` (`9f86d081...`)
@@ -129,7 +128,7 @@ def run_ranking_evaluation() -> Dict[str, Any]:
 ## 2. Per-Ecosystem Slice (Top-1 Actionable Precision)
 - `pypi`: {eco_slices["pypi"]:.2f} · `npm`: {eco_slices["npm"]:.2f} · `maven`: {eco_slices["maven"]:.2f} · `golang`: {eco_slices["golang"]:.2f}
 """
-    (repo_root / "reports" / "ranking_results.md").write_text(md, encoding="utf-8")
+    (reports_dir() / "ranking_results.md").write_text(md, encoding="utf-8")
     return out
 
 

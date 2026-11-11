@@ -4,22 +4,22 @@ import { PatchGraphApiClient, GraphNode, GraphEdge } from '../api/generated';
 import { ThreeHeroScene } from '../components/ThreeHeroScene';
 import {
   GitBranch,
-  Filter,
-  Layers,
+  
+  
   ZoomIn,
   ZoomOut,
   Maximize2,
   ShieldAlert,
-  ChevronRight,
-  Info,
-  Server,
-  Package,
-  Activity,
+  
+  
+  
+  
+  
   ArrowRight,
-  ShieldCheck,
+  
   RotateCcw,
   User,
-  AlertTriangle
+  
 } from 'lucide-react';
 
 const api = new PatchGraphApiClient();
@@ -35,7 +35,7 @@ export const GraphPage: React.FC<GraphPageProps> = ({ onNavigateToPlanner }) => 
   const [envFilter, setEnvFilter] = useState<string>('all');
   const [kevOnly, setKevOnly] = useState<boolean>(false);
   const [selectedNode, setSelectedNode] = useState<any>(null);
-  const [isLoadingNode, setIsLoadingNode] = useState<boolean>(false);
+  const [, setIsLoadingNode] = useState<boolean>(false);
   const [viewMode, setViewMode] = useState<'2d' | '3d'>('2d');
   const [nodeCount, setNodeCount] = useState<number>(0);
   const [edgeCount, setEdgeCount] = useState<number>(0);

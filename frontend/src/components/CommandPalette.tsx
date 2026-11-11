@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { 
   Search, 
-  X, 
+  
   ChevronRight, 
   ShieldAlert, 
   Layers, 
@@ -11,7 +11,7 @@ import {
   Lock, 
   Settings, 
   Server, 
-  Terminal
+  
 } from 'lucide-react';
 
 interface Props {

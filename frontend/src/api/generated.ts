@@ -1504,6 +1504,15 @@ export interface SystemHealthResponse {
 
 
 
+/** A token pasted into the browser (localStorage `patchgraph.token`) is used when none is passed in. */
+function readStoredToken(): string | undefined {
+  try {
+    return globalThis.localStorage?.getItem('patchgraph.token') || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export class PatchGraphApiClient {
 
 
@@ -1528,6 +1537,8 @@ export class PatchGraphApiClient {
 
 
 
+    const token = options.token ?? readStoredToken();
+
     this.headers = {
 
 
@@ -1548,7 +1559,7 @@ export class PatchGraphApiClient {
 
 
 
-      ...(options.token ? { Authorization: `Bearer ${options.token}` } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
 
 

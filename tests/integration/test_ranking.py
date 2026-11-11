@@ -10,7 +10,10 @@ Proves Gate 3 (Intelligence Slice) exit criteria:
 
 from __future__ import annotations
 
+import os
+import tempfile
 import unittest
+from unittest import mock
 
 from backend.app.catalog.deployments import get_project_deployment_contexts, parse_deployment_csv
 from backend.app.db.session import DatabaseManager
@@ -104,7 +107,8 @@ class TestPhase3IntelligenceSliceIntegration(unittest.TestCase):
         self.assertEqual(ranked[0]["finding_id"], "finding_seed_01")
 
     def test_calibrated_exploit_model_and_leakage_controls(self) -> None:
-        cal_res = generate_calibration_report()
+        with tempfile.TemporaryDirectory() as scratch, mock.patch.dict(os.environ, {"PATCHGRAPH_OUTPUT_DIR": scratch}):
+            cal_res = generate_calibration_report()
         self.assertLessEqual(cal_res["calibrated"]["brier_score"], cal_res["uncalibrated"]["brier_score"] + 0.05)
         self.assertGreaterEqual(cal_res["calibrated"]["roc_auc"], 0.85)
         self.assertEqual(len(cal_res["bundle_sha256"]), 64)

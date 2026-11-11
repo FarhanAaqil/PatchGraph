@@ -14,8 +14,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PATCHGRAPH_SQLITE_PATH=/data/patchgraph.db
 WORKDIR /app
 
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements.lock ./
+RUN pip install --no-cache-dir -r requirements.lock
 
 COPY backend ./backend
 COPY intelligence ./intelligence

@@ -1,22 +1,7 @@
-# Core API & Runtime
-fastapi>=0.112.0
-uvicorn>=0.30.0
-pydantic>=2.8.0
-starlette>=0.38.0
-httpx>=0.28.0
-pyyaml>=6.0.2
-
-# Graph & Optimization
-networkx>=3.3
-ortools>=9.10.4067
-
-# Machine Learning & Scientific Computing
-numpy>=1.26.0
-scipy>=1.14.0
-scikit-learn>=1.5.0
-pandas>=2.2.0
-
-# Threat Feeds & Connectors
-requests>=2.32.0
-python-dateutil>=2.9.0
-
+# Runtime dependencies. Exact versions are pinned in requirements.lock; refresh it with:
+#   uv pip compile requirements.txt --universal --python-version 3.12 -o requirements.lock
+fastapi>=0.115,<1
+uvicorn>=0.30,<1
+numpy>=1.26,<3
+scikit-learn>=1.5,<2
+ortools>=9.10,<10

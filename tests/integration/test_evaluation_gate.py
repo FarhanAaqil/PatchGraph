@@ -1,26 +1,35 @@
 """Day 49 Gate 7 Suite (`tests/integration/test_evaluation_gate.py`).
 
 Executes ranking, graph, planner, ablation, and stress evaluations and writes
-`reports/result_manifest.json`.
+`result_manifest.json` into a scratch reports directory.
 """
 
 from __future__ import annotations
 
 import hashlib
 import json
+import os
+import tempfile
 import unittest
-from pathlib import Path
+from unittest import mock
 
+from experiments.paths import reports_dir
 from experiments.run_ablations import run_ablation_suite
 from experiments.run_graph import run_graph_evaluation
 from experiments.run_planner import run_planner_evaluation
 from experiments.run_ranking import run_ranking_evaluation
 from experiments.run_stress import run_stress_benchmark
 
-REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-
 
 class TestPhase7EvidenceReadyGate(unittest.TestCase):
+    def setUp(self) -> None:
+        # Reports are written to a scratch directory so the run never touches tracked files.
+        scratch = tempfile.TemporaryDirectory()
+        self.addCleanup(scratch.cleanup)
+        patcher = mock.patch.dict(os.environ, {"PATCHGRAPH_OUTPUT_DIR": scratch.name})
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
     def test_full_evaluation_ablations_and_stress_suite(self) -> None:
         rank_res = run_ranking_evaluation()
         graph_res = run_graph_evaluation()
@@ -56,8 +65,7 @@ class TestPhase7EvidenceReadyGate(unittest.TestCase):
         manifest_bytes = json.dumps(manifest_payload, indent=2, sort_keys=True).encode("utf-8")
         manifest_payload["result_manifest_sha256"] = hashlib.sha256(manifest_bytes).hexdigest()
 
-        out_path = REPO_ROOT / "reports" / "result_manifest.json"
-        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path = reports_dir() / "result_manifest.json"
         out_path.write_text(json.dumps(manifest_payload, indent=2), encoding="utf-8")
         self.assertTrue(out_path.exists())
 
