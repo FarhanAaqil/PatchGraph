@@ -37,7 +37,7 @@ async def serve_root_app() -> HTMLResponse:
     if dist_index.exists():
         return HTMLResponse(dist_index.read_text(encoding="utf-8"))
     return HTMLResponse(
-        '<h1>PatchGraph API is running</h1><p>Build the UI with <code>cd frontend &amp;&amp; npm run build</code>, or browse <a href="/docs">/docs</a>.</p>'
+        "<h1>PatchGraph is running</h1><p>The web interface has not been built yet: run <code>cd frontend &amp;&amp; npm run build</code>.</p>"
     )
 
 

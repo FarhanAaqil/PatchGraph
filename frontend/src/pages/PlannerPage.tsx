@@ -15,13 +15,12 @@ import {
 } from 'lucide-react';
 
 interface PlannerPageProps {
-  apiBaseUrl?: string;
   onNavigateToAudit?: (planId?: string) => void;
 }
 
-export const PlannerPage: React.FC<PlannerPageProps> = ({ apiBaseUrl, onNavigateToAudit }) => {
+export const PlannerPage: React.FC<PlannerPageProps> = ({ onNavigateToAudit }) => {
   const queryClient = useQueryClient();
-  const client = new PatchGraphApiClient({ baseUrl: apiBaseUrl || '' });
+  const client = new PatchGraphApiClient();
 
   // Constraint state
   const [budgetHours, setBudgetHours] = useState<number>(16);
@@ -395,7 +394,7 @@ export const PlannerPage: React.FC<PlannerPageProps> = ({ apiBaseUrl, onNavigate
                 <AlertTriangle size={18} /> Solver Execution Error
               </div>
               <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem' }}>
-                {(solveMutation.error as Error)?.message || 'Failed to communicate with optimizer endpoint.'}
+                {(solveMutation.error as Error)?.message || 'The optimizer could not be reached. Please try again.'}
               </p>
             </div>
           )}

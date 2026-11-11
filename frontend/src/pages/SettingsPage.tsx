@@ -1,26 +1,17 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { PatchGraphApiClient } from '../api/generated';
-import { Settings, Database, Globe, Sun, Moon, CheckCircle, RefreshCw, Eye } from 'lucide-react';
+import { Settings, Database, Sun, Moon, RefreshCw, Eye } from 'lucide-react';
 
 interface SettingsPageProps {
-  apiBaseUrl?: string;
-  onUpdateApiBaseUrl?: (url: string) => void;
   motionEnabled?: boolean;
   onToggleMotion?: (enabled: boolean) => void;
 }
 
-export const SettingsPage: React.FC<SettingsPageProps> = ({
-  apiBaseUrl = '',
-  onUpdateApiBaseUrl,
-  motionEnabled = true,
-  onToggleMotion,
-}) => {
-  const [urlInput, setUrlInput] = useState(apiBaseUrl);
-  const [isSaved, setIsSaved] = useState(false);
+export const SettingsPage: React.FC<SettingsPageProps> = ({ motionEnabled = true, onToggleMotion }) => {
   const [themeMode, setThemeMode] = useState<'silver' | 'ink'>('silver');
 
-  const client = new PatchGraphApiClient({ baseUrl: apiBaseUrl });
+  const client = new PatchGraphApiClient();
 
   const {
     data: sourcesData,
@@ -30,15 +21,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     queryKey: ['sourcesStatus'],
     queryFn: () => client.getSourcesStatus(),
   });
-
-  const handleSaveUrl = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (onUpdateApiBaseUrl) {
-      onUpdateApiBaseUrl(urlInput.trim());
-      setIsSaved(true);
-      setTimeout(() => setIsSaved(false), 2500);
-    }
-  };
 
   const sources = sourcesData?.sources || {};
 
@@ -236,79 +218,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               <div style={{ color: 'var(--pg-violet)', fontWeight: 600 }}>
                 {sourcesData.offline_demo_mode ? 'Deterministic Offline Mode Active' : 'Online Streaming Mode'}
               </div>
-            </div>
-          )}
-        </div>
-
-        {/* API Base URL Configuration */}
-        <div
-          className="pg-card"
-          style={{
-            padding: '2rem',
-            background: '#FFF',
-            border: '1px solid #E2E8F0',
-            borderRadius: 'var(--radius-frame)',
-            boxShadow: 'var(--shadow-card)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
-            <Globe size={20} style={{ color: 'var(--pg-violet)' }} />
-            <div>
-              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700 }}>API Gateway Endpoint</h3>
-              <div style={{ fontSize: '0.8rem', color: 'var(--pg-steel)' }}>
-                Base URL for communicating with the PatchGraph FastAPI backend
-              </div>
-            </div>
-          </div>
-
-          <form
-            onSubmit={handleSaveUrl}
-            style={{ display: 'flex', gap: '1rem', alignItems: 'center', maxWidth: '640px' }}
-          >
-            <input
-              type="text"
-              placeholder="e.g. http://localhost:5000"
-              value={urlInput}
-              onChange={(e) => setUrlInput(e.target.value)}
-              style={{
-                flex: 1,
-                padding: '0.75rem 1.25rem',
-                borderRadius: 'var(--radius-pill)',
-                border: '1px solid #CBD5E1',
-                fontSize: '0.9rem',
-                fontFamily: 'var(--font-mono)',
-                outline: 'none',
-              }}
-            />
-            <button
-              type="submit"
-              style={{
-                padding: '0.75rem 1.5rem',
-                borderRadius: 'var(--radius-pill)',
-                background: 'var(--pg-violet)',
-                color: '#FFF',
-                border: 'none',
-                fontWeight: 700,
-                fontSize: '0.85rem',
-                cursor: 'pointer',
-              }}
-            >
-              Update Base URL
-            </button>
-          </form>
-
-          {isSaved && (
-            <div
-              style={{
-                marginTop: '0.75rem',
-                fontSize: '0.8rem',
-                color: '#16A34A',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-              }}
-            >
-              <CheckCircle size={14} /> Base URL updated successfully.
             </div>
           )}
         </div>

@@ -59,7 +59,6 @@ export const App: React.FC = () => {
   const [role, setRole] = useState<'viewer' | 'analyst' | 'approver' | 'admin'>('approver');
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [motionEnabled, setMotionEnabled] = useState(true);
-  const [apiBaseUrl, setApiBaseUrl] = useState<string>('/api/v1');
 
   // Derive active tab from current URL pathname
   const activeTab = useMemo(() => {
@@ -415,21 +414,14 @@ export const App: React.FC = () => {
 
             {activeTab === 'graph' && <GraphPage onNavigateToPlanner={() => handleNavigate('planner')} />}
 
-            {activeTab === 'risk' && <RiskPage apiBaseUrl={apiBaseUrl} />}
+            {activeTab === 'risk' && <RiskPage />}
 
-            {activeTab === 'planner' && (
-              <PlannerPage apiBaseUrl={apiBaseUrl} onNavigateToAudit={() => handleNavigate('audit')} />
-            )}
+            {activeTab === 'planner' && <PlannerPage onNavigateToAudit={() => handleNavigate('audit')} />}
 
-            {activeTab === 'audit' && <AuditPage apiBaseUrl={apiBaseUrl} />}
+            {activeTab === 'audit' && <AuditPage />}
 
             {activeTab === 'settings' && (
-              <SettingsPage
-                apiBaseUrl={apiBaseUrl}
-                onUpdateApiBaseUrl={(url) => setApiBaseUrl(url)}
-                motionEnabled={motionEnabled}
-                onToggleMotion={(enabled) => setMotionEnabled(enabled)}
-              />
+              <SettingsPage motionEnabled={motionEnabled} onToggleMotion={(enabled) => setMotionEnabled(enabled)} />
             )}
 
             {activeTab === 'assets' && <AssetsPage />}
