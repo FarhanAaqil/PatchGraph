@@ -16,10 +16,10 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Dict, List
 
-from backend.app.risk.baseline import RiskWeights, score_finding_explainable
 from experiments.manifest import build_evaluation_manifest_meta, compute_ndcg_at_k
 from experiments.run_planner import run_planner_evaluation
 from experiments.run_ranking import build_ranking_benchmark
+from intelligence.risk.baseline import RiskWeights, score_finding_explainable
 
 
 def _score_rows_with_weights(

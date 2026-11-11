@@ -5,10 +5,10 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Dict, List
 
-from backend.app.planner.candidates import CandidateAction
-from backend.app.planner.model import PlannerConstraints
-from backend.app.planner.solve import solve_greedy_baseline, solve_remediation_plan
 from experiments.manifest import build_evaluation_manifest_meta
+from intelligence.planner.candidates import CandidateAction
+from intelligence.planner.model import PlannerConstraints
+from intelligence.planner.solve import solve_greedy_baseline, solve_remediation_plan
 
 
 def build_planner_benchmark_candidates() -> List[CandidateAction]:

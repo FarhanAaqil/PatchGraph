@@ -1,11 +1,9 @@
-"""Database engine, PostgreSQL 16 DDL verifier, and deterministic seeded store for PatchGraph.
+"""SQLite store and deterministic demo seed for PatchGraph.
 
-In Docker Compose / production (`DATABASE_URL=postgresql://...`), PatchGraph executes
-`backend/migrations/001_core.sql` against PostgreSQL 16.
-In offline local/test mode (`DATABASE_URL=sqlite://...`), this module translates the
-canonical PostgreSQL 16 DDL in `001_core.sql` into SQLite while preserving all 22 tables,
-primary keys, unique constraints, CHECK constraints, and B-tree indexes so the full
-schema and query layer can be verified without an external database daemon.
+The canonical schema is the PostgreSQL-flavoured DDL in `backend/migrations/001_core.sql`. This module
+translates it to SQLite at start-up, keeping every table, primary key, unique constraint, CHECK constraint
+and index, and stores data in the file named by `PATCHGRAPH_SQLITE_PATH` (default `data/patchgraph.db`).
+There is no PostgreSQL driver: pointing the app at a Postgres server is not supported yet.
 """
 
 from __future__ import annotations

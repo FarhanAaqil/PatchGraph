@@ -6,7 +6,7 @@
 
 
 
- * Generated against backend/openapi.yaml (07_API_PatchGraph.md)
+ * Generated against contracts/openapi.yaml (07_API_PatchGraph.md)
 
 
 
