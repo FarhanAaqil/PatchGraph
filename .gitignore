@@ -64,3 +64,11 @@ dist-ssr/
 *.swo
 *.DS_Store
 Thumbs.db
+
+# Planning notes and blueprints stay local
+*blueprint*.md
+*Blueprint*.md
+PLAN*.md
+*_plan.md
+*.plan.md
+plans/

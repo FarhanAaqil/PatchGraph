@@ -1,4 +1,5 @@
 """Database backup, SHA-256 verification, and clean-instance restore drill (Day 40)."""
+
 from __future__ import annotations
 
 import hashlib

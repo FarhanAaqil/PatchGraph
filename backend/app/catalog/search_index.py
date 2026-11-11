@@ -3,6 +3,7 @@
 Provides sub-millisecond BM25/token search across packages, CVEs, CWEs, and services
 without requiring an external Elasticsearch cluster.
 """
+
 from __future__ import annotations
 
 import re

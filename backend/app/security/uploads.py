@@ -8,6 +8,7 @@ Enforces:
 - Non-executing parser and HTML/script tag rejection in identifiers
 - Secret redaction on logs and snapshots
 """
+
 from __future__ import annotations
 
 import json

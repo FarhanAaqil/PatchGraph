@@ -2,6 +2,7 @@
 
 Records source URL, fetched_at, content_sha256, and parser_version per 22_Sources_and_Verification_Ledger.md.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -39,7 +40,9 @@ class OsvConnector:
     """Offline-capable OSV connector backed by content-addressed snapshot fixtures."""
 
     def __init__(self, snapshot_path: Optional[Path] = None, max_age_hours: int = 168) -> None:
-        default_path = Path(__file__).resolve().parent.parent.parent.parent / "tests" / "fixtures" / "advisory_snapshot_seed.json"
+        default_path = (
+            Path(__file__).resolve().parent.parent.parent.parent / "tests" / "fixtures" / "advisory_snapshot_seed.json"
+        )
         self.snapshot_path = snapshot_path or default_path
         self.max_age_hours = max_age_hours
 

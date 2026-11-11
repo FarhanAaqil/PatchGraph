@@ -3,6 +3,7 @@
 Exports the authoritative PostgreSQL/NetworkX typed supply-chain graph to
 idempotent Neo4j Cypher `MERGE` statements for external graph visualization tools.
 """
+
 from __future__ import annotations
 
 from typing import List
@@ -20,7 +21,5 @@ def export_graph_to_cypher(graph: TypedSupplyChainGraph) -> str:
     for src, edges in sorted(graph.adj.items()):
         for dst, emeta in edges:
             rel_type = emeta.get("kind", "DEPENDS_ON").upper()
-            lines.append(
-                f'MATCH (a {{id: "{src}"}}), (b {{id: "{dst}"}}) MERGE (a)-[:{rel_type}]->(b);'
-            )
+            lines.append(f'MATCH (a {{id: "{src}"}}), (b {{id: "{dst}"}}) MERGE (a)-[:{rel_type}]->(b);')
     return "\n".join(lines) + "\n"

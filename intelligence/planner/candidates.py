@@ -1,8 +1,9 @@
 """Patch and mitigation candidate generation (Day 22)."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 from backend.app.planner.compatibility import classify_version_jump
 from intelligence.planner.effort import estimate_action_effort
@@ -38,7 +39,6 @@ def build_seeded_candidates() -> List[CandidateAction]:
     major_effort = estimate_action_effort(major_compat.jump_kind, affected_service_count=1)
 
     urllib_compat = classify_version_jump("2.0.2", "2.0.7")
-    urllib_effort = estimate_action_effort(urllib_compat.jump_kind, affected_service_count=1)
 
     return [
         CandidateAction(

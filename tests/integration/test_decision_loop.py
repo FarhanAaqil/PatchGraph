@@ -8,6 +8,7 @@ Proves Gate 5 (Decision Intelligence) exit criteria:
 - Source freshness & feature drift monitoring
 - Idempotent scheduled background refresh with exponential backoff and cached snapshot fallback
 """
+
 from __future__ import annotations
 
 import json

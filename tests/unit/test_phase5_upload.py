@@ -1,12 +1,13 @@
 """Unit tests for Phase 5 real file upload and ingestion (`tests/unit/test_phase5_upload.py`)."""
+
 from __future__ import annotations
 
 import json
 import unittest
+
 from fastapi.testclient import TestClient
 
 from backend.app.main import app
-from backend.app.db.session import DatabaseManager, get_db
 
 client = TestClient(app)
 

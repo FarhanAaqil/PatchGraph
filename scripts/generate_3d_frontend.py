@@ -13,9 +13,9 @@ Features:
 - Synthesized Web Audio API sound effects for futuristic tactile user feedback (with audio toggle).
 - High-density user-friendly glassmorphic UI overlay with Command-K search and instant inspector drawer.
 """
+
 from __future__ import annotations
 
-import re
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -1497,6 +1497,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 </html>
 """
 
+
 def generate():
     PREVIEW_FILE.write_text(HTML_TEMPLATE, encoding="utf-8")
     print(f"Generated {PREVIEW_FILE} ({len(HTML_TEMPLATE)} bytes)")
@@ -1513,14 +1514,11 @@ def generate():
 
     PAGES_DIR.mkdir(parents=True, exist_ok=True)
     for filename, tab in page_tab_map.items():
-        page_content = HTML_TEMPLATE.replace(
-            "switchWorkspaceTab(1)",
-            f"switchWorkspaceTab({tab})"
-        )
+        page_content = HTML_TEMPLATE.replace("switchWorkspaceTab(1)", f"switchWorkspaceTab({tab})")
         dest = PAGES_DIR / filename
         dest.write_text(page_content, encoding="utf-8")
         print(f"Generated {dest} (Default Tab {tab})")
 
+
 if __name__ == "__main__":
     generate()
-

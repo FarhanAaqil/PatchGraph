@@ -5,9 +5,11 @@ Compares a 2-layer normalized adjacency message-passing GNN (`H^{(l+1)} = ReLU(D
 against the deterministic typed traversal engine on the same frozen graph snapshot.
 Note: Deterministic traversal remains the authoritative production method.
 """
+
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any, Dict
+
 import numpy as np
 
 from backend.app.graph.build import TypedSupplyChainGraph

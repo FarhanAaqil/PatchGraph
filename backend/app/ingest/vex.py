@@ -4,6 +4,7 @@ Data invariant (`03_TRD_PatchGraph.md`):
 VEX never deletes a match; it qualifies status (`affected`, `not_affected`, `fixed`,
 `under_investigation`) with explicit product mapping and justification.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -42,7 +43,13 @@ def validate_and_parse_vex(document: Dict[str, Any]) -> ValidatedVexDocument:
     raw_stmts = document.get("statements")
     if not isinstance(raw_stmts, list) or not raw_stmts:
         return ValidatedVexDocument(
-            errors=[{"field": "statements", "issue": "VEX document requires non-empty statements array", "location": "$.statements"}]
+            errors=[
+                {
+                    "field": "statements",
+                    "issue": "VEX document requires non-empty statements array",
+                    "location": "$.statements",
+                }
+            ]
         )
 
     parsed: List[ParsedVexStatement] = []
@@ -55,7 +62,13 @@ def validate_and_parse_vex(document: Dict[str, Any]) -> ValidatedVexDocument:
         products = st.get("products") or []
 
         if not vuln_name:
-            errors.append({"field": "vulnerability.name", "issue": "Missing vulnerability name", "location": f"{loc}.vulnerability"})
+            errors.append(
+                {
+                    "field": "vulnerability.name",
+                    "issue": "Missing vulnerability name",
+                    "location": f"{loc}.vulnerability",
+                }
+            )
             continue
         if status not in ALLOWED_VEX_STATUSES:
             errors.append({"field": "status", "issue": f"Invalid VEX status '{status}'", "location": f"{loc}.status"})
@@ -70,12 +83,20 @@ def validate_and_parse_vex(document: Dict[str, Any]) -> ValidatedVexDocument:
             )
             continue
         if not products:
-            errors.append({"field": "products", "issue": "VEX statement requires explicit product mapping", "location": f"{loc}.products"})
+            errors.append(
+                {
+                    "field": "products",
+                    "issue": "VEX statement requires explicit product mapping",
+                    "location": f"{loc}.products",
+                }
+            )
             continue
 
         for p_obj in products:
             prod_id = p_obj.get("@id") or ""
-            sub_svcs = [s.get("@id", "").replace("service:", "") for s in (p_obj.get("subcomponents") or []) if s.get("@id")]
+            sub_svcs = [
+                s.get("@id", "").replace("service:", "") for s in (p_obj.get("subcomponents") or []) if s.get("@id")
+            ]
             target_services = sub_svcs if sub_svcs else [None]
             for svc in target_services:
                 parsed.append(

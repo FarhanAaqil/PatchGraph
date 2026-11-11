@@ -1,8 +1,8 @@
 """Version-jump classification and compatibility constraint modeling (Day 23)."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional, Tuple
 
 from backend.app.catalog.packages import parse_version_tuple
 

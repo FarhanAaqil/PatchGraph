@@ -4,6 +4,7 @@ Validates schema versions, canonicalizes package coordinates, verifies dependenc
 references are resolvable, collapses duplicate dependency edges while preserving
 provenance, and returns location-specific field errors.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -13,7 +14,6 @@ from typing import Any, Dict, List, Set, Tuple
 
 from backend.app.catalog.packages import (
     NormalizedPackageCoord,
-    normalize_ecosystem,
     normalize_package_name,
     normalize_version_string,
     parse_and_normalize_purl,
@@ -131,7 +131,9 @@ def _parse_cyclonedx(doc: Dict[str, Any], sha256_hex: str) -> ValidatedSbomDocum
             errors.append({"field": "name", "issue": "Component missing required name", "location": f"{loc}.name"})
             continue
         if not version:
-            errors.append({"field": "version", "issue": "Component missing required version", "location": f"{loc}.version"})
+            errors.append(
+                {"field": "version", "issue": "Component missing required version", "location": f"{loc}.version"}
+            )
             continue
         try:
             if purl:

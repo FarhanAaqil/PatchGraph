@@ -1,9 +1,11 @@
 """Remediation effort baseline and Model Two (Remediation Effort Estimator) (Day 24 & Phase 5)."""
+
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
-from typing import Dict, List
-
+from pathlib import Path
+from typing import Dict, Optional
 
 BASE_HOURS_BY_JUMP: Dict[str, float] = {
     "patch": 4.0,
@@ -58,11 +60,9 @@ def estimate_action_effort(
     )
 
 
-import json
-from pathlib import Path
-from typing import Optional
-
-DEFAULT_EFFORT_BUNDLE_PATH = Path(__file__).resolve().parent.parent.parent / "data" / "fixtures" / "model_effort_v1.json"
+DEFAULT_EFFORT_BUNDLE_PATH = (
+    Path(__file__).resolve().parent.parent.parent / "data" / "fixtures" / "model_effort_v1.json"
+)
 
 
 def predict_effort_with_model_two(

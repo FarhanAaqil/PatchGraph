@@ -1,8 +1,9 @@
 """Structured JSON observability, latency percentiles, and stale-source monitors (Day 39)."""
+
 from __future__ import annotations
 
-import json
 from typing import Any, Dict, List
+
 import numpy as np
 
 from backend.app.security.uploads import redact_secrets
@@ -14,7 +15,9 @@ class ObservabilityRegistry:
         self.error_counts: Dict[str, int] = {}
         self.structured_logs: List[Dict[str, Any]] = []
 
-    def record_request(self, route: str, latency_ms: float, status_code: int, request_id: str, message: str = "ok") -> None:
+    def record_request(
+        self, route: str, latency_ms: float, status_code: int, request_id: str, message: str = "ok"
+    ) -> None:
         self.latencies_ms.setdefault(route, []).append(float(latency_ms))
         if status_code >= 400:
             self.error_counts[route] = self.error_counts.get(route, 0) + 1

@@ -1,18 +1,28 @@
-"""Automated GitHub Pull Request & Merge Helper for PatchGraph phases.
+"""Open a pull request from master into main, wait for CI, then merge it.
 
-Retrieves authentication dynamically via Git Credential Helper or GITHUB_TOKEN environment variable.
-Never writes or hardcodes credentials.
+Usage:
+    python scripts/github_pr.py "Title of the change" "Longer description"
+
+Authentication comes from GITHUB_TOKEN or the git credential helper. Nothing is stored on disk.
+The merge only happens when every check on the PR head commit has finished successfully.
 """
+
 from __future__ import annotations
 
 import os
 import subprocess
 import sys
 import time
+
 import requests
 
 REPO = "FarhanAaqil/PatchGraph"
+OWNER = REPO.split("/")[0]
 BASE_URL = f"https://api.github.com/repos/{REPO}"
+HEAD_BRANCH = "master"
+BASE_BRANCH = "main"
+CHECK_TIMEOUT_SECONDS = 20 * 60
+POLL_SECONDS = 15
 
 
 def resolve_token() -> str:
@@ -20,76 +30,90 @@ def resolve_token() -> str:
     if env_token:
         return env_token.strip()
 
-    try:
-        proc = subprocess.run(
-            ["git", "credential", "fill"],
-            input="protocol=https\nhost=github.com\nusername=FarhanAaqil\n\n",
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-        for line in proc.stdout.splitlines():
-            if line.startswith("password="):
-                return line.split("=", 1)[1].strip()
-    except Exception as exc:
-        print(f"Warning: could not retrieve credentials from git credential helper: {exc}")
-
-    raise RuntimeError("GitHub authentication token not available via environment or credential helper.")
+    proc = subprocess.run(
+        ["git", "credential", "fill"],
+        input=f"protocol=https\nhost=github.com\nusername={OWNER}\n\n",
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    for line in proc.stdout.splitlines():
+        if line.startswith("password="):
+            return line.split("=", 1)[1].strip()
+    raise RuntimeError("No GitHub token found in GITHUB_TOKEN or the git credential helper.")
 
 
-def create_and_merge_pr(title: str, body: str) -> None:
-    token = resolve_token()
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Accept": "application/vnd.github.v3+json",
-        "User-Agent": "PatchGraph-Automator",
-    }
+def session() -> requests.Session:
+    s = requests.Session()
+    s.headers.update(
+        {
+            "Authorization": f"Bearer {resolve_token()}",
+            "Accept": "application/vnd.github+json",
+            "User-Agent": "patchgraph-release-helper",
+        }
+    )
+    return s
 
-    print(f"Creating Pull Request: {title}")
-    payload = {
-        "title": title,
-        "body": body,
-        "head": "master",
-        "base": "main",
-    }
-    resp = requests.post(f"{BASE_URL}/pulls", headers=headers, json=payload)
-    if resp.status_code == 422 and "A pull request already exists" in resp.text:
-        list_resp = requests.get(f"{BASE_URL}/pulls?head=FarhanAaqil:master&base=main", headers=headers)
-        prs = list_resp.json()
-        if prs:
-            pr_number = prs[0]["number"]
-            pr_url = prs[0]["html_url"]
-            print(f"Using existing PR #{pr_number}: {pr_url}")
-        else:
-            print(f"Error fetching PR: {resp.text}")
-            sys.exit(1)
-    elif resp.status_code != 201:
-        print(f"Failed to create PR ({resp.status_code}): {resp.text}")
-        sys.exit(1)
-    else:
-        pr_data = resp.json()
-        pr_number = pr_data["number"]
-        pr_url = pr_data["html_url"]
-        print(f"Successfully created PR #{pr_number}: {pr_url}")
 
-    # Brief pause to allow GitHub to register commit refs
-    time.sleep(2)
+def open_pull_request(s: requests.Session, title: str, body: str) -> dict:
+    resp = s.post(
+        f"{BASE_URL}/pulls",
+        json={"title": title, "body": body, "head": HEAD_BRANCH, "base": BASE_BRANCH},
+    )
+    if resp.status_code == 201:
+        return resp.json()
+    if resp.status_code == 422 and "already exists" in resp.text:
+        existing = s.get(f"{BASE_URL}/pulls", params={"head": f"{OWNER}:{HEAD_BRANCH}", "base": BASE_BRANCH}).json()
+        if existing:
+            return existing[0]
+    raise SystemExit(f"Could not open the pull request ({resp.status_code}): {resp.text}")
 
-    merge_payload = {
-        "commit_title": f"Merge pull request #{pr_number} from master: {title}",
-        "commit_message": body,
-        "merge_method": "merge",
-    }
-    merge_resp = requests.put(f"{BASE_URL}/pulls/{pr_number}/merge", headers=headers, json=merge_payload)
-    if merge_resp.status_code == 200:
-        print(f"Successfully merged PR #{pr_number} into main branch.")
-    else:
-        print(f"Merge response ({merge_resp.status_code}): {merge_resp.text}")
-        sys.exit(1)
+
+def wait_for_checks(s: requests.Session, sha: str) -> None:
+    """Block until all check runs on `sha` finish; exit non-zero if any did not succeed."""
+    deadline = time.time() + CHECK_TIMEOUT_SECONDS
+    while time.time() < deadline:
+        runs = s.get(f"{BASE_URL}/commits/{sha}/check-runs", params={"per_page": 100}).json().get("check_runs", [])
+        if runs and all(r["status"] == "completed" for r in runs):
+            failed = [r for r in runs if r["conclusion"] not in ("success", "skipped", "neutral")]
+            for r in runs:
+                print(f"  {r['name']}: {r['conclusion']}")
+            if failed:
+                raise SystemExit("Checks failed, not merging: " + ", ".join(r["name"] for r in failed))
+            return
+        pending = [r["name"] for r in runs if r["status"] != "completed"]
+        print(f"  waiting on checks: {', '.join(pending) or 'none started yet'}")
+        time.sleep(POLL_SECONDS)
+    raise SystemExit("Timed out waiting for checks.")
+
+
+def merge(s: requests.Session, number: int, title: str, body: str) -> None:
+    resp = s.put(
+        f"{BASE_URL}/pulls/{number}/merge",
+        json={"commit_title": f"{title} (#{number})", "commit_message": body, "merge_method": "merge"},
+    )
+    if resp.status_code != 200:
+        raise SystemExit(f"Merge failed ({resp.status_code}): {resp.text}")
+    print(f"Merged #{number} into {BASE_BRANCH}.")
+
+
+def main() -> None:
+    if len(sys.argv) < 3:
+        raise SystemExit(__doc__)
+    title, body = sys.argv[1], sys.argv[2]
+
+    subprocess.run(["git", "push", "origin", HEAD_BRANCH], check=True)
+    s = session()
+    pr = open_pull_request(s, title, body)
+    print(f"PR #{pr['number']}: {pr['html_url']}")
+    wait_for_checks(s, pr["head"]["sha"])
+    merge(s, pr["number"], title, body)
+
+    # Keep master level with main so the next phase starts from the merged state.
+    subprocess.run(["git", "fetch", "origin"], check=True)
+    subprocess.run(["git", "merge", "--ff-only", f"origin/{BASE_BRANCH}"], check=True)
+    subprocess.run(["git", "push", "origin", HEAD_BRANCH], check=True)
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 3:
-        print("Usage: python scripts/github_pr.py <title> <body>")
-        sys.exit(1)
-    create_and_merge_pr(sys.argv[1], sys.argv[2])
+    main()

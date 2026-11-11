@@ -7,20 +7,19 @@ Proves Gate 3 (Intelligence Slice) exit criteria:
 - Deterministic baseline formula and calibrated exploit-likelihood model produce explainable factor breakdowns
 - Temporal and package-family leakage controls reject leaked training splits
 """
+
 from __future__ import annotations
 
 import unittest
-from pathlib import Path
 
 from backend.app.catalog.deployments import get_project_deployment_contexts, parse_deployment_csv
 from backend.app.db.session import DatabaseManager
-from backend.app.graph.build import TypedSupplyChainGraph, build_project_supply_chain_graph
+from backend.app.graph.build import build_project_supply_chain_graph
 from backend.app.graph.impact import compute_blast_radius
 from backend.app.graph.traverse import traverse_affected_paths
 from backend.app.risk.baseline import rank_findings_by_baseline, score_finding_explainable
 from experiments.calibrate import generate_calibration_report
 from intelligence.risk.model import (
-    CalibratedExploitModel,
     VulnerabilityFeatureRow,
     verify_no_temporal_or_family_leakage,
 )
@@ -111,8 +110,12 @@ class TestPhase3IntelligenceSliceIntegration(unittest.TestCase):
         self.assertEqual(len(cal_res["bundle_sha256"]), 64)
 
         # Verify leakage detector catches package-family overlap
-        r1 = VulnerabilityFeatureRow("CVE-1", "pypi:same-pkg", "pypi", "2025-01-01", "2025-01-02", 8.0, 0.5, 1, True, False, 2, 1)
-        r2 = VulnerabilityFeatureRow("CVE-2", "pypi:same-pkg", "pypi", "2026-09-01", "2026-09-02", 8.0, 0.5, 1, True, False, 2, 0)
+        r1 = VulnerabilityFeatureRow(
+            "CVE-1", "pypi:same-pkg", "pypi", "2025-01-01", "2025-01-02", 8.0, 0.5, 1, True, False, 2, 1
+        )
+        r2 = VulnerabilityFeatureRow(
+            "CVE-2", "pypi:same-pkg", "pypi", "2026-09-01", "2026-09-02", 8.0, 0.5, 1, True, False, 2, 0
+        )
         with self.assertRaises(ValueError):
             verify_no_temporal_or_family_leakage([r1], [r2], cutoff_date="2026-06-30")
 

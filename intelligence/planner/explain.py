@@ -1,7 +1,8 @@
 """Explainability serializer for selected/rejected remediation actions and binding constraints (Day 26)."""
+
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 from intelligence.planner.candidates import CandidateAction
 from intelligence.planner.model import PlannerConstraints
@@ -30,10 +31,7 @@ def explain_rejected_actions_and_constraints(
             )
             if f"max_downtime_minutes <= {constraints.max_downtime_minutes}" not in binding:
                 binding.append(f"max_downtime_minutes <= {constraints.max_downtime_minutes}")
-        if (
-            constraints.include_compatibility_constraints
-            and c.compatibility_risk > constraints.max_compatibility_risk
-        ):
+        if constraints.include_compatibility_constraints and c.compatibility_risk > constraints.max_compatibility_risk:
             reasons.append(
                 f"Compatibility risk {c.compatibility_risk:.2f} exceeds ceiling {constraints.max_compatibility_risk:.2f}"
             )

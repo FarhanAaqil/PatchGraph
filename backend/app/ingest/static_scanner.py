@@ -4,12 +4,12 @@ Inspects uploaded Python source files using `ast` (without executing code!) to:
 1. Detect unknown/zero-day dangerous sink patterns (`pickle.loads`, `yaml.load`, `eval`, `exec`, `subprocess` with `shell=True`).
 2. Verify call-graph reachability (whether a service actually imports and calls a vulnerable library symbol).
 """
+
 from __future__ import annotations
 
 import ast
 from dataclasses import dataclass
-from typing import Any, Dict, List, Set
-
+from typing import Dict, List, Set
 
 DANGEROUS_SINKS = {
     ("pickle", "loads"): ("CWE-502", "HIGH", "Untrusted deserialization via pickle.loads"),

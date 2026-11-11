@@ -1,8 +1,9 @@
 """Idempotent scheduled evidence refresh job with exponential backoff and fallback (Day 34)."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional
+from typing import Dict, List
 
 
 @dataclass

@@ -3,10 +3,11 @@
 Simulates pre-deployment contract and API symbol checks for a candidate upgrade
 before human sign-off or rollout.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import List
 
 from backend.app.planner.compatibility import classify_version_jump
 

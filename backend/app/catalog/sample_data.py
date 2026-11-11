@@ -4,6 +4,7 @@ Loads CycloneDX 1.5 SBOM components, deployment topology mappings,
 vulnerabilities, advisories, exploit evidence, and computes calibrated
 ML risk scores and CP-SAT remediation plans.
 """
+
 from __future__ import annotations
 
 import json
@@ -17,7 +18,9 @@ from backend.app.risk.batch import score_project_findings_in_batches
 FIXTURES_DIR = Path(__file__).resolve().parent.parent.parent.parent / "tests" / "fixtures"
 
 
-def load_sample_dataset(db: DatabaseManager, project_id: str = "00000000-0000-0000-0000-000000000001") -> Dict[str, Any]:
+def load_sample_dataset(
+    db: DatabaseManager, project_id: str = "00000000-0000-0000-0000-000000000001"
+) -> Dict[str, Any]:
     # Reset and seed database with Phase 1 scenario
     db.seed_phase1_scenario(force=True)
     now = datetime.now(timezone.utc).isoformat()

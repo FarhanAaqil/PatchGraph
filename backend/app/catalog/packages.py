@@ -2,6 +2,7 @@
 
 Implements deterministic canonicalization per 03_TRD_PatchGraph.md and 20_Data_Specification_PatchGraph.md.
 """
+
 from __future__ import annotations
 
 import re

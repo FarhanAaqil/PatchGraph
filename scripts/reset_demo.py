@@ -3,6 +3,7 @@
 Resets the local database to the clean seeded demo state (`snap_01`), verifies
 all 4 pinned public evidence sources, and prints the ready-to-demo status in < 5 seconds.
 """
+
 from __future__ import annotations
 
 import json

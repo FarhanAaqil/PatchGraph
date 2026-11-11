@@ -1,4 +1,5 @@
 """Immutable What-If Simulation Cloner and Comparator (Day 27)."""
+
 from __future__ import annotations
 
 from dataclasses import replace

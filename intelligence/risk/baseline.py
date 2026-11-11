@@ -7,6 +7,7 @@ Implements the exact Technical Formulation from the PatchGraph Master Blueprint:
 Unknown evidence applies a documented uncertainty band and conservative prior,
 never a silent zero.
 """
+
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass

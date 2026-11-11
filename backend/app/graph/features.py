@@ -1,4 +1,5 @@
 """Bounded graph centrality and structural impact features (Day 31)."""
+
 from __future__ import annotations
 
 from typing import Dict

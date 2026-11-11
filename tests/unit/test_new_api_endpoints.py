@@ -1,12 +1,14 @@
 """Unit tests for newly added API endpoints and seed scripts (`tests/unit/test_new_api_endpoints.py`)."""
+
 from __future__ import annotations
 
 import unittest
+
 from fastapi.testclient import TestClient
 
-from backend.app.main import create_app
-from backend.app.db.session import DatabaseManager
 from backend.app.api import routes as api_routes
+from backend.app.db.session import DatabaseManager
+from backend.app.main import create_app
 from scripts.seed_demo import seed_demo_data
 
 
@@ -74,7 +76,9 @@ class TestExtendedApiEndpoints(unittest.TestCase):
         self.assertTrue(res_node.json()["in_kev"])
 
     def test_topology_import_and_jobs(self) -> None:
-        res_topo = self.client.post("/api/v1/imports/topology", json={"source_name": "test_topo.csv"}, headers=self.headers)
+        res_topo = self.client.post(
+            "/api/v1/imports/topology", json={"source_name": "test_topo.csv"}, headers=self.headers
+        )
         self.assertEqual(res_topo.status_code, 200)
         self.assertEqual(res_topo.json()["status"], "completed")
 
@@ -96,8 +100,6 @@ class TestExtendedApiEndpoints(unittest.TestCase):
         self.assertEqual(res["status"], "DEMO_DATA_SEEDED")
         self.assertEqual(res["label"], "Demo data")
         self.assertEqual(res["tables_seeded"], 26)
-
-
 
     def test_imports_list(self) -> None:
         res = self.client.get("/api/v1/imports", headers=self.headers)
@@ -129,6 +131,6 @@ class TestExtendedApiEndpoints(unittest.TestCase):
         self.assertIn("brier_score", data)
         self.assertIn("pr_auc", data)
 
+
 if __name__ == "__main__":
     unittest.main()
-

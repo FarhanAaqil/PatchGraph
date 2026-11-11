@@ -7,6 +7,7 @@ Proves Gate 2 (Data Flow) exit criteria:
 - Explicit staleness flagging when reference time exceeds freshness window
 - Typed dependency graph persistence and projection
 """
+
 from __future__ import annotations
 
 import json
