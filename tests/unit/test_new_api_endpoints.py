@@ -150,6 +150,59 @@ class TestExtendedApiEndpoints(unittest.TestCase):
         detail = self.client.get(f"/api/v1/plans/{plan_id}", headers=self.headers).json()
         self.assertEqual(detail["approval_state"], "approved")
 
+    def _create(self, **overrides):
+        payload = {
+            "risk_run_id": "rr_01",
+            "budget_hours": 16,
+            "max_downtime_minutes": 30,
+            "environments": ["prod"],
+            "objective": "weighted_exposure",
+        }
+        return self.client.post("/api/v1/plans", headers=self.headers, json={**payload, **overrides})
+
+    def test_plans_report_what_was_actually_solved(self) -> None:
+        self.client.post("/api/v1/demo/load-sample", headers=self.headers)
+        plan = self._create().json()
+        all_plans = self.client.get("/api/v1/plans", headers=self.headers).json()["items"]
+        listed = next(p for p in all_plans if p["id"] == plan["id"])
+        detail = self.client.get(f"/api/v1/plans/{plan['id']}", headers=self.headers).json()
+        self.assertAlmostEqual(listed["risk_removed"], plan["risk_removed"], places=2)
+        self.assertAlmostEqual(detail["risk_removed"], plan["risk_removed"], places=2)
+        self.assertEqual([a["package"] for a in detail["actions"]], [a["package"] for a in plan["actions"]])
+        self.assertEqual(detail["budget_hours"], 16)
+        self.assertEqual(self.client.get("/api/v1/plans/plan_missing", headers=self.headers).status_code, 404)
+
+    def test_objective_is_validated_and_used(self) -> None:
+        self.client.post("/api/v1/demo/load-sample", headers=self.headers)
+        self.assertEqual(self._create(objective="nonsense").status_code, 400)
+        exact = self._create(objective="weighted_exposure", budget_hours=60).json()
+        greedy = self._create(objective="greedy_risk_per_hour", budget_hours=60).json()
+        self.assertEqual(exact["status"], "optimal")
+        self.assertEqual(greedy["status"], "feasible")
+        self.assertGreaterEqual(exact["risk_removed"], greedy["risk_removed"] - 1e-9, "exact never loses to greedy")
+
+    def test_simulation_re_solves_instead_of_returning_constants(self) -> None:
+        self.client.post("/api/v1/demo/load-sample", headers=self.headers)
+        plan = self._create(budget_hours=8).json()
+        bigger = self.client.post(
+            f"/api/v1/plans/{plan['id']}/simulate",
+            headers=self.headers,
+            json={"budget_hours": 60, "max_downtime_minutes": 90, "environments": ["prod"]},
+        ).json()
+        self.assertGreaterEqual(bigger["simulated_plan"]["risk_removed"], bigger["baseline_plan"]["risk_removed"])
+        self.assertAlmostEqual(
+            bigger["deltas"]["risk_removed_delta"],
+            bigger["simulated_plan"]["risk_removed"] - bigger["baseline_plan"]["risk_removed"],
+            places=1,
+        )
+        tiny = self.client.post(
+            f"/api/v1/plans/{plan['id']}/simulate",
+            headers=self.headers,
+            json={"budget_hours": 1, "max_downtime_minutes": 0, "environments": ["prod"]},
+        ).json()
+        self.assertEqual(tiny["simulated_plan"]["status"], "infeasible")
+        self.assertLess(tiny["deltas"]["risk_removed_delta"], 0)
+
     def test_forced_reseed_never_deletes_memberships(self) -> None:
         """A reload of the sample data must not open a window where every caller looks like a non-member."""
         statements: list[str] = []

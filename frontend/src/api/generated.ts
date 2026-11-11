@@ -47,6 +47,8 @@ export interface AssetItem {
 export interface AssetListResponse {
   items: AssetItem[];
   total: number;
+  limit?: number;
+  offset?: number;
   request_id: string;
 }
 
@@ -78,13 +80,15 @@ export interface FindingSummary {
   probability: number;
   uncertainty: number;
   factors: FactorBreakdown;
-  source_freshness: Record<string, { fetched_at: string; stale: boolean; sha256: string }>;
 }
 
 export interface FindingListResponse {
   items: FindingSummary[];
   total: number;
-  evidence_snapshot: string;
+  limit: number;
+  offset: number;
+  source_freshness: Record<string, { fetched_at: string; stale: boolean; content_sha256?: string }>;
+  evidence_snapshot: string | null;
   request_id: string;
 }
 
@@ -179,6 +183,7 @@ export interface PlanResponse {
   best_bound?: number;
   runtime_ms?: number;
   approval_state?: string;
+  created_at?: string;
   request_id?: string;
 }
 
@@ -378,6 +383,17 @@ export interface SystemHealthResponse {
   timestamp: string;
 }
 
+/** Builds `?a=1&b=2`, skipping undefined, null, empty and false values. */
+export function toQuery(params?: Record<string, string | number | boolean | undefined | null>): string {
+  const qs = new URLSearchParams();
+  for (const [key, value] of Object.entries(params ?? {})) {
+    if (value === undefined || value === null || value === '' || value === false) continue;
+    qs.set(key, String(value));
+  }
+  const text = qs.toString();
+  return text ? `?${text}` : '';
+}
+
 /** A token pasted into the browser (localStorage `patchgraph.token`) is used when none is passed in. */
 function readStoredToken(): string | undefined {
   try {
@@ -461,14 +477,20 @@ export class PatchGraphApiClient {
     return this.request<ImportStatusResponse>(`/imports/${encodeURIComponent(id)}`);
   }
 
-  listAssets(params?: { environment?: string; service?: string }) {
-    const qs = new URLSearchParams(params as Record<string, string>).toString();
-    return this.request<AssetListResponse>(`/assets${qs ? `?${qs}` : ''}`);
+  listAssets(params?: { environment?: string; service?: string; limit?: number; offset?: number }) {
+    return this.request<AssetListResponse>(`/assets${toQuery(params)}`);
   }
 
-  listFindings(params?: { sort?: string; environment?: string; status?: string }) {
-    const qs = new URLSearchParams(params as Record<string, string>).toString();
-    return this.request<FindingListResponse>(`/findings${qs ? `?${qs}` : ''}`);
+  listFindings(params?: {
+    sort?: string;
+    environment?: string;
+    status?: string;
+    q?: string;
+    kev_only?: boolean;
+    limit?: number;
+    offset?: number;
+  }) {
+    return this.request<FindingListResponse>(`/findings${toQuery(params)}`);
   }
 
   getFinding(id: string) {
@@ -527,8 +549,12 @@ export class PatchGraphApiClient {
     return this.request<AuditListResponse>(`/audit${qs ? `?${qs}` : ''}`);
   }
 
-  exportAuditLogs(format: 'json' | 'csv' = 'json') {
-    return this.request<Blob>(`/audit/export?format=${format}`);
+  /** Fetches the audit export as a file blob, sending the same identity as every other call. */
+  async exportAuditLogs(format: 'json' | 'csv' = 'json'): Promise<Blob> {
+    const { 'Content-Type': _contentType, ...headers } = this.headers;
+    const res = await fetch(`${this.baseUrl}/audit/export?format=${format}`, { headers });
+    if (!res.ok) throw await res.json().catch(() => ({ message: res.statusText }));
+    return res.blob();
   }
 
   explainFinding(id: string) {
@@ -594,8 +620,14 @@ export class PatchGraphApiClient {
     });
   }
 
-  listImports() {
-    return this.request<{ items: ImportStatusResponse[]; total: number; request_id: string }>('/imports');
+  listImports(params?: { limit?: number; offset?: number }) {
+    return this.request<{
+      items: ImportStatusResponse[];
+      total: number;
+      limit: number;
+      offset: number;
+      request_id: string;
+    }>(`/imports${toQuery(params)}`);
   }
 
   getLatestRiskRun() {

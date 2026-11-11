@@ -85,3 +85,40 @@ jobs:
           done
           docker logs patchgraph-ci
           exit 1
+
+  e2e:
+    name: End-to-end (Chromium)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements.lock
+      - run: pip install -r requirements.lock
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            frontend/package-lock.json
+      - name: Build the web interface
+        run: cd frontend && npm ci && npm run build
+      - name: Install Playwright and Chromium
+        run: npm ci && npx playwright install --with-deps chromium
+      - name: Start the app
+        run: |
+          PATCHGRAPH_SQLITE_PATH="$RUNNER_TEMP/e2e.db" nohup python scripts/run_standalone_server.py --port 5000 > "$RUNNER_TEMP/server.log" 2>&1 &
+          for i in $(seq 1 30); do curl -fs http://127.0.0.1:5000/health && exit 0; sleep 1; done
+          cat "$RUNNER_TEMP/server.log"; exit 1
+      - name: Run end-to-end tests
+        run: npx playwright test
+      - name: Keep traces when a test fails
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results
+          path: test-results
+          retention-days: 7

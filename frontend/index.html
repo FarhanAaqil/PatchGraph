@@ -1,19 +1,27 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PatchGraph — Patch what matters</title>
-  
-  <!-- Fonts: Unbounded (Display), DM Sans (Body), JetBrains Mono (Code) -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..800;1,9..40,300..800&family=JetBrains+Mono:wght@400;500;600&family=Unbounded:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
-</head>
-<body class="bg-[#E6E9EE] text-[#1A1220] antialiased">
-  <div id="root"></div>
-  <script type="module" src="/src/main.tsx"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="PatchGraph shows which software vulnerabilities matter most and plans the fixes your team can actually ship." />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#1A1220" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>PatchGraph — Patch what matters</title>
+    <script>
+      // Apply the saved theme before first paint so there is no flash of the wrong colours.
+      (function () {
+        try {
+          var t = localStorage.getItem('pg.theme') || 'silver';
+          if (t === 'system') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'ink' : 'silver';
+          document.documentElement.dataset.theme = t;
+          if (localStorage.getItem('pg.motion') === 'reduced') document.documentElement.dataset.motion = 'reduced';
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
-

@@ -1,348 +1,197 @@
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { PatchGraphApiClient } from '../api/generated';
-import { Settings, Database, Sun, Moon, RefreshCw, Eye } from 'lucide-react';
+import { Database, Keyboard, Palette, Rocket } from 'lucide-react';
+import { useState } from 'react';
+import { errorMessage } from '../lib/errors';
+import { shortHash, timeAgo } from '../lib/format';
+import { useLoadSample, useSources } from '../lib/hooks';
+import { applyReducedMotion, applyTheme, getReducedMotion, getTheme, type ThemeChoice } from '../lib/theme';
+import { Badge, Button, Card, CardHead, ErrorState, Notice, PageHead, Skeleton } from '../ui/primitives';
+import { useToast } from '../ui/Toast';
 
-interface SettingsPageProps {
-  motionEnabled?: boolean;
-  onToggleMotion?: (enabled: boolean) => void;
-}
-
-export const SettingsPage: React.FC<SettingsPageProps> = ({ motionEnabled = true, onToggleMotion }) => {
-  const [themeMode, setThemeMode] = useState<'silver' | 'ink'>('silver');
-
-  const client = new PatchGraphApiClient();
-
-  const {
-    data: sourcesData,
-    isLoading: isLoadingSources,
-    refetch,
-  } = useQuery({
-    queryKey: ['sourcesStatus'],
-    queryFn: () => client.getSourcesStatus(),
-  });
-
-  const sources = sourcesData?.sources || {};
-
-  return (
-    <div style={{ padding: '2.5rem', maxWidth: '1200px', margin: '0 auto', color: 'var(--pg-ink)' }}>
-      {/* Header */}
-      <div style={{ marginBottom: '2.5rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-          <span
-            className="pill-chip"
-            style={{
-              background: 'rgba(122, 15, 224, 0.1)',
-              color: 'var(--pg-violet)',
-              border: '1px solid rgba(122, 15, 224, 0.25)',
-            }}
-          >
-            <Settings size={14} style={{ marginRight: '0.35rem' }} /> System Configuration
-          </span>
-          <span
-            className="pill-chip"
-            style={{ background: '#FFF', color: 'var(--pg-steel)', border: '1px solid #CBD5E1' }}
-          >
-            Demo data
-          </span>
-        </div>
-        <h1
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: '2.25rem',
-            letterSpacing: '-0.03em',
-            margin: 0,
-            fontWeight: 800,
-          }}
-        >
-          Environment & Connector Settings
-        </h1>
-        <p style={{ color: 'var(--pg-steel)', marginTop: '0.5rem', fontSize: '1rem', maxWidth: '640px' }}>
-          Inspect upstream threat intelligence connectors, and customize display rendering and motion preferences.
-        </p>
-      </div>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-        {/* Connector Feeds Status */}
-        <div
-          className="pg-card"
-          style={{
-            padding: '2rem',
-            background: '#FFF',
-            border: '1px solid #E2E8F0',
-            borderRadius: 'var(--radius-frame)',
-            boxShadow: 'var(--shadow-card)',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '1.5rem',
-              flexWrap: 'wrap',
-              gap: '1rem',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <Database size={20} style={{ color: 'var(--pg-violet)' }} />
-              <div>
-                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700 }}>Data Source Connectors</h3>
-                <div style={{ fontSize: '0.8rem', color: 'var(--pg-steel)' }}>
-                  Freshness and parser integrity for vulnerability catalogs and exploit probability models
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={() => refetch()}
-              style={{
-                background: '#F8FAFC',
-                border: '1px solid #CBD5E1',
-                borderRadius: 'var(--radius-pill)',
-                padding: '0.45rem 0.95rem',
-                fontSize: '0.8rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                color: 'var(--pg-ink)',
-              }}
-            >
-              <RefreshCw size={13} /> Refresh Status
-            </button>
-          </div>
-
-          {isLoadingSources ? (
-            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--pg-steel)' }}>
-              Checking connector health...
-            </div>
-          ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
-              {Object.entries(sources).map(([key, item]) => {
-                const isHealthy = item.status === 'operational' || item.status === 'ok';
-
-                return (
-                  <div
-                    key={key}
-                    style={{
-                      padding: '1.25rem',
-                      background: 'var(--gradient-silver)',
-                      borderRadius: 'var(--radius-card)',
-                      border: '1px solid #CBD5E1',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between',
-                      minHeight: '120px',
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <div
-                        style={{
-                          fontFamily: 'var(--font-mono)',
-                          fontWeight: 800,
-                          fontSize: '1rem',
-                          textTransform: 'uppercase',
-                          color: 'var(--pg-ink)',
-                        }}
-                      >
-                        {key}
-                      </div>
-                      <span
-                        style={{
-                          fontSize: '0.7rem',
-                          fontWeight: 700,
-                          padding: '0.2rem 0.5rem',
-                          borderRadius: 'var(--radius-pill)',
-                          background: isHealthy ? 'rgba(22, 163, 74, 0.12)' : 'rgba(245, 158, 11, 0.12)',
-                          color: isHealthy ? '#16A34A' : '#D97706',
-                          border: `1px solid ${isHealthy ? 'rgba(22, 163, 74, 0.25)' : 'rgba(245, 158, 11, 0.25)'}`,
-                          textTransform: 'uppercase',
-                        }}
-                      >
-                        {item.status}
-                      </span>
-                    </div>
-
-                    <div
-                      style={{
-                        marginTop: '0.75rem',
-                        fontSize: '0.75rem',
-                        color: 'var(--pg-steel)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '0.2rem',
-                      }}
-                    >
-                      {item.content_sha256 && (
-                        <div>
-                          Content SHA-256:{' '}
-                          <strong style={{ color: 'var(--pg-ink)', fontFamily: 'var(--font-mono)' }}>
-                            {item.content_sha256.slice(0, 12)}…
-                          </strong>
-                        </div>
-                      )}
-                      <div>
-                        Parser version: <span style={{ fontFamily: 'var(--font-mono)' }}>{item.parser_version}</span>
-                      </div>
-                      <div>Last sync: {item.last_sync ? new Date(item.last_sync).toLocaleTimeString() : 'never'}</div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {sourcesData?.snapshot_sha256 && (
-            <div
-              style={{
-                marginTop: '1.5rem',
-                padding: '0.85rem 1.25rem',
-                background: '#F8FAFC',
-                borderRadius: 'var(--radius-card)',
-                border: '1px solid #E2E8F0',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                fontSize: '0.8rem',
-              }}
-            >
-              <div style={{ color: 'var(--pg-steel)' }}>
-                Evidence Snapshot Content Hash:{' '}
-                <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--pg-ink)', fontWeight: 600 }}>
-                  {sourcesData.snapshot_sha256}
-                </span>
-              </div>
-              <div style={{ color: 'var(--pg-violet)', fontWeight: 600 }}>
-                {sourcesData.offline_demo_mode ? 'Deterministic Offline Mode Active' : 'Online Streaming Mode'}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Presentation & Accessibility Preferences */}
-        <div
-          className="pg-card"
-          style={{
-            padding: '2rem',
-            background: '#FFF',
-            border: '1px solid #E2E8F0',
-            borderRadius: 'var(--radius-frame)',
-            boxShadow: 'var(--shadow-card)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
-            <Eye size={20} style={{ color: 'var(--pg-violet)' }} />
-            <div>
-              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700 }}>Accessibility & Motion</h3>
-              <div style={{ fontSize: '0.8rem', color: 'var(--pg-steel)' }}>
-                Manage motion sensitivity, 3D hardware rendering, and palette themes
-              </div>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', maxWidth: '640px' }}>
-            {/* Motion Sensitivity Toggle */}
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '1rem',
-                background: '#F8FAFC',
-                borderRadius: 'var(--radius-card)',
-                border: '1px solid #E2E8F0',
-              }}
-            >
-              <div>
-                <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>Three.js 3D & Ambient Particle Motion</div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--pg-steel)' }}>
-                  Disables rotating 3D graph and floating dust for users sensitive to motion (prefers-reduced-motion)
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => onToggleMotion && onToggleMotion(!motionEnabled)}
-                style={{
-                  padding: '0.5rem 1.25rem',
-                  borderRadius: 'var(--radius-pill)',
-                  border: motionEnabled ? '2px solid var(--pg-violet)' : '1px solid #CBD5E1',
-                  background: motionEnabled ? 'rgba(122, 15, 224, 0.1)' : '#FFF',
-                  color: motionEnabled ? 'var(--pg-violet)' : 'var(--pg-steel)',
-                  fontWeight: 700,
-                  fontSize: '0.85rem',
-                  cursor: 'pointer',
-                }}
-              >
-                {motionEnabled ? 'Enabled' : 'Reduced Motion'}
-              </button>
-            </div>
-
-            {/* Surface Theme */}
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '1rem',
-                background: '#F8FAFC',
-                borderRadius: 'var(--radius-card)',
-                border: '1px solid #E2E8F0',
-              }}
-            >
-              <div>
-                <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>Color Palette Theme</div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--pg-steel)' }}>
-                  Silver metallic light mode or dark ink workbench
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button
-                  type="button"
-                  onClick={() => setThemeMode('silver')}
-                  style={{
-                    padding: '0.45rem 1rem',
-                    borderRadius: 'var(--radius-pill)',
-                    border: themeMode === 'silver' ? '2px solid var(--pg-violet)' : '1px solid #CBD5E1',
-                    background: themeMode === 'silver' ? 'rgba(122, 15, 224, 0.1)' : '#FFF',
-                    color: themeMode === 'silver' ? 'var(--pg-violet)' : 'var(--pg-steel)',
-                    fontWeight: 700,
-                    fontSize: '0.8rem',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.35rem',
-                  }}
-                >
-                  <Sun size={13} /> Silver
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setThemeMode('ink')}
-                  style={{
-                    padding: '0.45rem 1rem',
-                    borderRadius: 'var(--radius-pill)',
-                    border: themeMode === 'ink' ? '2px solid var(--pg-violet)' : '1px solid #CBD5E1',
-                    background: themeMode === 'ink' ? 'rgba(122, 15, 224, 0.1)' : '#FFF',
-                    color: themeMode === 'ink' ? 'var(--pg-violet)' : 'var(--pg-steel)',
-                    fontWeight: 700,
-                    fontSize: '0.8rem',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.35rem',
-                  }}
-                >
-                  <Moon size={13} /> Ink
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+const SOURCE_NAMES: Record<string, { name: string; text: string }> = {
+  osv: { name: 'OSV', text: 'Open-source vulnerability database' },
+  nvd: { name: 'NVD', text: 'US National Vulnerability Database' },
+  epss: { name: 'EPSS', text: 'Exploit likelihood scores' },
+  kev: { name: 'CISA KEV', text: 'Vulnerabilities attackers are known to exploit' },
 };
 
-export default SettingsPage;
+const SHORTCUTS: Array<[string, string]> = [
+  ['Ctrl / ⌘ + K', 'Open quick jump'],
+  ['Esc', 'Close a panel or menu'],
+  ['Tab', 'Move to the next control'],
+  ['Enter', 'Open the focused row or press the focused button'],
+];
+
+export default function SettingsPage() {
+  const toast = useToast();
+  const sources = useSources();
+  const loadSample = useLoadSample();
+  const [theme, setTheme] = useState<ThemeChoice>(getTheme());
+  const [reduced, setReduced] = useState(getReducedMotion());
+
+  const chooseTheme = (choice: ThemeChoice) => {
+    applyTheme(choice);
+    setTheme(choice);
+  };
+
+  return (
+    <>
+      <PageHead
+        title="Settings"
+        lead="Where the evidence comes from, how the app looks and the shortcuts that save time."
+      />
+
+      <Card>
+        <CardHead
+          title="Data sources"
+          hint="PatchGraph scores risk using these four public sources. The demo ships a fixed snapshot so results are repeatable."
+          action={
+            sources.data?.offline_demo_mode ? <Badge tone="done">Offline demo mode</Badge> : <Badge>Live sources</Badge>
+          }
+        />
+        {sources.isLoading ? (
+          <div className="grid grid-2">
+            {Array.from({ length: 4 }, (_, i) => (
+              <Skeleton key={i} height={96} radius={14} />
+            ))}
+          </div>
+        ) : sources.isError ? (
+          <ErrorState message={errorMessage(sources.error)} onRetry={() => sources.refetch()} />
+        ) : (
+          <>
+            <div className="grid grid-2" data-testid="sources">
+              {Object.entries(sources.data?.sources ?? {}).map(([key, s]) => (
+                <div key={key} className="source">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                    <div>
+                      <strong>{SOURCE_NAMES[key]?.name ?? key.toUpperCase()}</strong>
+                      <span className="cell-sub">{SOURCE_NAMES[key]?.text}</span>
+                    </div>
+                    <Badge tone={s.stale ? 'alert' : 'done'}>{s.stale ? 'Out of date' : 'Up to date'}</Badge>
+                  </div>
+                  <span className="cell-sub">
+                    Fetched {timeAgo(s.last_sync)} · fingerprint{' '}
+                    <span className="mono">{shortHash(s.content_sha256, 12)}</span>
+                  </span>
+                </div>
+              ))}
+            </div>
+            <p style={{ color: 'var(--text-3)', marginTop: 12, fontSize: '0.84rem' }}>
+              Snapshot <span className="mono">{sources.data?.snapshot_id}</span> · manifest{' '}
+              <span className="mono">{shortHash(sources.data?.snapshot_sha256, 16)}</span>
+            </p>
+          </>
+        )}
+      </Card>
+
+      <div className="grid grid-2">
+        <Card>
+          <CardHead
+            title="Appearance"
+            hint="Both themes use the same five brand colours."
+            action={<Palette size={20} aria-hidden="true" />}
+          />
+          <div className="stack">
+            <div className="field">
+              <span className="field-label" id="theme-label">
+                Theme
+              </span>
+              <div className="segmented" role="radiogroup" aria-labelledby="theme-label">
+                {(
+                  [
+                    ['silver', 'Silver (light)'],
+                    ['ink', 'Ink (dark)'],
+                    ['system', 'Match my device'],
+                  ] as Array<[ThemeChoice, string]>
+                ).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    role="radio"
+                    aria-checked={theme === value}
+                    onClick={() => chooseTheme(value)}
+                    data-testid={`theme-${value}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="field">
+              <span className="field-label" id="motion-label">
+                Motion
+              </span>
+              <div className="segmented" role="radiogroup" aria-labelledby="motion-label">
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={!reduced}
+                  onClick={() => {
+                    applyReducedMotion(false);
+                    setReduced(false);
+                  }}
+                >
+                  Normal
+                </button>
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={reduced}
+                  onClick={() => {
+                    applyReducedMotion(true);
+                    setReduced(true);
+                  }}
+                  data-testid="motion-reduced"
+                >
+                  Reduced
+                </button>
+              </div>
+              <span className="field-hint">
+                Reduces animation. The app also follows your device&apos;s own setting.
+              </span>
+            </div>
+          </div>
+        </Card>
+
+        <Card>
+          <CardHead
+            title="Keyboard shortcuts"
+            hint="Everything can be done without a mouse."
+            action={<Keyboard size={20} aria-hidden="true" />}
+          />
+          <dl className="shortcuts">
+            {SHORTCUTS.map(([keys, text]) => (
+              <div key={keys}>
+                <dt>
+                  <span className="kbd">{keys}</span>
+                </dt>
+                <dd>{text}</dd>
+              </div>
+            ))}
+          </dl>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHead
+          title="Demo data"
+          hint="Reset to the built-in example project."
+          action={<Database size={20} aria-hidden="true" />}
+        />
+        <Button
+          icon={Rocket}
+          busy={loadSample.isPending}
+          onClick={() =>
+            loadSample.mutate(undefined, {
+              onSuccess: () => toast.success('Sample data reloaded.'),
+              onError: (e) => toast.error(errorMessage(e)),
+            })
+          }
+        >
+          Reload sample data
+        </Button>
+      </Card>
+
+      <Notice>Settings you choose here are stored only in this browser.</Notice>
+    </>
+  );
+}

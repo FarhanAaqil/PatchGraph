@@ -16,8 +16,8 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
+/lib/
+/lib64/
 parts/
 sdist/
 var/
@@ -79,3 +79,6 @@ docs/demo/
 docs/REDESIGN_NOTES.md
 docs/claim_evidence_map.md
 release/
+
+# Personal material (user guide, slides, working screenshots) stays on this machine only
+personal/
