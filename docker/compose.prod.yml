@@ -25,6 +25,7 @@ services:
     environment:
       PATCHGRAPH_OFFLINE_DEMO: "true"
       PATCHGRAPH_ENV: "production"
+      PATCHGRAPH_AUTH_SIGNING_KEY: "${PATCHGRAPH_AUTH_SIGNING_KEY:?set PATCHGRAPH_AUTH_SIGNING_KEY before starting}"
     ports:
       - "8000:8000"
     command: ["uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]

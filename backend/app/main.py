@@ -6,6 +6,7 @@ Wires request ID middleware, CORS middleware, structured error handlers matching
 
 from __future__ import annotations
 
+import os
 import uuid
 from datetime import datetime, timezone
 
@@ -16,9 +17,21 @@ from fastapi.responses import JSONResponse
 
 from backend.app.api.routes import ContractError
 from backend.app.api.routes import router as api_v1_router
+from backend.app.security.auth import get_signing_key, is_production
+
+DEFAULT_CORS_ORIGINS = "http://localhost:5173,http://localhost:5000,http://127.0.0.1:5173,http://127.0.0.1:5000"
+
+
+def allowed_origins() -> list[str]:
+    """Origins come from CORS_ORIGINS (comma separated); a wildcard is never accepted."""
+    raw = os.environ.get("CORS_ORIGINS", DEFAULT_CORS_ORIGINS)
+    return [o.strip() for o in raw.split(",") if o.strip() and o.strip() != "*"]
 
 
 def create_app() -> FastAPI:
+    if is_production():
+        get_signing_key()  # refuse to boot without a configured signing key
+
     app = FastAPI(
         title="PatchGraph API",
         version="1.0.0",
@@ -27,10 +40,18 @@ def create_app() -> FastAPI:
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=allowed_origins(),
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allow_headers=[
+            "Authorization",
+            "Content-Type",
+            "X-Request-Id",
+            "X-Project-Id",
+            "X-User-Id",
+            "X-User-Role",
+            "X-Filename",
+        ],
     )
 
     @app.middleware("http")
