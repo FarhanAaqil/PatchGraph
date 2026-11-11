@@ -50,7 +50,7 @@ class TestTrainedDatasetsAndModelBundles(unittest.TestCase):
         )
 
     def test_runtime_inference_from_pretrained_exploit_and_effort_bundles(self) -> None:
-        from backend.app.planner.effort import predict_effort_with_model_two
+        from intelligence.planner.effort import predict_effort_with_model_two
         from intelligence.risk.model import VulnerabilityFeatureRow, load_pretrained_exploit_model
 
         exp_model = load_pretrained_exploit_model()

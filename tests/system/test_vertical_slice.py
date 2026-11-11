@@ -19,10 +19,10 @@ from fastapi.testclient import TestClient
 from backend.app.api import routes as api_routes
 from backend.app.db.session import DatabaseManager
 from backend.app.main import create_app
-from backend.app.planner.candidates import CandidateAction, build_seeded_candidates
-from backend.app.planner.model import PlannerConstraints
-from backend.app.planner.simulate import run_what_if_simulation
-from backend.app.planner.solve import solve_greedy_baseline, solve_remediation_plan
+from intelligence.planner.candidates import CandidateAction, build_seeded_candidates
+from intelligence.planner.model import PlannerConstraints
+from intelligence.planner.simulate import run_what_if_simulation
+from intelligence.planner.solve import solve_greedy_baseline, solve_remediation_plan
 
 
 class TestPhase4EndToEndMvpVerticalSlice(unittest.TestCase):

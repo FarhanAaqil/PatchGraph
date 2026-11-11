@@ -329,7 +329,7 @@ async def import_sbom(
 
     db.conn.commit()
 
-    JOB_QUEUE.enqueue("ingest_sbom", ctx["project_id"], imp_id, {"import_id": imp_id, "kind": kind})
+    JOB_QUEUE.record_completed("ingest_sbom", ctx["project_id"], imp_id, {"import_id": imp_id, "kind": kind})
 
     return {
         "id": imp_id,
@@ -2220,6 +2220,7 @@ async def import_topology(
         body = {"source_name": "uploaded_topology.csv", "services_registered": 2}
 
     job_id = f"job_topo_{uuid.uuid4().hex[:8]}"
+    JOB_QUEUE.record_completed("import_topology", ctx["project_id"], job_id, {}, job_id=job_id)
 
     return {
         "id": job_id,
@@ -2234,33 +2235,46 @@ async def import_topology(
     }
 
 
+def _job_or_404(ctx: Dict[str, str], job_id: str):
+    job = JOB_QUEUE.get(ctx["project_id"], job_id)
+    if job is None:
+        raise ContractError(status_code=404, code="JOB_NOT_FOUND", message=f"No job '{job_id}' in this project.")
+    return job
+
+
+def _job_view(job, request_id: str) -> Dict[str, Any]:
+    return {
+        "id": job.job_id,
+        "type": job.job_type,
+        "status": job.status,
+        "progress": 100 if job.status == "completed" else 0,
+        "stage": job.job_type,
+        "errors": [job.error] if job.error else [],
+        "created_at": job.created_at,
+        "finished_at": job.finished_at,
+        "request_id": request_id,
+    }
+
+
 @router.get("/jobs/{job_id}")
 async def get_job_status(
     job_id: str,
     ctx: Dict[str, str] = Depends(get_request_context),
 ) -> Dict[str, Any]:
-
-    return {
-        "id": job_id,
-        "status": "completed",
-        "progress": 100,
-        "stage": "INDEXED_AND_SCORED",
-        "errors": [],
-        "created_at": datetime.now(timezone.utc).isoformat(),
-        "request_id": ctx["request_id"],
-    }
+    return _job_view(_job_or_404(ctx, job_id), ctx["request_id"])
 
 
 @router.get("/jobs/{job_id}/events")
-async def stream_job_events(job_id: str):
-
+async def stream_job_events(
+    job_id: str,
+    ctx: Dict[str, str] = Depends(get_request_context),
+):
     from fastapi.responses import StreamingResponse
 
+    job = _job_view(_job_or_404(ctx, job_id), ctx["request_id"])
+
     async def event_generator():
-
-        yield f"data: {json.dumps({'job_id': job_id, 'progress': 50, 'status': 'processing'})}\n\n"
-
-        yield f"data: {json.dumps({'job_id': job_id, 'progress': 100, 'status': 'completed'})}\n\n"
+        yield f"data: {json.dumps({'job_id': job['id'], 'progress': job['progress'], 'status': job['status']})}\n\n"
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 

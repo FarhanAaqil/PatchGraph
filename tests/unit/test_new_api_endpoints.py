@@ -82,9 +82,14 @@ class TestExtendedApiEndpoints(unittest.TestCase):
         self.assertEqual(res_topo.status_code, 200)
         self.assertEqual(res_topo.json()["status"], "completed")
 
-        res_job = self.client.get("/api/v1/jobs/job_01", headers=self.headers)
+        res_job = self.client.get(f"/api/v1/jobs/{res_topo.json()['id']}", headers=self.headers)
         self.assertEqual(res_job.status_code, 200)
+        self.assertEqual(res_job.json()["status"], "completed")
         self.assertEqual(res_job.json()["progress"], 100)
+
+        res_missing = self.client.get("/api/v1/jobs/job_does_not_exist", headers=self.headers)
+        self.assertEqual(res_missing.status_code, 404)
+        self.assertEqual(res_missing.json()["code"], "JOB_NOT_FOUND")
 
     def test_sources_status_and_health(self) -> None:
         res_src = self.client.get("/api/v1/sources/status", headers=self.headers)

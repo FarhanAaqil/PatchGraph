@@ -9,7 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import List
 
-from backend.app.planner.compatibility import classify_version_jump
+from intelligence.planner.compatibility import classify_version_jump
 
 
 @dataclass(frozen=True)

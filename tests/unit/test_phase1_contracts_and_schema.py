@@ -99,10 +99,26 @@ class TestPhase1SchemaAndContracts(unittest.TestCase):
     def test_job_queue_enforces_narrow_payload_trust_boundary(self) -> None:
         queue = JobQueueShell()
         job = queue.enqueue("ingest_sbom", "proj_1", "imp_1", {"import_id": "imp_1", "kind": "cyclonedx"})
-        self.assertEqual(job.status, "completed")
+        self.assertEqual(job.status, "queued", "nothing has run it yet")
 
         with self.assertRaises(ValueError):
             queue.enqueue("ingest_sbom", "proj_1", "imp_1", {"raw_secret_token": "leaked"})
+
+    def test_job_queue_records_how_work_actually_ended(self) -> None:
+        queue = JobQueueShell()
+        ran: list[str] = []
+        ok = queue.enqueue("refresh", "proj_1", "snap_1", {"snapshot_id": "snap_1"}, work=lambda: ran.append("x"))
+        self.assertEqual((ok.status, ran), ("completed", ["x"]))
+        self.assertIsNotNone(ok.finished_at)
+
+        def boom() -> None:
+            raise RuntimeError("feed unreachable")
+
+        bad = queue.enqueue("refresh", "proj_1", "snap_2", {"snapshot_id": "snap_2"}, work=boom)
+        self.assertEqual((bad.status, bad.error), ("failed", "feed unreachable"))
+
+        self.assertEqual(queue.get("proj_1", bad.job_id).status, "failed")
+        self.assertIsNone(queue.get("another_project", bad.job_id), "jobs are scoped to their project")
 
     def test_day1_to_day6_artifacts_and_fixtures_exist(self) -> None:
         required_files = [

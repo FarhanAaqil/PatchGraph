@@ -17,8 +17,8 @@ from backend.app.db.session import DatabaseManager
 from backend.app.graph.build import build_project_supply_chain_graph
 from backend.app.graph.impact import compute_blast_radius
 from backend.app.graph.traverse import traverse_affected_paths
-from backend.app.risk.baseline import rank_findings_by_baseline, score_finding_explainable
 from experiments.calibrate import generate_calibration_report
+from intelligence.risk.baseline import rank_findings_by_baseline, score_finding_explainable
 from intelligence.risk.model import (
     VulnerabilityFeatureRow,
     verify_no_temporal_or_family_leakage,

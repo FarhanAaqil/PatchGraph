@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional
 from backend.app.db.session import DatabaseManager
 from backend.app.graph.build import build_project_supply_chain_graph
 from backend.app.graph.features import compute_package_centrality_features
-from backend.app.risk.baseline import score_finding_explainable
+from intelligence.risk.baseline import score_finding_explainable
 from intelligence.risk.model import predict_vulnerability_exploit_risk
 
 

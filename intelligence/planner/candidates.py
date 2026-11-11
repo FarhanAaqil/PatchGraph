@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import List, Optional
 
-from backend.app.planner.compatibility import classify_version_jump
+from intelligence.planner.compatibility import classify_version_jump
 from intelligence.planner.effort import estimate_action_effort
 
 

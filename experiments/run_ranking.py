@@ -11,8 +11,8 @@ from typing import Any, Dict, List
 
 import numpy as np
 
-from backend.app.risk.baseline import score_finding_explainable
 from experiments.manifest import bootstrap_ci, build_evaluation_manifest_meta, compute_ndcg_at_k
+from intelligence.risk.baseline import score_finding_explainable
 from intelligence.risk.model import compute_binary_classification_metrics
 
 
