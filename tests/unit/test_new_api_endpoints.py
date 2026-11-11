@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import unittest
 
 from fastapi.testclient import TestClient
@@ -99,6 +100,37 @@ class TestExtendedApiEndpoints(unittest.TestCase):
         res_health = self.client.get("/health")
         self.assertEqual(res_health.status_code, 200)
         self.assertEqual(res_health.json()["status"], "ok")
+
+    def test_sources_status_comes_from_the_stored_snapshot_not_constants(self) -> None:
+        res = self.client.get("/api/v1/sources/status", headers=self.headers).json()
+        self.assertEqual(res["data_freshness"], "synchronized")
+        self.assertEqual(res["snapshot_id"], "snap_01")
+        self.assertTrue(all("records" not in src for src in res["sources"].values()), "no invented record counts")
+
+        row = self.db.conn.execute("SELECT id, source_cutoffs FROM evidence_snapshots").fetchone()
+        cutoffs = json.loads(row["source_cutoffs"])
+        cutoffs["epss"]["stale"] = True
+        self.db.conn.execute(
+            "UPDATE evidence_snapshots SET source_cutoffs = ? WHERE id = ?", (json.dumps(cutoffs), row["id"])
+        )
+        self.db.conn.commit()
+
+        stale = self.client.get("/api/v1/sources/status", headers=self.headers).json()
+        self.assertEqual(stale["data_freshness"], "stale")
+        self.assertEqual(stale["sources"]["epss"]["status"], "stale")
+
+    def test_forced_reseed_never_deletes_memberships(self) -> None:
+        """A reload of the sample data must not open a window where every caller looks like a non-member."""
+        statements: list[str] = []
+        self.db.conn.set_trace_callback(statements.append)
+        self.db.seed_phase1_scenario(force=True)
+        self.db.conn.set_trace_callback(None)
+        deletes = [s for s in statements if s.upper().startswith("DELETE FROM")]
+        self.assertTrue(deletes, "the reseed should still clear the data tables")
+        for identity_table in ("memberships", "users", "projects"):
+            self.assertNotIn(f"DELETE FROM {identity_table}", deletes)
+        count = self.db.conn.execute("SELECT COUNT(*) FROM memberships").fetchone()[0]
+        self.assertEqual(count, 3)
 
     def test_seed_demo_script(self) -> None:
         res = seed_demo_data(db_path=":memory:")

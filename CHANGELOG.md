@@ -1,5 +1,35 @@
 # Changelog — PatchGraph
 
+## [1.1.0] — 2026-11-11
+### Security
+- A caller's role now always comes from the `memberships` table. `X-User-Role` can lower it but no longer raise it, and requests without headers no longer run as the seeded approver in production.
+- Signed bearer tokens are supported end to end (`scripts/issue_token.py`, client `token` option). The signing key comes from `PATCHGRAPH_AUTH_SIGNING_KEY`; production refuses to start without it and no key is committed.
+- CORS reads `CORS_ORIGINS` and never answers with a wildcard alongside credentials.
+- The audit listing builds its SQL from fixed fragments and reports the real actor email.
+- Removed the unused `httpx2` requirement.
+
+### Fixed
+- Intermittent `403 FORBIDDEN_PROJECT_SCOPE` responses: the auth dependency ran in a worker thread against the shared SQLite connection while handlers committed on the event loop. It now runs on the loop, and reloading sample data no longer deletes users, projects or memberships.
+- `/jobs/{id}` answered "completed" for any id; jobs now record whether they finished or failed, are project-scoped, and unknown ids return 404.
+- `/sources/status` returned invented record counts and a made-up snapshot hash; it now reflects the stored evidence snapshot.
+- Missing `Tuple` import in the planner explainer, plus unused variables and exception chains flagged by ruff.
+- File uploads from the web client now send the same identity headers as every other request.
+
+### Changed
+- Source is LF everywhere (`.gitattributes`) and formatted with ruff (Python) and Prettier (frontend). `routes.py` went from 7,273 lines to nine per-area modules, and `generated.ts` from 2,430 lines to about 630.
+- The planner and risk re-export wrappers under `backend/app` were folded into `intelligence/`.
+- Experiment outputs are written through `experiments/paths.py`; tests use a scratch directory and no longer modify tracked files.
+- Python dependencies are split into runtime and dev sets with uv lock files; unused packages (pandas, scipy, networkx, python-dateutil) were dropped.
+- One multi-stage `Dockerfile`, a one-service compose file, a production compose file and a single-replica k8s manifest replace the Postgres/Redis stack the app never used.
+- CI runs ruff, Prettier, ESLint, vitest, the backend suite, the frontend build and a Docker build with a health probe on every PR into `main`.
+
+### Added
+- Frontend unit tests (API client, routes, session expiry, severity vocabulary), a security test module for the auth boundary, and regression tests for the fixes above.
+- Dependabot configuration for pip and npm and GitHub Actions (grouped, minor/patch only).
+
+### Removed
+- Duplicate `backend/openapi.yaml`, `docker/compose.yml`, the Alembic-style migration wrapper, the legacy static pages and their generator, and the stale gate-manifest scripts.
+
 ## [1.0.0] — 2026-11-02
 ### Added
 - **Phase 1 (Architecture Skeleton)**: Modular monolith layout, PostgreSQL 16 schema (`001_core.sql` with 26 tables and 10 indexes), OpenAPI 3.1 contract (`/api/v1` with 12 endpoints), typed TypeScript client, and 14-screen React shell.

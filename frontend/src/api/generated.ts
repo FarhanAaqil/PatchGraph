@@ -357,15 +357,16 @@ export interface SourcesStatusResponse {
     string,
     {
       status: string;
-      last_sync: string;
+      last_sync: string | null;
       stale: boolean;
-      records: number;
       parser_version: string;
+      content_sha256?: string | null;
+      source_url?: string | null;
     }
   >;
-  snapshot_sha256: string;
+  snapshot_sha256: string | null;
   data_freshness?: string;
-  snapshot_id?: string;
+  snapshot_id?: string | null;
   offline_demo_mode?: boolean;
   request_id: string;
 }

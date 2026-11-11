@@ -4,6 +4,7 @@
 [![OpenAPI 3.1](https://img.shields.io/badge/OpenAPI-3.1-blue.svg)](contracts/openapi.yaml)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](frontend/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688.svg)](backend/)
+[![Python](https://img.shields.io/badge/Python-3.12-3776AB.svg)](pyproject.toml)
 [![OR-Tools](https://img.shields.io/badge/Google%20OR--Tools-CP--SAT-red.svg)](intelligence/planner/)
 
 > **"Patch what matters."**
@@ -24,7 +25,7 @@
                                                         v
 +-----------------------+              +----------------+-------------------+
 | Modern Web Frontend   | <--- API --- | FastAPI Gateway & Intelligence     |
-| - React 18 + Vite     |  (Port 5000) | - SQLite / PostgreSQL 16           |
+| - React 18 + Vite     |  (Port 5000) | - SQLite (single file)             |
 | - Three.js 3D Graph   |              | - Platt Calibrated Risk Engine     |
 | - Cytoscape.js Topo   |              | - Google OR-Tools CP-SAT Solver    |
 | - TanStack Query      |              | - Append-Only Audit Ledger         |
@@ -40,7 +41,7 @@
 2. **Empirical Risk Scoring**: Replaces arbitrary severity scores with Platt-calibrated exploit probabilities, real EPSS percentiles, CISA KEV weaponization evidence, runtime reachability, and asset business criticality.
 3. **Constrained Optimization**: Uses Google OR-Tools CP-SAT integer programming to solve optimal upgrade combinations within finite engineering hours, downtime windows, and breaking-change budgets.
 4. **Contract-First Architecture**: `contracts/openapi.yaml` is the single source of truth, synchronizing backend routers and generating typed TypeScript clients for the frontend.
-5. **No Invented Data**: Every metric shown comes directly from authenticated API endpoints. Demo data is clearly identified.
+5. **No Invented Data**: Metrics come from the stored evidence snapshot and database, and seeded demo records are labelled as such. The offline demo uses placeholder content hashes for its pinned snapshot.
 
 ---
 
@@ -77,51 +78,71 @@ Designed according to a bold, modern, graphical aesthetic:
 
 ## Quickstart
 
-### Option 1: Standalone Server (Single Command)
+### Option 1: Run locally
 
 ```bash
-# 1. Activate Python virtual environment and install dependencies
-.venv\Scripts\activate
-pip install -r requirements.txt
+# 1. Python environment (3.12)
+python -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
+pip install -r requirements-dev.lock
 
-# 2. Build the React + Three.js frontend bundle
-cd frontend && npm install && npm run build && cd ..
+# 2. Build the React + Three.js bundle
+cd frontend && npm ci && npm run build && cd ..
 
-# 3. Seed demo data
-python scripts/seed_demo.py
-
-# 4. Launch unified server (FastAPI + React bundle on Port 5000)
+# 3. Start the API and UI together on port 5000
 python scripts/run_standalone_server.py --port 5000
 ```
-Open **[http://127.0.0.1:5000](http://127.0.0.1:5000)** in your browser.
+
+Open **[http://127.0.0.1:5000](http://127.0.0.1:5000)**. The first start creates and seeds `data/patchgraph.db`
+(override the location with `PATCHGRAPH_SQLITE_PATH`).
+
+### Option 2: Docker
+
+```bash
+docker compose up --build
+```
+
+One container serves the API and the UI on `http://localhost:5000` (OpenAPI docs at `/docs`), with SQLite on a named
+volume. `docker/compose.prod.yml` is the production-style variant: read-only filesystem, bearer tokens required, and
+`PATCHGRAPH_AUTH_SIGNING_KEY` must be set.
 
 ---
 
-### Option 2: Docker Compose
+## Authentication
+
+| Mode | When | How callers identify themselves |
+|---|---|---|
+| Demo (default) | Local runs and tests | `X-Project-Id` / `X-User-Id` headers, defaulting to the seeded approver |
+| Production | `PATCHGRAPH_ENV=production` | `Authorization: Bearer <token>` only; identity headers are ignored |
+
+In both modes the caller's role comes from the `memberships` table. `X-User-Role` (or the role inside a token) can
+only lower it, never raise it. Tokens are HMAC-signed with `PATCHGRAPH_AUTH_SIGNING_KEY`; production refuses to start
+without one. Mint a token with:
 
 ```bash
-# Start backend API, Postgres 16, Redis 7, and Vite frontend
-docker compose up
+PATCHGRAPH_AUTH_SIGNING_KEY=... python scripts/issue_token.py <user_id> <email> <project_id> <role>
 ```
-- Frontend UI: `http://localhost:5173`
-- Backend API & OpenAPI Docs: `http://localhost:5000/docs`
+
+The web client sends the token stored in `localStorage` under `patchgraph.token`.
 
 ---
 
-## Running Tests
+## Development
 
-### Backend Unit & Integration Tests (43 tests)
+Work happens on `master`; each phase of work is a pull request into `main` that must pass CI before merging
+(`scripts/github_pr.py` opens the PR, waits for the checks and merges).
 
-```bash
-python -m unittest discover -s tests -p "test_*.py" -v
-```
+| Check | Command |
+|---|---|
+| Python lint + format | `ruff check .` and `ruff format --check .` |
+| Backend tests (67) | `PYTHONPATH=. python -m unittest discover -s tests -p "test_*.py"` |
+| Frontend format, lint, tests (13), build | `cd frontend && npm run format:check && npm run lint && npm test && npm run build` |
+| End-to-end (17 Playwright tests) | start the server on port 5000, then `npm ci && npx playwright test` from the repo root |
+| Docker image | `docker build .` |
 
-### Playwright End-to-End Tests (10 tests)
-
-```bash
-# Ensure server is running on port 5000, then run:
-npx playwright test
-```
+Dependencies: `requirements.txt` lists runtime packages, `requirements-dev.txt` adds tooling, and the `.lock` files pin
+exact versions (`uv pip compile requirements.txt --universal --python-version 3.12 -o requirements.lock`).
+Tests write experiment output to a scratch directory (`PATCHGRAPH_OUTPUT_DIR`), so running them leaves the tree clean.
 
 ---
 
@@ -129,20 +150,38 @@ npx playwright test
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/health` | System health and database connectivity |
-| `GET` | `/api/v1/sources/status` | Upstream threat feed freshness (OSV, NVD, EPSS, KEV) |
-| `POST` | `/api/v1/imports/sbom` | Ingest CycloneDX/SPDX SBOM |
+| `GET` | `/health` | Service health |
+| `GET` | `/api/v1/health/data` | Evidence snapshot freshness per source |
+| `GET` | `/api/v1/sources/status` | Upstream source status from the stored snapshot (OSV, NVD, EPSS, KEV) |
+| `POST` | `/api/v1/demo/load-sample` | Reset to the seeded sample scenario and re-score it |
+| `POST` | `/api/v1/imports/sbom` | Ingest CycloneDX/SPDX SBOM (JSON body) |
+| `POST` | `/api/v1/sbom/upload` | Ingest an SBOM file upload |
 | `POST` | `/api/v1/imports/vex` | Ingest OpenVEX statements |
 | `POST` | `/api/v1/imports/topology` | Register application deployment topology |
-| `GET` | `/api/v1/graph` | Filtered dependency-and-deployment graph nodes & edges |
-| `GET` | `/api/v1/graph/nodes/{id}` | Node blast radius and reachability details |
-| `GET` | `/api/v1/findings` | Prioritized risk findings register |
+| `GET` | `/api/v1/imports`, `/api/v1/imports/{id}` | Import history and status |
+| `GET` | `/api/v1/jobs/{id}`, `/api/v1/jobs/{id}/events` | Job status (404 for unknown jobs) |
+| `GET` | `/api/v1/vex-statements` | Stored VEX statements |
+| `GET` | `/api/v1/assets` | Asset inventory |
+| `GET` | `/api/v1/graph`, `/api/v1/graph/paths`, `/api/v1/graph/nodes/{id}` | Dependency-and-deployment graph, reverse paths, node blast radius |
+| `GET` | `/api/v1/findings`, `/api/v1/findings/{id}` | Prioritized risk findings |
 | `GET` | `/api/v1/findings/{id}/explain` | Decomposed risk factor breakdown & Platt formula |
-| `POST` | `/api/v1/plans` | Execute OR-Tools CP-SAT remediation optimizer |
-| `GET` | `/api/v1/plans` | Query historical planning runs |
-| `POST` | `/api/v1/plans/{id}/decision` | Human approval sign-off (writes to immutable audit log) |
-| `GET` | `/api/v1/audit` | Append-only governance audit log entries |
-| `GET` | `/api/v1/audit/export` | Export audit ledger in JSON or CSV format |
+| `POST` | `/api/v1/risk-runs` | Score all findings with the calibrated model |
+| `GET` | `/api/v1/risk-runs/latest` | Latest risk run |
+| `GET` | `/api/v1/model-card` | Model card and evaluation metrics |
+| `POST` | `/api/v1/plans` | Run the OR-Tools CP-SAT remediation optimizer |
+| `GET` | `/api/v1/plans`, `/api/v1/plans/{id}` | Planning runs |
+| `POST` | `/api/v1/plans/{id}/simulate` | What-if simulation |
+| `POST` | `/api/v1/plans/{id}/decision` | Human approval sign-off (writes to the audit log) |
+| `GET` | `/api/v1/audit`, `/api/v1/audit/export` | Append-only audit log, JSON or CSV export |
+
+`contracts/openapi.yaml` is the API contract; the running server also serves generated docs at `/docs`.
+
+## Known limitations
+
+- Storage is SQLite only. The schema is written as PostgreSQL DDL and translated, but there is no Postgres driver.
+- Topology import acknowledges the request but does not yet parse the uploaded topology file.
+- `contracts/openapi.yaml` documents a subset of the routes above; the generated `/docs` is complete.
+- The frontend still has 27 `any` usages, reported as ESLint warnings.
 
 ---
 
