@@ -8,7 +8,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Query, Request
 
 from backend.app.api.common import (
     MAX_JSON_DEPTH,
@@ -574,6 +574,8 @@ async def import_topology(
 
 @router.get("/imports")
 async def list_imports(
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
     ctx: Dict[str, str] = Depends(get_request_context),
     db: DatabaseManager = Depends(get_db),
 ) -> Dict[str, Any]:
@@ -583,9 +585,10 @@ async def list_imports(
 
 
 
-           FROM imports WHERE project_id = ? ORDER BY created_at DESC""",
-        (ctx["project_id"],),
+           FROM imports WHERE project_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?""",
+        (ctx["project_id"], limit, offset),
     ).fetchall()
+    total = db.conn.execute("SELECT COUNT(*) FROM imports WHERE project_id = ?", (ctx["project_id"],)).fetchone()[0]
 
     items = []
 
@@ -617,7 +620,9 @@ async def list_imports(
 
     return {
         "items": items,
-        "total": len(items),
+        "total": total,
+        "limit": limit,
+        "offset": offset,
         "request_id": ctx["request_id"],
     }
 

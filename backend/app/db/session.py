@@ -52,6 +52,7 @@ class ThreadSafeConnection:
         return getattr(self._conn, name)
 
 
+INDEX_SQL_PATH = Path(__file__).resolve().parent.parent.parent / "migrations" / "002_indexes.sql"
 IDENTITY_TABLES = frozenset({"projects", "users", "memberships"})
 
 MIGRATION_SQL_PATH = Path(__file__).resolve().parent.parent.parent / "migrations" / "001_core.sql"
@@ -139,6 +140,10 @@ class DatabaseManager:
         raw_conn = sqlite3.connect(db_path, check_same_thread=False, timeout=30.0)
         raw_conn.row_factory = sqlite3.Row
         raw_conn.execute("PRAGMA foreign_keys = ON;")
+        # One long-lived connection acts as the pool (SQLite allows a single writer). Tune it for reads.
+        raw_conn.execute("PRAGMA synchronous = NORMAL;")
+        raw_conn.execute("PRAGMA cache_size = -20000;")  # ~20 MB page cache
+        raw_conn.execute("PRAGMA temp_store = MEMORY;")
         if db_path != ":memory:":
             try:
                 raw_conn.execute("PRAGMA journal_mode = WAL;")
@@ -151,6 +156,8 @@ class DatabaseManager:
     def apply_migrations(self) -> None:
         pg_sql = MIGRATION_SQL_PATH.read_text(encoding="utf-8")
         for stmt in translate_postgres_ddl_to_sqlite(pg_sql):
+            self.conn.execute(stmt)
+        for stmt in translate_postgres_ddl_to_sqlite(INDEX_SQL_PATH.read_text(encoding="utf-8")):
             self.conn.execute(stmt)
         self.conn.commit()
 

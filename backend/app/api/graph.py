@@ -20,71 +20,56 @@ router = APIRouter()
 async def list_assets(
     environment: Optional[str] = Query(default=None),
     service: Optional[str] = Query(default=None),
+    limit: int = Query(default=100, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
     ctx: Dict[str, str] = Depends(get_request_context),
     db: DatabaseManager = Depends(get_db),
 ) -> Dict[str, Any]:
-
-    rows = db.conn.execute(
-        """SELECT a.id, a.project_id, a.external_key, a.kind, a.criticality, a.metadata,
-
-
-
-                  e.name AS env_name, e.production, e.max_downtime_minutes,
-
-
-
-                  s.name AS service_name, s.owner_email
-
-
-
-           FROM assets a
-
-
-
+    where = ["a.project_id = ?"]
+    params: List[Any] = [ctx["project_id"]]
+    if environment:
+        where.append("e.name = ?")
+        params.append(environment)
+    if service:
+        where.append("s.name = ?")
+        params.append(service)
+    where_sql = " AND ".join(where)  # fixed fragments only; values are bound parameters
+    joins = """FROM assets a
            LEFT JOIN environments e ON a.environment_id = e.id
-
-
-
            LEFT JOIN deployments d ON d.asset_id = a.id
+           LEFT JOIN services s ON d.service_id = s.id"""
 
-
-
-           LEFT JOIN services s ON d.service_id = s.id
-
-
-
-           WHERE a.project_id = ?""",
-        (ctx["project_id"],),
+    total = db.conn.execute(f"SELECT COUNT(*) {joins} WHERE {where_sql}", params).fetchone()[0]
+    rows = db.conn.execute(
+        f"""SELECT a.id, a.project_id, a.external_key, a.kind, a.criticality, a.metadata,
+                  e.name AS env_name, e.production, e.max_downtime_minutes,
+                  s.name AS service_name, s.owner_email
+           {joins} WHERE {where_sql} ORDER BY a.external_key, a.id LIMIT ? OFFSET ?""",
+        [*params, limit, offset],
     ).fetchall()
 
-    items: List[Dict[str, Any]] = []
-
-    for r in rows:
-        if environment and r["env_name"] != environment:
-            continue
-
-        if service and r["service_name"] != service:
-            continue
-
-        items.append(
-            {
-                "id": r["id"],
-                "project_id": r["project_id"],
-                "external_key": r["external_key"],
-                "kind": r["kind"],
-                "criticality": r["criticality"],
-                "environment": r["env_name"],
-                "production": bool(r["production"]),
-                "max_downtime_minutes": r["max_downtime_minutes"],
-                "services": [r["service_name"]] if r["service_name"] else [],
-                "owner_email": r["owner_email"] or "unassigned@patchgraph.local",
-                "metadata": json.loads(r["metadata"] or "{}"),
-            }
-        )
+    items: List[Dict[str, Any]] = [
+        {
+            "id": r["id"],
+            "project_id": r["project_id"],
+            "external_key": r["external_key"],
+            "kind": r["kind"],
+            "criticality": r["criticality"],
+            "environment": r["env_name"],
+            "production": bool(r["production"]),
+            "max_downtime_minutes": r["max_downtime_minutes"],
+            "services": [r["service_name"]] if r["service_name"] else [],
+            "owner_email": r["owner_email"] or "unassigned@patchgraph.local",
+            "metadata": json.loads(r["metadata"] or "{}"),
+        }
+        for r in rows
+    ]
 
     return {
         "items": items,
-        "total": len(items),
+        "total": total,
+        "limit": limit,
+        "offset": offset,
         "request_id": ctx["request_id"],
     }
 

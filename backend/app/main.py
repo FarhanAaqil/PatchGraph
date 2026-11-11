@@ -13,10 +13,12 @@ from datetime import datetime, timezone
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 
 from backend.app.api.routes import ContractError
 from backend.app.api.routes import router as api_v1_router
+from backend.app.performance import ResponseCache, ResponseCacheMiddleware
 from backend.app.security.auth import get_signing_key, is_production
 
 DEFAULT_CORS_ORIGINS = "http://localhost:5173,http://localhost:5000,http://127.0.0.1:5173,http://127.0.0.1:5000"
@@ -73,6 +75,11 @@ def create_app() -> FastAPI:
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         return response
+
+    # Order matters: later additions wrap earlier ones, so GZip is outermost and the cache sits just inside it.
+    app.state.response_cache = ResponseCache()
+    app.add_middleware(ResponseCacheMiddleware, cache=app.state.response_cache)
+    app.add_middleware(GZipMiddleware, minimum_size=500, compresslevel=6)
 
     @app.exception_handler(ContractError)
     async def handle_contract_error(request: Request, exc: ContractError) -> JSONResponse:
