@@ -4,6 +4,7 @@ Allows organizations with custom or commercial threat feeds to normalize externa
 advisories into PatchGraph's content-addressed `AdvisoryMatch` format while keeping
 offline reproducibility via SHA-256 snapshot pinning.
 """
+
 from __future__ import annotations
 
 import hashlib

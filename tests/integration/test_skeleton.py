@@ -8,6 +8,7 @@ Proves Gate 1 (Architecture Skeleton) exit criteria:
 - Constrained plan optimization, what-if simulation, and human approval audit record
 - Project-scoped RBAC authorization enforcement
 """
+
 from __future__ import annotations
 
 import json
@@ -16,9 +17,9 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
+from backend.app.api import routes as api_routes
 from backend.app.db.session import DatabaseManager
 from backend.app.main import create_app
-from backend.app.api import routes as api_routes
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 FIXTURES_DIR = REPO_ROOT / "tests" / "fixtures"
@@ -181,7 +182,11 @@ class TestArchitectureSkeletonIntegration(unittest.TestCase):
         res_bad_sbom = self.client.post(
             "/api/v1/imports/sbom",
             headers=self.default_headers,
-            json={"kind": "cyclonedx", "source_name": "bad.json", "document": {"bomFormat": "CycloneDX", "specVersion": "1.0"}},
+            json={
+                "kind": "cyclonedx",
+                "source_name": "bad.json",
+                "document": {"bomFormat": "CycloneDX", "specVersion": "1.0"},
+            },
         )
         self.assertEqual(res_bad_sbom.status_code, 400)
         err_body = res_bad_sbom.json()

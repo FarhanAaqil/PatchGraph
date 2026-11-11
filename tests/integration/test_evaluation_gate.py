@@ -3,6 +3,7 @@
 Executes ranking, graph, planner, ablation, and stress evaluations and writes
 `reports/result_manifest.json`.
 """
+
 from __future__ import annotations
 
 import hashlib

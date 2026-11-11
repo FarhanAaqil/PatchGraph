@@ -3,10 +3,12 @@
 Tests bounded graph traversal p95 latency (< 2,000 ms target) on a synthetic
 high-fanout dependency graph with injected cycles and missing metadata.
 """
+
 from __future__ import annotations
 
 import time
 from typing import Any, Dict, List
+
 import numpy as np
 
 from backend.app.graph.build import TypedSupplyChainGraph
@@ -29,7 +31,7 @@ def run_stress_benchmark(num_edges: int = 5_000, num_queries: int = 25) -> Dict[
             nid = f"pv_d{depth}_{i}"
             g.add_node(nid, kind="package_version", label=f"pkg-{depth}-{i}@1.0.0")
             parent_target = prev_layer[i % len(prev_layer)]
-            #nid depends on parent_target -> edge nid -> parent_target
+            # nid depends on parent_target -> edge nid -> parent_target
             g.add_edge(nid, parent_target, kind="depends_on", scope="runtime")
             edge_count += 1
             curr_layer.append(nid)

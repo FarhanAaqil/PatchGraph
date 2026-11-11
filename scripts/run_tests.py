@@ -4,6 +4,7 @@ Executes all Phase 1 unit, schema, contract, failure-path, and integration test 
 and writes `release/phase1_run_manifest.json` with SHA-256 digests of every Phase 1 artifact.
 Includes a DirectPathFinder so imports work even on virtual FUSE mounts where `readdir` is disabled.
 """
+
 from __future__ import annotations
 
 import hashlib

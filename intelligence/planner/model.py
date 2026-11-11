@@ -11,10 +11,11 @@ Formulation per `PatchGraph Master Blueprint.docx` and `29_Remediation_Optimizat
   5. Incompatible action pairs (`x_a + x_b <= 1`)
   6. Critical-service simultaneous change limit (`sum_{a in Crit} x_a <= max_critical_changes`)
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 from ortools.sat.python import cp_model
 
@@ -41,11 +42,7 @@ def build_cpsat_model(
     constraints: PlannerConstraints,
 ) -> Tuple[cp_model.CpModel, Dict[str, cp_model.IntVar], List[CandidateAction]]:
     model = cp_model.CpModel()
-    eligible = [
-        c
-        for c in candidates
-        if any(env in constraints.environments for env in c.environments)
-    ]
+    eligible = [c for c in candidates if any(env in constraints.environments for env in c.environments)]
 
     x_vars: Dict[str, cp_model.IntVar] = {}
     for c in eligible:
@@ -65,17 +62,16 @@ def build_cpsat_model(
         for svc in c.services:
             by_service.setdefault(svc, []).append(c)
 
-    for svc, svc_actions in by_service.items():
+    for svc_actions in by_service.values():
         model.Add(
-            sum(c.downtime_minutes * x_vars[c.action_id] for c in svc_actions)
-            <= constraints.max_downtime_minutes
+            sum(c.downtime_minutes * x_vars[c.action_id] for c in svc_actions) <= constraints.max_downtime_minutes
         )
 
     # 3. At most one chosen version per package
     by_pkg: Dict[str, List[CandidateAction]] = {}
     for c in eligible:
         by_pkg.setdefault(c.package_name, []).append(c)
-    for pkg, pkg_actions in by_pkg.items():
+    for pkg_actions in by_pkg.values():
         if len(pkg_actions) > 1:
             model.Add(sum(x_vars[c.action_id] for c in pkg_actions) <= 1)
 
@@ -96,10 +92,7 @@ def build_cpsat_model(
     # 6. Critical-service change concentration limit
     crit_actions = [c for c in eligible if c.is_critical_service]
     if crit_actions:
-        model.Add(
-            sum(x_vars[c.action_id] for c in crit_actions)
-            <= constraints.max_critical_service_actions
-        )
+        model.Add(sum(x_vars[c.action_id] for c in crit_actions) <= constraints.max_critical_service_actions)
 
     # Objective: maximize net weighted benefit
     objective_terms = []

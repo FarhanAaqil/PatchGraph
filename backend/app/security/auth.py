@@ -1,4 +1,5 @@
 """Local OIDC-compatible authentication boundary and token verifier (Day 36)."""
+
 from __future__ import annotations
 
 import base64

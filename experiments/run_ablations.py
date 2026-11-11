@@ -10,6 +10,7 @@ Runs all 7 ablations mandated by `10_Evaluation_PatchGraph.md` on the exact same
 7. Replace CP-SAT optimizer with Greedy Risk-Descending
 8. Remove VEX qualification (treat `not_affected` as `reachable_prod`)
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -29,7 +30,11 @@ def _score_rows_with_weights(
 ) -> float:
     scored_list = []
     for r in rows:
-        reach = "reachable_prod" if (ignore_vex and r["reachability_state"] == "unreachable_vex") else r["reachability_state"]
+        reach = (
+            "reachable_prod"
+            if (ignore_vex and r["reachability_state"] == "unreachable_vex")
+            else r["reachability_state"]
+        )
         res = score_finding_explainable(
             finding_id=r["finding_id"],
             canonical_id=r["cve_id"],
@@ -59,14 +64,54 @@ def run_ablation_suite() -> Dict[str, Any]:
     no_vex_ndcg = _score_rows_with_weights(rows, RiskWeights(), ignore_vex=True)
 
     ablations = [
-        {"variant": "Full PatchGraph System", "ndcg_at_6": full_ndcg, "exposure_removed": planner_res["cpsat_optimal"]["risk_removed"], "brier_score": 0.0085},
-        {"variant": "1. Remove Deployment Context (gamma=0)", "ndcg_at_6": no_deploy_ndcg, "exposure_removed": planner_res["cpsat_optimal"]["risk_removed"], "brier_score": 0.0085},
-        {"variant": "2. Remove Reachability (delta=0)", "ndcg_at_6": no_reach_ndcg, "exposure_removed": planner_res["cpsat_optimal"]["risk_removed"], "brier_score": 0.0085},
-        {"variant": "3. Remove Graph Centrality", "ndcg_at_6": no_cent_ndcg, "exposure_removed": planner_res["cpsat_optimal"]["risk_removed"], "brier_score": 0.0085},
-        {"variant": "4. Remove EPSS Signal (beta=0)", "ndcg_at_6": no_epss_ndcg, "exposure_removed": planner_res["cpsat_optimal"]["risk_removed"], "brier_score": 0.0085},
-        {"variant": "5. Remove Probability Calibration", "ndcg_at_6": full_ndcg, "exposure_removed": planner_res["cpsat_optimal"]["risk_removed"], "brier_score": 0.0214},
-        {"variant": "6. Replace CP-SAT Optimizer with Greedy", "ndcg_at_6": full_ndcg, "exposure_removed": planner_res["greedy_risk_descending"]["risk_removed"], "brier_score": 0.0085},
-        {"variant": "7. Remove VEX Qualification", "ndcg_at_6": no_vex_ndcg, "exposure_removed": planner_res["cpsat_optimal"]["risk_removed"], "brier_score": 0.0085},
+        {
+            "variant": "Full PatchGraph System",
+            "ndcg_at_6": full_ndcg,
+            "exposure_removed": planner_res["cpsat_optimal"]["risk_removed"],
+            "brier_score": 0.0085,
+        },
+        {
+            "variant": "1. Remove Deployment Context (gamma=0)",
+            "ndcg_at_6": no_deploy_ndcg,
+            "exposure_removed": planner_res["cpsat_optimal"]["risk_removed"],
+            "brier_score": 0.0085,
+        },
+        {
+            "variant": "2. Remove Reachability (delta=0)",
+            "ndcg_at_6": no_reach_ndcg,
+            "exposure_removed": planner_res["cpsat_optimal"]["risk_removed"],
+            "brier_score": 0.0085,
+        },
+        {
+            "variant": "3. Remove Graph Centrality",
+            "ndcg_at_6": no_cent_ndcg,
+            "exposure_removed": planner_res["cpsat_optimal"]["risk_removed"],
+            "brier_score": 0.0085,
+        },
+        {
+            "variant": "4. Remove EPSS Signal (beta=0)",
+            "ndcg_at_6": no_epss_ndcg,
+            "exposure_removed": planner_res["cpsat_optimal"]["risk_removed"],
+            "brier_score": 0.0085,
+        },
+        {
+            "variant": "5. Remove Probability Calibration",
+            "ndcg_at_6": full_ndcg,
+            "exposure_removed": planner_res["cpsat_optimal"]["risk_removed"],
+            "brier_score": 0.0214,
+        },
+        {
+            "variant": "6. Replace CP-SAT Optimizer with Greedy",
+            "ndcg_at_6": full_ndcg,
+            "exposure_removed": planner_res["greedy_risk_descending"]["risk_removed"],
+            "brier_score": 0.0085,
+        },
+        {
+            "variant": "7. Remove VEX Qualification",
+            "ndcg_at_6": no_vex_ndcg,
+            "exposure_removed": planner_res["cpsat_optimal"]["risk_removed"],
+            "brier_score": 0.0085,
+        },
     ]
 
     repo_root = Path(__file__).resolve().parent.parent

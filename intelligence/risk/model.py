@@ -7,17 +7,17 @@ Implements:
 - Platt sigmoid calibration + reliability bin evaluation (Brier score, ECE, PR-AUC, ROC-AUC)
 - Factor-level log-odds contribution breakdown for explainability.
 """
+
 from __future__ import annotations
 
 import hashlib
 import json
 import math
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import numpy as np
-
 
 FEATURE_NAMES = [
     "cvss_norm",
@@ -35,7 +35,7 @@ class VulnerabilityFeatureRow:
     package_family: str
     ecosystem: str
     published_date: str  # YYYY-MM-DD
-    as_of_date: str      # YYYY-MM-DD (must be >= published_date)
+    as_of_date: str  # YYYY-MM-DD (must be >= published_date)
     cvss_score: Optional[float]
     epss: Optional[float]
     age_days: int
@@ -60,8 +60,7 @@ def verify_no_temporal_or_family_leakage(
     for r in test_rows:
         if r.published_date <= cutoff_date:
             raise ValueError(
-                f"Temporal split violation in test row {r.cve_id}: "
-                f"published={r.published_date} <= cutoff={cutoff_date}"
+                f"Temporal split violation in test row {r.cve_id}: published={r.published_date} <= cutoff={cutoff_date}"
             )
 
     train_families = {r.package_family for r in train_rows}
@@ -152,8 +151,7 @@ class CalibratedExploitModel:
         prob = float(_sigmoid(np.array([calibrated_logit]))[0])
 
         contributions = {
-            FEATURE_NAMES[i]: round(float(self.weights[i] * x[i] * self.platt_a), 4)
-            for i in range(len(FEATURE_NAMES))
+            FEATURE_NAMES[i]: round(float(self.weights[i] * x[i] * self.platt_a), 4) for i in range(len(FEATURE_NAMES))
         }
         return {
             "cve_id": row.cve_id,
@@ -208,8 +206,9 @@ class CalibratedGradientBoostingComparator:
         self.feature_importances_: List[float] = []
 
     def fit(self, rows: List[VulnerabilityFeatureRow]) -> "CalibratedGradientBoostingComparator":
-        from sklearn.ensemble import GradientBoostingClassifier
         from sklearn.calibration import CalibratedClassifierCV
+        from sklearn.ensemble import GradientBoostingClassifier
+
         X = np.vstack([extract_feature_vector(r) for r in rows])
         y = np.array([float(r.exploited_within_horizon) for r in rows], dtype=np.float64)
 
@@ -315,7 +314,7 @@ def compute_binary_classification_metrics(y_true: np.ndarray, y_prob: np.ndarray
     precisions = tp / np.maximum(1.0, tp + fp)
     pr_auc = 0.0
     prev_r = 0.0
-    for r_val, p_val in zip(recalls, precisions):
+    for r_val, p_val in zip(recalls, precisions, strict=True):
         pr_auc += float(p_val) * float(r_val - prev_r)
         prev_r = float(r_val)
 
@@ -328,7 +327,9 @@ def compute_binary_classification_metrics(y_true: np.ndarray, y_prob: np.ndarray
     }
 
 
-DEFAULT_EXPLOIT_BUNDLE_PATH = Path(__file__).resolve().parent.parent.parent / "data" / "fixtures" / "model_exploit_v1.json"
+DEFAULT_EXPLOIT_BUNDLE_PATH = (
+    Path(__file__).resolve().parent.parent.parent / "data" / "fixtures" / "model_exploit_v1.json"
+)
 _CACHED_EXPLOIT_MODEL: Optional[CalibratedExploitModel] = None
 
 

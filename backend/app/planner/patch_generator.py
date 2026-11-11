@@ -4,11 +4,11 @@ Generates unified Git diffs (`requirements.txt`, `pyproject.toml`, `package.json
 PR metadata, and rollback scripts ONLY after an `approved` human decision record exists
 in `plan_decisions`.
 """
+
 from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass
-from typing import Any, Dict, List
 
 from backend.app.db.session import DatabaseManager
 

@@ -4,6 +4,7 @@ Revision ID: 001_core
 Revises: None
 Create Date: 2026-11-02 00:00:00
 """
+
 from pathlib import Path
 
 revision = "001_core"

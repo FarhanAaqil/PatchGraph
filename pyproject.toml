@@ -1,0 +1,36 @@
+[project]
+name = "patchgraph"
+version = "1.0.0"
+description = "Explainable, constrained software supply-chain remediation planning"
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = [".venv", "node_modules", "frontend/node_modules", "reference_project"]
+
+[tool.ruff.format]
+line-ending = "lf"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B"]
+# Long lines are left to the formatter; wrapping prose and string literals by hand adds noise.
+ignore = ["E501"]
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = [
+    "fastapi.Depends",
+    "fastapi.Header",
+    "fastapi.Query",
+    "fastapi.Body",
+    "fastapi.File",
+    "fastapi.Form",
+    "fastapi.Path",
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["backend", "intelligence", "experiments", "scripts", "tests"]
+
+[tool.ruff.lint.per-file-ignores]
+# Entry-point scripts extend sys.path before importing project packages.
+"scripts/*.py" = ["E402"]

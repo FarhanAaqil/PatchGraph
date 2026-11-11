@@ -4,6 +4,7 @@ Loads a realistic demo SBOM (CycloneDX 1.5) and deployment topology,
 computes cryptographic content hashes, seeds findings, and marks everything
 explicitly with 'is_demo': True and 'Demo data' badges for production transparency.
 """
+
 from __future__ import annotations
 
 import json
@@ -27,9 +28,9 @@ def seed_demo_data(db_path: str = "patchgraph_demo.db") -> dict:
     # 1. Ingest demo SBOM
     sbom_path = FIXTURES_DIR / "sbom_cyclonedx_seed.json"
     if sbom_path.exists():
-        cdx_doc = json.loads(sbom_path.read_text(encoding="utf-8"))
         # Ingestion happens via database manager seeded state
-    
+        json.loads(sbom_path.read_text(encoding="utf-8"))  # fail fast on a corrupt fixture
+
     elapsed_ms = round((time.perf_counter() - t0) * 1000.0, 2)
     summary = {
         "status": "DEMO_DATA_SEEDED",
@@ -51,4 +52,3 @@ def seed_demo_data(db_path: str = "patchgraph_demo.db") -> dict:
 if __name__ == "__main__":
     result = seed_demo_data()
     print(json.dumps(result, indent=2))
-

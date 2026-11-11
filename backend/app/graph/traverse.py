@@ -3,11 +3,12 @@
 Enforces max depth <= 12, handles cycles safely via per-path visited sets,
 computes hop decay, and assigns explicit reachability states.
 """
+
 from __future__ import annotations
 
 from collections import deque
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from backend.app.graph.build import TypedSupplyChainGraph
 
@@ -60,7 +61,7 @@ def traverse_affected_paths(
             continue
 
         # Move upstream along reverse edges (who depends on or uses `curr`)
-        for parent_id, edge_meta in graph.rev_adj.get(curr, []):
+        for parent_id, _edge_meta in graph.rev_adj.get(curr, []):
             if parent_id in path:
                 cycle_encountered = True
                 continue

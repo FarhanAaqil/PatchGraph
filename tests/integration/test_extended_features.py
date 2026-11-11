@@ -7,6 +7,7 @@ Tests:
 4. 2-Layer GNN Message-Passing Stretch Ablation
 5. Neo4j Cypher Exporter, In-Process Full-Text Search Index, and Pluggable Threat Feed Adapter
 """
+
 from __future__ import annotations
 
 import unittest
@@ -36,7 +37,14 @@ class TestExtendedCapabilitiesSuite(unittest.TestCase):
         # Record human approval in plan_decisions
         self.db.conn.execute(
             "INSERT INTO plan_decisions (id, planning_run_id, user_id, decision, reason, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-            ("dec_ext_01", "plan_01", self.approver_id, "approved", "Approved for PR bundle generation", "2026-11-02T00:00:00Z"),
+            (
+                "dec_ext_01",
+                "plan_01",
+                self.approver_id,
+                "approved",
+                "Approved for PR bundle generation",
+                "2026-11-02T00:00:00Z",
+            ),
         )
         self.db.conn.commit()
 
@@ -80,7 +88,9 @@ class TestExtendedCapabilitiesSuite(unittest.TestCase):
         self.assertIn("DEPENDS_ON", cypher)
 
         idx = SupplyChainSearchIndex()
-        idx.index_document("f1", {"id": "finding_seed_01", "cve": "CVE-2026-1001", "pkg": "example-lib", "cwe": "CWE-502"})
+        idx.index_document(
+            "f1", {"id": "finding_seed_01", "cve": "CVE-2026-1001", "pkg": "example-lib", "cwe": "CWE-502"}
+        )
         hits = idx.search("deserialization cwe 502 example")
         self.assertEqual(len(hits), 1)
         self.assertEqual(hits[0]["id"], "finding_seed_01")

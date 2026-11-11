@@ -9,11 +9,10 @@ Proves Gate 4 (End-to-End MVP Success Gate) exit criteria:
 6. Two remediation plans are compared side-by-side in What-If simulation
 7. Human approval is recorded in `plan_decisions` and `audit_logs`, and all metrics reproduce deterministically offline
 """
+
 from __future__ import annotations
 
-import json
 import unittest
-from pathlib import Path
 
 from fastapi.testclient import TestClient
 

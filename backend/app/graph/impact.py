@@ -1,4 +1,5 @@
 """Blast-radius impact aggregation across services, environments, and owners (Day 17)."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

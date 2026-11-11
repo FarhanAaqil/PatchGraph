@@ -3,6 +3,7 @@
 Per 04_Architecture_PatchGraph.md, background workers receive narrow job payloads
 (only IDs and snapshot references, never raw credentials or unbounded blobs).
 """
+
 from __future__ import annotations
 
 import uuid

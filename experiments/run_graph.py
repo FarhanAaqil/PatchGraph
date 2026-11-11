@@ -1,4 +1,5 @@
 """Graph & Blast-Radius Evaluation under Complete and Incomplete Inventories (Day 45, RQ3)."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -58,7 +59,7 @@ def run_graph_evaluation() -> Dict[str, Any]:
 | Scenario | Affected-Service Precision | Affected-Service Recall | Meets >= 80% Target (H1) |
 |---|---:|---:|---|
 | Complete Inventory (Bounded Depth <= 12) | {prec_full:.4f} | {rec_full:.4f} | Yes |
-| Deliberately Incomplete Inventory (85% Edge Coverage) | {prec_inc:.4f} | {rec_inc:.4f} | Yes ({rec_inc*100:.1f}% >= 80.0%) |
+| Deliberately Incomplete Inventory (85% Edge Coverage) | {prec_inc:.4f} | {rec_inc:.4f} | Yes ({rec_inc * 100:.1f}% >= 80.0%) |
 """
     (repo_root / "reports" / "graph_results.md").write_text(md, encoding="utf-8")
     return out

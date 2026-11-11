@@ -3,13 +3,14 @@
 Extracts CVSS v3.1 base score, vector string, and CWE identifier while preserving
 source provenance, hash, and staleness indicators. Unknown CVSS stays None (never 0.0).
 """
+
 from __future__ import annotations
 
 import json
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Optional
 
 NVD_OFFICIAL_URL = "https://services.nvd.nist.gov/rest/json/cves/2.0"
 NVD_PARSER_VERSION = "1.0.0"
@@ -30,7 +31,9 @@ class NvdEnrichmentRecord:
 
 class NvdConnector:
     def __init__(self, snapshot_path: Optional[Path] = None, max_age_hours: int = 168) -> None:
-        default_path = Path(__file__).resolve().parent.parent.parent.parent / "tests" / "fixtures" / "advisory_snapshot_seed.json"
+        default_path = (
+            Path(__file__).resolve().parent.parent.parent.parent / "tests" / "fixtures" / "advisory_snapshot_seed.json"
+        )
         self.snapshot_path = snapshot_path or default_path
         self.max_age_hours = max_age_hours
 

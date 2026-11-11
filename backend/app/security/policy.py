@@ -1,4 +1,5 @@
 """Project RBAC policy matrix and tenant row-scope enforcement (Day 37)."""
+
 from __future__ import annotations
 
 from typing import Dict, Set

@@ -1,1169 +1,1169 @@
-openapi: 3.1.0
-info:
-  title: PatchGraph API
-  version: 1.0.0
-  description: >-
-    Versioned HTTP contract for PatchGraph software supply-chain intelligence
-    and constrained remediation planning. All routes are under /api/v1, return
-    a request_id, and enforce project-scoped authorization.
-servers:
-  - url: /api/v1
-    description: Versioned API v1 base path
-
-components:
-  securitySchemes:
-    ProjectScopedAuth:
-      type: apiKey
-      in: header
-      name: X-Project-Id
-      description: Project UUID for tenant scoping (accompanied by X-User-Id and X-User-Role in local mode)
-
-  parameters:
-    ProjectIdHeader:
-      name: X-Project-Id
-      in: header
-      required: false
-      schema:
-        type: string
-    UserIdHeader:
-      name: X-User-Id
-      in: header
-      required: false
-      schema:
-        type: string
-    UserRoleHeader:
-      name: X-User-Role
-      in: header
-      required: false
-      schema:
-        type: string
-        enum: [viewer, analyst, approver, admin]
-
-  schemas:
-    FieldError:
-      type: object
-      required: [field, issue]
-      properties:
-        field:
-          type: string
-        issue:
-          type: string
-        location:
-          type: string
-
-    ErrorResponse:
-      type: object
-      required: [code, message, field_errors, request_id]
-      properties:
-        code:
-          type: string
-        message:
-          type: string
-        field_errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/FieldError'
-        request_id:
-          type: string
-
-    SbomImportRequest:
-      type: object
-      required: [kind, source_name, document]
-      properties:
-        project_id:
-          type: string
-        kind:
-          type: string
-          enum: [cyclonedx, spdx]
-        source_name:
-          type: string
-        document:
-          type: object
-
-    VexImportRequest:
-      type: object
-      required: [source_name, document]
-      properties:
-        project_id:
-          type: string
-        kind:
-          type: string
-          enum: [vex]
-          default: vex
-        source_name:
-          type: string
-        document:
-          type: object
-
-    ImportStatusResponse:
-      type: object
-      required: [id, project_id, kind, status, source_name, content_sha256, object_key, parser_version, errors, created_at, request_id]
-      properties:
-        id:
-          type: string
-        project_id:
-          type: string
-        kind:
-          type: string
-          enum: [cyclonedx, spdx, vex]
-        status:
-          type: string
-          enum: [queued, completed, failed, duplicate]
-        source_name:
-          type: string
-        content_sha256:
-          type: string
-        object_key:
-          type: string
-        parser_version:
-          type: string
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/FieldError'
-        created_at:
-          type: string
-          format: date-time
-        request_id:
-          type: string
-
-    AssetItem:
-      type: object
-      required: [id, project_id, external_key, kind, criticality, environment, services]
-      properties:
-        id:
-          type: string
-        project_id:
-          type: string
-        external_key:
-          type: string
-        kind:
-          type: string
-        criticality:
-          type: integer
-          minimum: 1
-          maximum: 5
-        environment:
-          type: string
-        production:
-          type: boolean
-        max_downtime_minutes:
-          type: integer
-        services:
-          type: array
-          items:
-            type: string
-        owner_email:
-          type: string
-        metadata:
-          type: object
-
-    AssetListResponse:
-      type: object
-      required: [items, total, request_id]
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/AssetItem'
-        total:
-          type: integer
-        request_id:
-          type: string
-
-    FactorBreakdown:
-      type: object
-      required: [severity, exploit_probability, criticality, reachability, kev_bonus, uncertainty_penalty]
-      properties:
-        severity:
-          type: number
-        exploit_probability:
-          type: number
-        criticality:
-          type: number
-        reachability:
-          type: number
-        kev_bonus:
-          type: number
-        uncertainty_penalty:
-          type: number
-        weights:
-          type: object
-
-    FindingSummary:
-      type: object
-      required: [id, vulnerability_id, canonical_id, package_name, package_version, ecosystem, service_name, environment, applicability, status, baseline_score, final_score, probability, uncertainty, factors, source_freshness]
-      properties:
-        id:
-          type: string
-        vulnerability_id:
-          type: string
-        canonical_id:
-          type: string
-        package_name:
-          type: string
-        package_version:
-          type: string
-        ecosystem:
-          type: string
-        service_name:
-          type: string
-        environment:
-          type: string
-        owner_email:
-          type: string
-        applicability:
-          type: string
-        status:
-          type: string
-        vex_status:
-          type: string
-        baseline_score:
-          type: number
-        final_score:
-          type: number
-        probability:
-          type: number
-          minimum: 0
-          maximum: 1
-        uncertainty:
-          type: number
-          minimum: 0
-          maximum: 1
-        factors:
-          $ref: '#/components/schemas/FactorBreakdown'
-        source_freshness:
-          type: object
-
-    FindingListResponse:
-      type: object
-      required: [items, total, evidence_snapshot, request_id]
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/FindingSummary'
-        total:
-          type: integer
-        evidence_snapshot:
-          type: string
-        request_id:
-          type: string
-
-    FindingDetailResponse:
-      allOf:
-        - $ref: '#/components/schemas/FindingSummary'
-        - type: object
-          required: [advisories, affected_paths, candidate_actions, request_id]
-          properties:
-            summary:
-              type: string
-            advisories:
-              type: array
-              items:
-                type: object
-            vex_statements:
-              type: array
-              items:
-                type: object
-            affected_paths:
-              type: array
-              items:
-                type: object
-            candidate_actions:
-              type: array
-              items:
-                type: object
-            request_id:
-              type: string
-
-    GraphPathNode:
-      type: object
-      required: [id, kind, label]
-      properties:
-        id:
-          type: string
-        kind:
-          type: string
-          enum: [package, package_version, application, service, asset, environment, owner]
-        label:
-          type: string
-        metadata:
-          type: object
-
-    GraphPathEdge:
-      type: object
-      required: [source, target, kind]
-      properties:
-        source:
-          type: string
-        target:
-          type: string
-        kind:
-          type: string
-        scope:
-          type: string
-
-    GraphPathsResponse:
-      type: object
-      required: [root_id, depth, paths, affected_services, nodes, edges, request_id]
-      properties:
-        root_id:
-          type: string
-        depth:
-          type: integer
-          minimum: 1
-          maximum: 12
-        paths:
-          type: array
-          items:
-            type: object
-        affected_services:
-          type: array
-          items:
-            type: string
-        nodes:
-          type: array
-          items:
-            $ref: '#/components/schemas/GraphPathNode'
-        edges:
-          type: array
-          items:
-            $ref: '#/components/schemas/GraphPathEdge'
-        request_id:
-          type: string
-
-    RiskRunRequest:
-      type: object
-      properties:
-        project_id:
-          type: string
-        snapshot_id:
-          type: string
-        model_version:
-          type: string
-          default: baseline-logreg-v1
-        config:
-          type: object
-
-    RiskRunResponse:
-      type: object
-      required: [id, project_id, snapshot_id, manifest_sha256, model_version, scored_findings, created_at, request_id]
-      properties:
-        id:
-          type: string
-        project_id:
-          type: string
-        snapshot_id:
-          type: string
-        manifest_sha256:
-          type: string
-        model_version:
-          type: string
-        scored_findings:
-          type: integer
-        created_at:
-          type: string
-          format: date-time
-        request_id:
-          type: string
-
-    PlanRequest:
-      type: object
-      required: [risk_run_id, budget_hours, max_downtime_minutes, environments, objective]
-      properties:
-        risk_run_id:
-          type: string
-        budget_hours:
-          type: number
-          minimum: 0
-        max_downtime_minutes:
-          type: integer
-          minimum: 0
-        environments:
-          type: array
-          items:
-            type: string
-        objective:
-          type: string
-          enum: [weighted_exposure, greedy_risk_per_hour, greedy_risk_desc]
-
-    PlanActionItem:
-      type: object
-      required: [package, from, to, services, hours]
-      properties:
-        package:
-          type: string
-        from:
-          type: string
-        to:
-          type: string
-        services:
-          type: array
-          items:
-            type: string
-        hours:
-          type: number
-        downtime_minutes:
-          type: integer
-        compatibility_risk:
-          type: number
-        risk_removed:
-          type: number
-        rationale:
-          type: object
-
-    PlanResponse:
-      type: object
-      required: [id, status, actions, risk_removed, warnings, evidence_snapshot]
-      properties:
-        id:
-          type: string
-        status:
-          type: string
-          enum: [optimal, feasible, infeasible]
-        actions:
-          type: array
-          items:
-            $ref: '#/components/schemas/PlanActionItem'
-        rejected_actions:
-          type: array
-          items:
-            $ref: '#/components/schemas/PlanActionItem'
-        binding_constraints:
-          type: array
-          items:
-            type: string
-        risk_removed:
-          type: number
-        warnings:
-          type: array
-          items:
-            type: string
-        evidence_snapshot:
-          type: string
-        objective_value:
-          type: number
-        best_bound:
-          type: number
-        runtime_ms:
-          type: integer
-        approval_state:
-          type: string
-        request_id:
-          type: string
-
-    PlanSimulateRequest:
-      type: object
-      required: [budget_hours, max_downtime_minutes, environments]
-      properties:
-        budget_hours:
-          type: number
-          minimum: 0
-        max_downtime_minutes:
-          type: integer
-          minimum: 0
-        environments:
-          type: array
-          items:
-            type: string
-        objective:
-          type: string
-          default: weighted_exposure
-
-    PlanSimulateResponse:
-      type: object
-      required: [baseline_plan, simulated_plan, greedy_comparison, deltas, request_id]
-      properties:
-        baseline_plan:
-          $ref: '#/components/schemas/PlanResponse'
-        simulated_plan:
-          $ref: '#/components/schemas/PlanResponse'
-        greedy_comparison:
-          type: object
-        deltas:
-          type: object
-        request_id:
-          type: string
-
-    PlanDecisionRequest:
-      type: object
-      required: [decision, reason]
-      properties:
-        decision:
-          type: string
-          enum: [approved, rejected, needs_changes]
-        reason:
-          type: string
-          minLength: 3
-
-    PlanDecisionResponse:
-      type: object
-      required: [id, planning_run_id, user_id, decision, reason, audit_log_id, created_at, request_id]
-      properties:
-        id:
-          type: string
-        planning_run_id:
-          type: string
-        user_id:
-          type: string
-        decision:
-          type: string
-          enum: [approved, rejected, needs_changes]
-        reason:
-          type: string
-        audit_log_id:
-          type: integer
-        created_at:
-          type: string
-          format: date-time
-        request_id:
-          type: string
-
-    DataHealthSource:
-      type: object
-      required: [source, source_url, last_fetched_at, content_sha256, parser_version, stale, status]
-      properties:
-        source:
-          type: string
-        source_url:
-          type: string
-        last_fetched_at:
-          type: string
-          format: date-time
-        content_sha256:
-          type: string
-        parser_version:
-          type: string
-        stale:
-          type: boolean
-        status:
-          type: string
-          enum: [healthy, stale, degraded]
-        error_count:
-          type: integer
-
-    DataHealthResponse:
-      type: object
-      required: [overall_status, offline_demo_mode, active_snapshot, sources, recent_import_errors, request_id]
-      properties:
-        overall_status:
-          type: string
-          enum: [healthy, stale, degraded]
-        offline_demo_mode:
-          type: boolean
-        active_snapshot:
-          type: string
-        manifest_sha256:
-          type: string
-        sources:
-          type: array
-          items:
-            $ref: '#/components/schemas/DataHealthSource'
-        recent_import_errors:
-          type: array
-          items:
-            type: object
-        request_id:
-          type: string
-
-paths:
-  /sbom/upload:
-    post:
-      summary: Upload multipart or direct JSON SBOM file
-      operationId: uploadSbomFile
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                file:
-                  type: string
-                  format: binary
-          application/json:
-            schema:
-              type: object
-      responses:
-        '200':
-          description: Uploaded file validated, parsed, and registered
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ImportStatusResponse'
-        '400':
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /imports/sbom:
-    post:
-      summary: Validate and enqueue SBOM
-      operationId: createSbomImport
-      responses:
-        '200':
-          description: SBOM validated and stored
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ImportStatusResponse'
-        '400':
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /imports/vex:
-    post:
-      summary: Validate and store VEX
-      operationId: createVexImport
-      responses:
-        '200':
-          description: VEX validated and stored
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ImportStatusResponse'
-        '400':
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /imports/{id}:
-    get:
-      summary: Import status and errors
-      operationId: getImportStatus
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Import record and validation errors
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ImportStatusResponse'
-        '404':
-          description: Missing import
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /assets:
-    get:
-      summary: Filtered asset inventory
-      operationId: listAssets
-      parameters:
-        - name: environment
-          in: query
-          required: false
-          schema:
-            type: string
-        - name: service
-          in: query
-          required: false
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Filtered asset inventory
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AssetListResponse'
-
-  /findings:
-    get:
-      summary: Ranked findings
-      operationId: listFindings
-      parameters:
-        - name: sort
-          in: query
-          required: false
-          schema:
-            type: string
-            enum: [final_score, baseline_score, cvss, epss, kev_first]
-        - name: environment
-          in: query
-          required: false
-          schema:
-            type: string
-        - name: status
-          in: query
-          required: false
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Ranked findings list
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FindingListResponse'
-
-  /findings/{id}:
-    get:
-      summary: Evidence and explanations
-      operationId: getFindingDetail
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Detailed finding evidence, paths, and factor contributions
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FindingDetailResponse'
-        '404':
-          description: Finding not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /graph/paths:
-    get:
-      summary: Bounded affected paths
-      operationId: getGraphPaths
-      parameters:
-        - name: package_version_id
-          in: query
-          required: false
-          schema:
-            type: string
-        - name: depth
-          in: query
-          required: false
-          schema:
-            type: integer
-            default: 6
-            minimum: 1
-            maximum: 12
-        - name: limit
-          in: query
-          required: false
-          schema:
-            type: integer
-            default: 100
-            maximum: 500
-      responses:
-        '200':
-          description: Bounded graph paths and affected services
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GraphPathsResponse'
-        '400':
-          description: Invalid depth or limit parameter
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /risk-runs:
-    post:
-      summary: Freeze evidence and score
-      operationId: createRiskRun
-      responses:
-        '200':
-          description: Risk run created and findings scored
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RiskRunResponse'
-
-  /plans:
-    post:
-      summary: Optimize remediation actions
-      operationId: createPlan
-      responses:
-        '200':
-          description: Optimized remediation plan
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PlanResponse'
-        '422':
-          description: Infeasible constraints
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /plans/{id}/simulate:
-    post:
-      summary: Compare changed constraints
-      operationId: simulatePlan
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Side-by-side what-if comparison
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PlanSimulateResponse'
-
-  /plans/{id}/decision:
-    post:
-      summary: Approve or reject
-      operationId: recordPlanDecision
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Decision recorded in plan_decisions and audit_logs
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PlanDecisionResponse'
-        '403':
-          description: Forbidden role
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /health/data:
-    get:
-      summary: Source freshness and errors
-      operationId: getDataHealth
-      responses:
-        '200':
-          description: Source freshness and degraded-mode status
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DataHealthResponse'
-
-  /imports/topology:
-    post:
-      summary: Ingest deployment topology
-      operationId: importTopology
-      responses:
-        '200':
-          description: Ingestion job initiated
-          content:
-            application/json:
-              schema:
-                type: object
-
-  /jobs/{id}:
-    get:
-      summary: Check background job status
-      operationId: getJobStatus
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Job status report
-          content:
-            application/json:
-              schema:
-                type: object
-
-  /jobs/{id}/events:
-    get:
-      summary: Stream job events via SSE
-      operationId: streamJobEvents
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: SSE event stream
-          content:
-            text/event-stream:
-              schema:
-                type: string
-
-  /findings/{id}/explain:
-    get:
-      summary: Explain risk score factor decomposition
-      operationId: explainFindingScore
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Detailed factor weights and calibration notes
-          content:
-            application/json:
-              schema:
-                type: object
-
-  /graph:
-    get:
-      summary: Full dependency-and-deployment graph
-      operationId: getFullGraph
-      responses:
-        '200':
-          description: Node-link graph structure
-          content:
-            application/json:
-              schema:
-                type: object
-
-  /graph/nodes/{id}:
-    get:
-      summary: Node detail and blast radius
-      operationId: getGraphNodeDetail
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Node detail profile
-          content:
-            application/json:
-              schema:
-                type: object
-
-  /plans/{id}:
-    get:
-      summary: Get plan detail by ID
-      operationId: getPlanDetail
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Stored plan details
-          content:
-            application/json:
-              schema:
-                type: object
-
-  /audit:
-    get:
-      summary: Query immutable audit logs
-      operationId: listAuditLogs
-      responses:
-        '200':
-          description: Paginated audit logs
-          content:
-            application/json:
-              schema:
-                type: object
-
-  /audit/export:
-    get:
-      summary: Export audit logs as CSV or JSON
-      operationId: exportAuditLogs
-      responses:
-        '200':
-          description: Audit log export file
-          content:
-            application/json:
-              schema:
-                type: object
-            text/csv:
-              schema:
-                type: string
-
-  /sources/status:
-    get:
-      summary: Get data source sync freshness
-      operationId: getSourcesStatus
-      responses:
-        '200':
-          description: Source status table
-          content:
-            application/json:
-              schema:
-                type: object
-
-  /health:
-    get:
-      summary: System health check
-      operationId: getSystemHealth
-      responses:
-        '200':
-          description: System operational status
-          content:
-            application/json:
-              schema:
-                type: object
-
-  /demo/load-sample:
-    post:
-      summary: Load sample dataset with CycloneDX SBOM and deployment topology
-      operationId: loadSampleDataset
-      responses:
-        '200':
-          description: Sample dataset loaded successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                  message:
-                    type: string
-                  snapshot_id:
-                    type: string
-                  packages_loaded:
-                    type: integer
-                  findings_loaded:
-                    type: integer
-                  is_demo:
-                    type: boolean
-
-  /imports:
-    get:
-      summary: List all SBOM, SPDX, and VEX imports
-      operationId: listImports
-      responses:
-        '200':
-          description: List of import records
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  items:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/ImportStatusResponse'
-                  total:
-                    type: integer
-                  request_id:
-                    type: string
-
-  /risk-runs/latest:
-    get:
-      summary: Get the latest risk run evaluation
-      operationId: getLatestRiskRun
-      responses:
-        '200':
-          description: Latest risk run record
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                  project_id:
-                    type: string
-                  snapshot_id:
-                    type: string
-                  model_version:
-                    type: string
-                  config:
-                    type: object
-                  created_at:
-                    type: string
-                    format: date-time
-                  findings_count:
-                    type: integer
-                  request_id:
-                    type: string
-
-  /vex-statements:
-    get:
-      summary: List all VEX applicability statements
-      operationId: listVexStatements
-      responses:
-        '200':
-          description: List of VEX statements
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  items:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        cve:
-                          type: string
-                        service:
-                          type: string
-                        status:
-                          type: string
-                        justification:
-                          type: string
-                        action_statement:
-                          type: string
-                  total:
-                    type: integer
-                  request_id:
-                    type: string
-
-  /model-card:
-    get:
-      summary: Get ML exploit likelihood model card and calibration metrics
-      operationId: getModelCard
-      responses:
-        '200':
-          description: Model card specifications and metrics
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  model_name:
-                    type: string
-                  version:
-                    type: string
-                  brier_score:
-                    type: number
-                  ece:
-                    type: number
-                  pr_auc:
-                    type: number
-                  roc_auc:
-                    type: number
-                  temporal_cutoff:
-                    type: string
-                  training_samples:
-                    type: integer
-                  test_samples:
-                    type: integer
-                  features:
-                    type: array
-                    items:
-                      type: string
-                  request_id:
-                    type: string
+openapi: 3.1.0
+info:
+  title: PatchGraph API
+  version: 1.0.0
+  description: >-
+    Versioned HTTP contract for PatchGraph software supply-chain intelligence
+    and constrained remediation planning. All routes are under /api/v1, return
+    a request_id, and enforce project-scoped authorization.
+servers:
+  - url: /api/v1
+    description: Versioned API v1 base path
+
+components:
+  securitySchemes:
+    ProjectScopedAuth:
+      type: apiKey
+      in: header
+      name: X-Project-Id
+      description: Project UUID for tenant scoping (accompanied by X-User-Id and X-User-Role in local mode)
+
+  parameters:
+    ProjectIdHeader:
+      name: X-Project-Id
+      in: header
+      required: false
+      schema:
+        type: string
+    UserIdHeader:
+      name: X-User-Id
+      in: header
+      required: false
+      schema:
+        type: string
+    UserRoleHeader:
+      name: X-User-Role
+      in: header
+      required: false
+      schema:
+        type: string
+        enum: [viewer, analyst, approver, admin]
+
+  schemas:
+    FieldError:
+      type: object
+      required: [field, issue]
+      properties:
+        field:
+          type: string
+        issue:
+          type: string
+        location:
+          type: string
+
+    ErrorResponse:
+      type: object
+      required: [code, message, field_errors, request_id]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        field_errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldError'
+        request_id:
+          type: string
+
+    SbomImportRequest:
+      type: object
+      required: [kind, source_name, document]
+      properties:
+        project_id:
+          type: string
+        kind:
+          type: string
+          enum: [cyclonedx, spdx]
+        source_name:
+          type: string
+        document:
+          type: object
+
+    VexImportRequest:
+      type: object
+      required: [source_name, document]
+      properties:
+        project_id:
+          type: string
+        kind:
+          type: string
+          enum: [vex]
+          default: vex
+        source_name:
+          type: string
+        document:
+          type: object
+
+    ImportStatusResponse:
+      type: object
+      required: [id, project_id, kind, status, source_name, content_sha256, object_key, parser_version, errors, created_at, request_id]
+      properties:
+        id:
+          type: string
+        project_id:
+          type: string
+        kind:
+          type: string
+          enum: [cyclonedx, spdx, vex]
+        status:
+          type: string
+          enum: [queued, completed, failed, duplicate]
+        source_name:
+          type: string
+        content_sha256:
+          type: string
+        object_key:
+          type: string
+        parser_version:
+          type: string
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldError'
+        created_at:
+          type: string
+          format: date-time
+        request_id:
+          type: string
+
+    AssetItem:
+      type: object
+      required: [id, project_id, external_key, kind, criticality, environment, services]
+      properties:
+        id:
+          type: string
+        project_id:
+          type: string
+        external_key:
+          type: string
+        kind:
+          type: string
+        criticality:
+          type: integer
+          minimum: 1
+          maximum: 5
+        environment:
+          type: string
+        production:
+          type: boolean
+        max_downtime_minutes:
+          type: integer
+        services:
+          type: array
+          items:
+            type: string
+        owner_email:
+          type: string
+        metadata:
+          type: object
+
+    AssetListResponse:
+      type: object
+      required: [items, total, request_id]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetItem'
+        total:
+          type: integer
+        request_id:
+          type: string
+
+    FactorBreakdown:
+      type: object
+      required: [severity, exploit_probability, criticality, reachability, kev_bonus, uncertainty_penalty]
+      properties:
+        severity:
+          type: number
+        exploit_probability:
+          type: number
+        criticality:
+          type: number
+        reachability:
+          type: number
+        kev_bonus:
+          type: number
+        uncertainty_penalty:
+          type: number
+        weights:
+          type: object
+
+    FindingSummary:
+      type: object
+      required: [id, vulnerability_id, canonical_id, package_name, package_version, ecosystem, service_name, environment, applicability, status, baseline_score, final_score, probability, uncertainty, factors, source_freshness]
+      properties:
+        id:
+          type: string
+        vulnerability_id:
+          type: string
+        canonical_id:
+          type: string
+        package_name:
+          type: string
+        package_version:
+          type: string
+        ecosystem:
+          type: string
+        service_name:
+          type: string
+        environment:
+          type: string
+        owner_email:
+          type: string
+        applicability:
+          type: string
+        status:
+          type: string
+        vex_status:
+          type: string
+        baseline_score:
+          type: number
+        final_score:
+          type: number
+        probability:
+          type: number
+          minimum: 0
+          maximum: 1
+        uncertainty:
+          type: number
+          minimum: 0
+          maximum: 1
+        factors:
+          $ref: '#/components/schemas/FactorBreakdown'
+        source_freshness:
+          type: object
+
+    FindingListResponse:
+      type: object
+      required: [items, total, evidence_snapshot, request_id]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/FindingSummary'
+        total:
+          type: integer
+        evidence_snapshot:
+          type: string
+        request_id:
+          type: string
+
+    FindingDetailResponse:
+      allOf:
+        - $ref: '#/components/schemas/FindingSummary'
+        - type: object
+          required: [advisories, affected_paths, candidate_actions, request_id]
+          properties:
+            summary:
+              type: string
+            advisories:
+              type: array
+              items:
+                type: object
+            vex_statements:
+              type: array
+              items:
+                type: object
+            affected_paths:
+              type: array
+              items:
+                type: object
+            candidate_actions:
+              type: array
+              items:
+                type: object
+            request_id:
+              type: string
+
+    GraphPathNode:
+      type: object
+      required: [id, kind, label]
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+          enum: [package, package_version, application, service, asset, environment, owner]
+        label:
+          type: string
+        metadata:
+          type: object
+
+    GraphPathEdge:
+      type: object
+      required: [source, target, kind]
+      properties:
+        source:
+          type: string
+        target:
+          type: string
+        kind:
+          type: string
+        scope:
+          type: string
+
+    GraphPathsResponse:
+      type: object
+      required: [root_id, depth, paths, affected_services, nodes, edges, request_id]
+      properties:
+        root_id:
+          type: string
+        depth:
+          type: integer
+          minimum: 1
+          maximum: 12
+        paths:
+          type: array
+          items:
+            type: object
+        affected_services:
+          type: array
+          items:
+            type: string
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/GraphPathNode'
+        edges:
+          type: array
+          items:
+            $ref: '#/components/schemas/GraphPathEdge'
+        request_id:
+          type: string
+
+    RiskRunRequest:
+      type: object
+      properties:
+        project_id:
+          type: string
+        snapshot_id:
+          type: string
+        model_version:
+          type: string
+          default: baseline-logreg-v1
+        config:
+          type: object
+
+    RiskRunResponse:
+      type: object
+      required: [id, project_id, snapshot_id, manifest_sha256, model_version, scored_findings, created_at, request_id]
+      properties:
+        id:
+          type: string
+        project_id:
+          type: string
+        snapshot_id:
+          type: string
+        manifest_sha256:
+          type: string
+        model_version:
+          type: string
+        scored_findings:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        request_id:
+          type: string
+
+    PlanRequest:
+      type: object
+      required: [risk_run_id, budget_hours, max_downtime_minutes, environments, objective]
+      properties:
+        risk_run_id:
+          type: string
+        budget_hours:
+          type: number
+          minimum: 0
+        max_downtime_minutes:
+          type: integer
+          minimum: 0
+        environments:
+          type: array
+          items:
+            type: string
+        objective:
+          type: string
+          enum: [weighted_exposure, greedy_risk_per_hour, greedy_risk_desc]
+
+    PlanActionItem:
+      type: object
+      required: [package, from, to, services, hours]
+      properties:
+        package:
+          type: string
+        from:
+          type: string
+        to:
+          type: string
+        services:
+          type: array
+          items:
+            type: string
+        hours:
+          type: number
+        downtime_minutes:
+          type: integer
+        compatibility_risk:
+          type: number
+        risk_removed:
+          type: number
+        rationale:
+          type: object
+
+    PlanResponse:
+      type: object
+      required: [id, status, actions, risk_removed, warnings, evidence_snapshot]
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+          enum: [optimal, feasible, infeasible]
+        actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlanActionItem'
+        rejected_actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlanActionItem'
+        binding_constraints:
+          type: array
+          items:
+            type: string
+        risk_removed:
+          type: number
+        warnings:
+          type: array
+          items:
+            type: string
+        evidence_snapshot:
+          type: string
+        objective_value:
+          type: number
+        best_bound:
+          type: number
+        runtime_ms:
+          type: integer
+        approval_state:
+          type: string
+        request_id:
+          type: string
+
+    PlanSimulateRequest:
+      type: object
+      required: [budget_hours, max_downtime_minutes, environments]
+      properties:
+        budget_hours:
+          type: number
+          minimum: 0
+        max_downtime_minutes:
+          type: integer
+          minimum: 0
+        environments:
+          type: array
+          items:
+            type: string
+        objective:
+          type: string
+          default: weighted_exposure
+
+    PlanSimulateResponse:
+      type: object
+      required: [baseline_plan, simulated_plan, greedy_comparison, deltas, request_id]
+      properties:
+        baseline_plan:
+          $ref: '#/components/schemas/PlanResponse'
+        simulated_plan:
+          $ref: '#/components/schemas/PlanResponse'
+        greedy_comparison:
+          type: object
+        deltas:
+          type: object
+        request_id:
+          type: string
+
+    PlanDecisionRequest:
+      type: object
+      required: [decision, reason]
+      properties:
+        decision:
+          type: string
+          enum: [approved, rejected, needs_changes]
+        reason:
+          type: string
+          minLength: 3
+
+    PlanDecisionResponse:
+      type: object
+      required: [id, planning_run_id, user_id, decision, reason, audit_log_id, created_at, request_id]
+      properties:
+        id:
+          type: string
+        planning_run_id:
+          type: string
+        user_id:
+          type: string
+        decision:
+          type: string
+          enum: [approved, rejected, needs_changes]
+        reason:
+          type: string
+        audit_log_id:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        request_id:
+          type: string
+
+    DataHealthSource:
+      type: object
+      required: [source, source_url, last_fetched_at, content_sha256, parser_version, stale, status]
+      properties:
+        source:
+          type: string
+        source_url:
+          type: string
+        last_fetched_at:
+          type: string
+          format: date-time
+        content_sha256:
+          type: string
+        parser_version:
+          type: string
+        stale:
+          type: boolean
+        status:
+          type: string
+          enum: [healthy, stale, degraded]
+        error_count:
+          type: integer
+
+    DataHealthResponse:
+      type: object
+      required: [overall_status, offline_demo_mode, active_snapshot, sources, recent_import_errors, request_id]
+      properties:
+        overall_status:
+          type: string
+          enum: [healthy, stale, degraded]
+        offline_demo_mode:
+          type: boolean
+        active_snapshot:
+          type: string
+        manifest_sha256:
+          type: string
+        sources:
+          type: array
+          items:
+            $ref: '#/components/schemas/DataHealthSource'
+        recent_import_errors:
+          type: array
+          items:
+            type: object
+        request_id:
+          type: string
+
+paths:
+  /sbom/upload:
+    post:
+      summary: Upload multipart or direct JSON SBOM file
+      operationId: uploadSbomFile
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Uploaded file validated, parsed, and registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportStatusResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /imports/sbom:
+    post:
+      summary: Validate and enqueue SBOM
+      operationId: createSbomImport
+      responses:
+        '200':
+          description: SBOM validated and stored
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportStatusResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /imports/vex:
+    post:
+      summary: Validate and store VEX
+      operationId: createVexImport
+      responses:
+        '200':
+          description: VEX validated and stored
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportStatusResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /imports/{id}:
+    get:
+      summary: Import status and errors
+      operationId: getImportStatus
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Import record and validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportStatusResponse'
+        '404':
+          description: Missing import
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /assets:
+    get:
+      summary: Filtered asset inventory
+      operationId: listAssets
+      parameters:
+        - name: environment
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: service
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Filtered asset inventory
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetListResponse'
+
+  /findings:
+    get:
+      summary: Ranked findings
+      operationId: listFindings
+      parameters:
+        - name: sort
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [final_score, baseline_score, cvss, epss, kev_first]
+        - name: environment
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Ranked findings list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FindingListResponse'
+
+  /findings/{id}:
+    get:
+      summary: Evidence and explanations
+      operationId: getFindingDetail
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Detailed finding evidence, paths, and factor contributions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FindingDetailResponse'
+        '404':
+          description: Finding not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /graph/paths:
+    get:
+      summary: Bounded affected paths
+      operationId: getGraphPaths
+      parameters:
+        - name: package_version_id
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: depth
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 6
+            minimum: 1
+            maximum: 12
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 100
+            maximum: 500
+      responses:
+        '200':
+          description: Bounded graph paths and affected services
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GraphPathsResponse'
+        '400':
+          description: Invalid depth or limit parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /risk-runs:
+    post:
+      summary: Freeze evidence and score
+      operationId: createRiskRun
+      responses:
+        '200':
+          description: Risk run created and findings scored
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RiskRunResponse'
+
+  /plans:
+    post:
+      summary: Optimize remediation actions
+      operationId: createPlan
+      responses:
+        '200':
+          description: Optimized remediation plan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanResponse'
+        '422':
+          description: Infeasible constraints
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /plans/{id}/simulate:
+    post:
+      summary: Compare changed constraints
+      operationId: simulatePlan
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Side-by-side what-if comparison
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanSimulateResponse'
+
+  /plans/{id}/decision:
+    post:
+      summary: Approve or reject
+      operationId: recordPlanDecision
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Decision recorded in plan_decisions and audit_logs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanDecisionResponse'
+        '403':
+          description: Forbidden role
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /health/data:
+    get:
+      summary: Source freshness and errors
+      operationId: getDataHealth
+      responses:
+        '200':
+          description: Source freshness and degraded-mode status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataHealthResponse'
+
+  /imports/topology:
+    post:
+      summary: Ingest deployment topology
+      operationId: importTopology
+      responses:
+        '200':
+          description: Ingestion job initiated
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /jobs/{id}:
+    get:
+      summary: Check background job status
+      operationId: getJobStatus
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Job status report
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /jobs/{id}/events:
+    get:
+      summary: Stream job events via SSE
+      operationId: streamJobEvents
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: SSE event stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+  /findings/{id}/explain:
+    get:
+      summary: Explain risk score factor decomposition
+      operationId: explainFindingScore
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Detailed factor weights and calibration notes
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /graph:
+    get:
+      summary: Full dependency-and-deployment graph
+      operationId: getFullGraph
+      responses:
+        '200':
+          description: Node-link graph structure
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /graph/nodes/{id}:
+    get:
+      summary: Node detail and blast radius
+      operationId: getGraphNodeDetail
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Node detail profile
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /plans/{id}:
+    get:
+      summary: Get plan detail by ID
+      operationId: getPlanDetail
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Stored plan details
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /audit:
+    get:
+      summary: Query immutable audit logs
+      operationId: listAuditLogs
+      responses:
+        '200':
+          description: Paginated audit logs
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /audit/export:
+    get:
+      summary: Export audit logs as CSV or JSON
+      operationId: exportAuditLogs
+      responses:
+        '200':
+          description: Audit log export file
+          content:
+            application/json:
+              schema:
+                type: object
+            text/csv:
+              schema:
+                type: string
+
+  /sources/status:
+    get:
+      summary: Get data source sync freshness
+      operationId: getSourcesStatus
+      responses:
+        '200':
+          description: Source status table
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /health:
+    get:
+      summary: System health check
+      operationId: getSystemHealth
+      responses:
+        '200':
+          description: System operational status
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /demo/load-sample:
+    post:
+      summary: Load sample dataset with CycloneDX SBOM and deployment topology
+      operationId: loadSampleDataset
+      responses:
+        '200':
+          description: Sample dataset loaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+                  snapshot_id:
+                    type: string
+                  packages_loaded:
+                    type: integer
+                  findings_loaded:
+                    type: integer
+                  is_demo:
+                    type: boolean
+
+  /imports:
+    get:
+      summary: List all SBOM, SPDX, and VEX imports
+      operationId: listImports
+      responses:
+        '200':
+          description: List of import records
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ImportStatusResponse'
+                  total:
+                    type: integer
+                  request_id:
+                    type: string
+
+  /risk-runs/latest:
+    get:
+      summary: Get the latest risk run evaluation
+      operationId: getLatestRiskRun
+      responses:
+        '200':
+          description: Latest risk run record
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  project_id:
+                    type: string
+                  snapshot_id:
+                    type: string
+                  model_version:
+                    type: string
+                  config:
+                    type: object
+                  created_at:
+                    type: string
+                    format: date-time
+                  findings_count:
+                    type: integer
+                  request_id:
+                    type: string
+
+  /vex-statements:
+    get:
+      summary: List all VEX applicability statements
+      operationId: listVexStatements
+      responses:
+        '200':
+          description: List of VEX statements
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        cve:
+                          type: string
+                        service:
+                          type: string
+                        status:
+                          type: string
+                        justification:
+                          type: string
+                        action_statement:
+                          type: string
+                  total:
+                    type: integer
+                  request_id:
+                    type: string
+
+  /model-card:
+    get:
+      summary: Get ML exploit likelihood model card and calibration metrics
+      operationId: getModelCard
+      responses:
+        '200':
+          description: Model card specifications and metrics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  model_name:
+                    type: string
+                  version:
+                    type: string
+                  brier_score:
+                    type: number
+                  ece:
+                    type: number
+                  pr_auc:
+                    type: number
+                  roc_auc:
+                    type: number
+                  temporal_cutoff:
+                    type: string
+                  training_samples:
+                    type: integer
+                  test_samples:
+                    type: integer
+                  features:
+                    type: array
+                    items:
+                      type: string
+                  request_id:
+                    type: string

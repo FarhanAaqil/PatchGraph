@@ -1,8 +1,10 @@
 """Source freshness and feature distribution drift detector (Day 33)."""
+
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any, Dict, List
+
 import numpy as np
 
 

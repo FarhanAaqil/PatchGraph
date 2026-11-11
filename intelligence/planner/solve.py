@@ -1,4 +1,5 @@
 """OR-Tools CP-SAT Solver & Greedy Baseline Comparator (Day 26)."""
+
 from __future__ import annotations
 
 import time
@@ -144,10 +145,7 @@ def solve_greedy_baseline(
     for c in ordered:
         if c.package_name in chosen_pkgs:
             continue
-        if (
-            constraints.include_compatibility_constraints
-            and c.compatibility_risk > constraints.max_compatibility_risk
-        ):
+        if constraints.include_compatibility_constraints and c.compatibility_risk > constraints.max_compatibility_risk:
             continue
         if c.requires_action_id and c.requires_action_id not in chosen_ids:
             continue
@@ -155,10 +153,7 @@ def solve_greedy_baseline(
             continue
         if hours_used + c.effort_hours > constraints.budget_hours:
             continue
-        if any(
-            dt_by_service.get(svc, 0) + c.downtime_minutes > constraints.max_downtime_minutes
-            for svc in c.services
-        ):
+        if any(dt_by_service.get(svc, 0) + c.downtime_minutes > constraints.max_downtime_minutes for svc in c.services):
             continue
 
         chosen.append(c)

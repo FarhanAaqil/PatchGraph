@@ -1,4 +1,5 @@
 """Backend wrapper re-exporting deterministic baseline scorer from `intelligence.risk.baseline`."""
+
 from intelligence.risk.baseline import (
     REACHABILITY_SCORES,
     RiskWeights,

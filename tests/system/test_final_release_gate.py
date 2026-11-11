@@ -2,9 +2,9 @@
 
 Verifies Gate 8 (Demo Ready) exit criteria and the complete 56-day checklist.
 """
+
 from __future__ import annotations
 
-import json
 import unittest
 from pathlib import Path
 

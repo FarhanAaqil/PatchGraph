@@ -3,11 +3,12 @@
 Evaluates RQ1 on a curated 20-finding multi-ecosystem benchmark with ground-truth
 operational urgency labels (1 = exploitable in reachable production service, 0 = non-urgent/unreachable).
 """
+
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Any, Dict, List
+
 import numpy as np
 
 from backend.app.risk.baseline import score_finding_explainable
@@ -64,7 +65,9 @@ def build_ranking_benchmark() -> List[Dict[str, Any]]:
 def evaluate_ranking_strategy(rows: List[Dict[str, Any]], key_fn, k: int = 6) -> Dict[str, Any]:
     ordered = sorted(rows, key=key_fn, reverse=True)
     rels = [float(r["actionable_label"]) for r in ordered]
-    scores = np.array([float(key_fn(r)[0] if isinstance(key_fn(r), tuple) else key_fn(r)) for r in rows], dtype=np.float64)
+    scores = np.array(
+        [float(key_fn(r)[0] if isinstance(key_fn(r), tuple) else key_fn(r)) for r in rows], dtype=np.float64
+    )
     # Normalize scores to [0,1] for PR-AUC calculation
     s_min, s_max = float(np.min(scores)), float(np.max(scores))
     probs = (scores - s_min) / max(1e-6, s_max - s_min)
@@ -124,7 +127,7 @@ def run_ranking_evaluation() -> Dict[str, Any]:
 
     md += f"""
 ## 2. Per-Ecosystem Slice (Top-1 Actionable Precision)
-- `pypi`: {eco_slices['pypi']:.2f} · `npm`: {eco_slices['npm']:.2f} · `maven`: {eco_slices['maven']:.2f} · `golang`: {eco_slices['golang']:.2f}
+- `pypi`: {eco_slices["pypi"]:.2f} · `npm`: {eco_slices["npm"]:.2f} · `maven`: {eco_slices["maven"]:.2f} · `golang`: {eco_slices["golang"]:.2f}
 """
     (repo_root / "reports" / "ranking_results.md").write_text(md, encoding="utf-8")
     return out

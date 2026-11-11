@@ -1,7 +1,8 @@
 """Markdown table formatter and claim-verification helper for evaluation reports (Day 43)."""
+
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Dict
 
 
 def format_ci(metric_dict: Dict[str, float]) -> str:

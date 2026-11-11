@@ -1,12 +1,18 @@
 """Model Calibration & Reliability Report Generator (Day 20)."""
+
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
-from experiments.train_exploit import build_time_split_dataset, run_training
-from intelligence.risk.model import CalibratedExploitModel, _sigmoid, compute_binary_classification_metrics, extract_feature_vector
 import numpy as np
+
+from experiments.train_exploit import build_time_split_dataset, run_training
+from intelligence.risk.model import (
+    CalibratedExploitModel,
+    _sigmoid,
+    compute_binary_classification_metrics,
+    extract_feature_vector,
+)
 
 
 def generate_calibration_report() -> dict:
@@ -27,25 +33,27 @@ def generate_calibration_report() -> dict:
 
     report_md = f"""# PatchGraph Model One (Exploit Likelihood) Calibration Report
 
-- **Model Version**: `{bundle['model_version']}`
-- **Bundle SHA-256**: `{bundle['bundle_sha256']}`
+- **Model Version**: `{bundle["model_version"]}`
+- **Bundle SHA-256**: `{bundle["bundle_sha256"]}`
 - **Temporal Cutoff Date**: `{cutoff}` (Train `n={len(train_rows)}`, Post-Cutoff Test `n={len(test_rows)}`, Package-Family Overlap `0`)
 
 ## 1. Calibration & Discrimination Comparison (Post-Cutoff Test Set)
 
 | Metric | Uncalibrated Logistic Regression | Platt-Calibrated Logistic Regression |
 |---|---:|---:|
-| **Brier Score** (lower is better) | {uncal_metrics['brier_score']:.4f} | {cal_metrics['brier_score']:.4f} |
-| **Expected Calibration Error (ECE)** | {uncal_metrics['ece']:.4f} | {cal_metrics['ece']:.4f} |
-| **PR-AUC** | {uncal_metrics['pr_auc']:.4f} | {cal_metrics['pr_auc']:.4f} |
-| **ROC-AUC** | {uncal_metrics['roc_auc']:.4f} | {cal_metrics['roc_auc']:.4f} |
+| **Brier Score** (lower is better) | {uncal_metrics["brier_score"]:.4f} | {cal_metrics["brier_score"]:.4f} |
+| **Expected Calibration Error (ECE)** | {uncal_metrics["ece"]:.4f} | {cal_metrics["ece"]:.4f} |
+| **PR-AUC** | {uncal_metrics["pr_auc"]:.4f} | {cal_metrics["pr_auc"]:.4f} |
+| **ROC-AUC** | {uncal_metrics["roc_auc"]:.4f} | {cal_metrics["roc_auc"]:.4f} |
 
 ## 2. Reliability Curve Bins (Calibrated Model)
 
 | Probability Bin | Count | Mean Predicted Probability | Observed Exploitation Rate |
 |---|---:|---:|---:|\n"""
     for b in cal_metrics["reliability_bins"]:
-        report_md += f"| `{b['bin']}` | {b['count']} | {b['mean_predicted_prob']:.4f} | {b['observed_positive_rate']:.4f} |\n"
+        report_md += (
+            f"| `{b['bin']}` | {b['count']} | {b['mean_predicted_prob']:.4f} | {b['observed_positive_rate']:.4f} |\n"
+        )
 
     report_md += """
 ## 3. Documented Limitations

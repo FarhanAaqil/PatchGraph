@@ -7,18 +7,16 @@ canonical PostgreSQL 16 DDL in `001_core.sql` into SQLite while preserving all 2
 primary keys, unique constraints, CHECK constraints, and B-tree indexes so the full
 schema and query layer can be verified without an external database daemon.
 """
+
 from __future__ import annotations
 
-import hashlib
 import json
 import os
 import re
 import sqlite3
 import threading
-import uuid
-from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 
 class ThreadSafeConnection:
@@ -54,6 +52,7 @@ class ThreadSafeConnection:
 
     def __getattr__(self, name: str):
         return getattr(self._conn, name)
+
 
 MIGRATION_SQL_PATH = Path(__file__).resolve().parent.parent.parent / "migrations" / "001_core.sql"
 

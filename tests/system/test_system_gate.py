@@ -6,6 +6,7 @@ Proves Gate 6 (System Ready) exit criteria:
 - Structured observability metrics and secret-redacted logs
 - Full database backup and cryptographic SHA-256 verified restore drill
 """
+
 from __future__ import annotations
 
 import tempfile

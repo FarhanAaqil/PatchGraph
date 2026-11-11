@@ -6,6 +6,7 @@ Serves:
 - Full React + Vite + Three.js single-page application from `frontend/dist`
 - Legacy HTML routes at `/pages/{page_id}`
 """
+
 from __future__ import annotations
 
 import argparse
@@ -18,8 +19,9 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from fastapi import HTTPException
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
+
 from backend.app.main import app
 
 DIST_DIR = REPO_ROOT / "frontend" / "dist"

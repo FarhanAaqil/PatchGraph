@@ -4,11 +4,12 @@ Provides an in-process NetworkX-compatible typed directed graph projection over
 PostgreSQL/SQLite tables (`packages`, `package_versions`, `dependencies`,
 `service_components`, `services`, `applications`, `assets`, `environments`).
 """
+
 from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Set, Tuple
+from typing import Any, Dict, List, Tuple
 
 from backend.app.db.session import DatabaseManager
 from backend.app.ingest.sbom import ValidatedSbomDocument
@@ -157,7 +158,9 @@ def build_project_supply_chain_graph(db: DatabaseManager, project_id: str) -> Ty
         svc_node = f"service:{s['service_name']}"
         app_node = f"application:{s['app_name']}"
         owner_node = f"owner:{s['owner_email'] or 'unassigned@patchgraph.local'}"
-        g.add_node(svc_node, kind="service", label=s["service_name"], db_id=s["service_id"], owner_email=s["owner_email"])
+        g.add_node(
+            svc_node, kind="service", label=s["service_name"], db_id=s["service_id"], owner_email=s["owner_email"]
+        )
         g.add_node(app_node, kind="application", label=s["app_name"], criticality=s["app_criticality"])
         g.add_node(owner_node, kind="owner", label=s["owner_email"] or "unassigned@patchgraph.local")
         g.add_edge(app_node, svc_node, kind="owns_service")

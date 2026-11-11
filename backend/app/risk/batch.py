@@ -1,4 +1,5 @@
 """Deterministic batch scoring of project findings pinned to an evidence snapshot (Day 32)."""
+
 from __future__ import annotations
 
 import json
