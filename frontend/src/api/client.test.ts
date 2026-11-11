@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { PatchGraphApiClient } from './generated';
+import { PatchGraphApiClient, toQuery } from './generated';
 
 function mockFetch(status: number, body: unknown) {
   const fn = vi.fn().mockResolvedValue({
@@ -7,6 +7,7 @@ function mockFetch(status: number, body: unknown) {
     status,
     statusText: 'x',
     json: async () => body,
+    blob: async () => new Blob(['x']),
   });
   vi.stubGlobal('fetch', fn);
   return fn;
@@ -14,6 +15,15 @@ function mockFetch(status: number, body: unknown) {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+});
+
+describe('toQuery', () => {
+  it('skips empty, false and undefined values', () => {
+    expect(toQuery({ q: 'a b', kev_only: true, environment: '', limit: 10, offset: 0, x: undefined, y: false })).toBe(
+      '?q=a+b&kev_only=true&limit=10&offset=0',
+    );
+    expect(toQuery()).toBe('');
+  });
 });
 
 describe('PatchGraphApiClient', () => {
@@ -32,6 +42,12 @@ describe('PatchGraphApiClient', () => {
     expect(fetchFn.mock.calls[0][1].headers.Authorization).toBe('Bearer abc.def');
   });
 
+  it('sends paging, search and filters as query parameters', async () => {
+    const fetchFn = mockFetch(200, { items: [], total: 0 });
+    await new PatchGraphApiClient().listFindings({ q: 'lib', kev_only: true, limit: 10, offset: 20 });
+    expect(String(fetchFn.mock.calls[0][0])).toBe('/api/v1/findings?q=lib&kev_only=true&limit=10&offset=20');
+  });
+
   it('throws the API error envelope on non-2xx responses', async () => {
     mockFetch(403, { code: 'INSUFFICIENT_ROLE', message: 'nope', field_errors: [], request_id: 'r1' });
     await expect(new PatchGraphApiClient().listAuditLogs()).rejects.toMatchObject({ code: 'INSUFFICIENT_ROLE' });
@@ -44,5 +60,13 @@ describe('PatchGraphApiClient', () => {
     expect(headers['Content-Type']).toBeUndefined();
     expect(headers['x-filename']).toBe('sbom.json');
     expect(headers.Authorization).toBe('Bearer t');
+  });
+
+  it('downloads the audit export as a blob with the same identity', async () => {
+    const fetchFn = mockFetch(200, {});
+    const blob = await new PatchGraphApiClient({ token: 't' }).exportAuditLogs('csv');
+    expect(blob).toBeInstanceOf(Blob);
+    expect(String(fetchFn.mock.calls[0][0])).toBe('/api/v1/audit/export?format=csv');
+    expect(fetchFn.mock.calls[0][1].headers.Authorization).toBe('Bearer t');
   });
 });

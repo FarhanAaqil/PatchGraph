@@ -124,10 +124,9 @@ class TestPhase1SchemaAndContracts(unittest.TestCase):
             "docs/domain.md",
             "docs/adr/001-architecture.md",
             "docs/data_examples.md",
-            "frontend/src/content/terms.ts",
-            "frontend/src/app/routes.tsx",
             "frontend/src/api/generated.ts",
-            "frontend/src/pages/Imports.tsx",
+            "frontend/src/app/App.tsx",
+            "frontend/src/styles/tokens.css",
             "tests/fixtures/sbom_cyclonedx_seed.json",
             "tests/fixtures/sbom_spdx_seed.json",
             "tests/fixtures/vex_openvex_seed.json",
@@ -137,24 +136,9 @@ class TestPhase1SchemaAndContracts(unittest.TestCase):
             path = REPO_ROOT / rel
             self.assertTrue(path.exists(), f"Missing Phase 1 artifact: {rel}")
 
-        routes_ts = (REPO_ROOT / "frontend/src/app/routes.tsx").read_text(encoding="utf-8")
-        for screen_id in [
-            "dashboard",
-            "assets",
-            "dependency-graph",
-            "vulnerabilities",
-            "prioritization",
-            "finding-detail",
-            "explainability",
-            "blast-radius",
-            "remediation-planner",
-            "what-if",
-            "imports",
-            "runs",
-            "audit",
-            "data-health",
-        ]:
-            self.assertIn(f"id: '{screen_id}'", routes_ts)
+        nav_ts = (REPO_ROOT / "frontend/src/app/nav.ts").read_text(encoding="utf-8")
+        for path in ["/", "/import", "/risks", "/plan", "/review", "/map", "/settings"]:
+            self.assertIn(f"path: '{path}'", nav_ts, f"screen {path} missing from the navigation")
 
 
 if __name__ == "__main__":

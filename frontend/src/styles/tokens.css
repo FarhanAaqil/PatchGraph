@@ -1,294 +1,103 @@
-/**
- * PatchGraph Design System Tokens (docs/DESIGN_SYSTEM.md)
- * Exact Palette: silver #E6E9EE, violet #7A0FE0, indigo #4B0F9E, steel gray #8A929C, ink #1A1220
+/*
+ * Design tokens.
+ * The brand palette is exactly five colours; every other shade below is mixed from them (plus white).
+ *   Silver Metallic #E6E9EE   Deep Violet #7A0FE0   Electric Indigo #4B0F9E   Steel Gray #8A929C   Ink Void #1A1220
+ * Meaning is never carried by colour alone: severity, status and trends always pair colour with a label or icon.
  */
-
 :root {
-  /* Exact 5 Colors */
-  --color-silver: #e6e9ee;
-  --color-violet: #7a0fe0;
-  --color-indigo: #4b0f9e;
-  --color-steel-gray: #8a929c;
-  --color-ink: #1a1220;
+  --silver: #e6e9ee;
+  --violet: #7a0fe0;
+  --indigo: #4b0f9e;
+  --steel: #8a929c;
+  --ink: #1a1220;
+  --white: #ffffff;
 
-  /* Aliases */
-  --pg-silver: #e6e9ee;
-  --pg-violet: #7a0fe0;
-  --pg-indigo: #4b0f9e;
-  --pg-steel: #8a929c;
-  --pg-ink: #1a1220;
+  --font-body: 'DM Sans', 'DM Sans Fallback', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Unbounded', 'Unbounded Fallback', 'DM Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
-  /* Luxurious Gradients */
-  --gradient-silver: linear-gradient(135deg, #ffffff 0%, #f1f4f9 45%, #e6e9ee 80%, #d8dde6 100%);
-  --gradient-silver-dark: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-  --gradient-violet: linear-gradient(135deg, #7a0fe0 0%, #5b0ebd 50%, #4b0f9e 100%);
-  --gradient-violet-subtle: linear-gradient(135deg, rgba(122, 15, 224, 0.12) 0%, rgba(75, 15, 158, 0.05) 100%);
-  --gradient-ink: linear-gradient(145deg, #1a1220 0%, #120a17 100%);
-  --gradient-ink-card: linear-gradient(145deg, rgba(26, 18, 32, 0.95) 0%, rgba(18, 10, 24, 0.98) 100%);
+  --radius-s: 8px;
+  --radius-m: 12px;
+  --radius-l: 18px;
+  --radius-pill: 999px;
 
-  /* Border Radii (Shape language: 32-44px rounded frames) */
-  --radius-xs: 6px;
-  --radius-sm: 10px;
-  --radius-md: 18px;
-  --radius-card: 32px;
-  --radius-hero: 44px;
-  --radius-pill: 9999px;
-  --radius-frame: 32px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
 
-  /* Shadows & Glows */
-  --shadow-soft-silver: 0 20px 48px -12px rgba(26, 18, 32, 0.08), 0 0 1px 1px rgba(230, 233, 238, 0.8);
-  --shadow-card: 0 24px 60px -15px rgba(26, 18, 32, 0.09), 0 0 0 1px rgba(203, 213, 225, 0.6);
-  --shadow-card-hover: 0 32px 70px -16px rgba(122, 15, 224, 0.16), 0 0 0 1px rgba(122, 15, 224, 0.3);
-  --shadow-violet-glow: 0 0 30px rgba(122, 15, 224, 0.4);
-  --shadow-violet-intense: 0 0 50px rgba(122, 15, 224, 0.65);
-  --shadow-ink-depth: 0 20px 50px rgba(0, 0, 0, 0.45);
+  --sidebar-width: 248px;
+  --topbar-height: 64px;
+  --content-max: 1240px;
 
-  /* Typography */
-  --font-display: 'Unbounded', -apple-system, sans-serif;
-  --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --dur: 160ms;
+
+  /* Light ("Silver") theme */
+  --bg: color-mix(in srgb, var(--silver) 62%, var(--white));
+  --surface: var(--white);
+  --surface-2: color-mix(in srgb, var(--silver) 42%, var(--white));
+  --surface-3: color-mix(in srgb, var(--silver) 80%, var(--white));
+  --text: var(--ink);
+  --text-2: color-mix(in srgb, var(--ink) 72%, var(--silver));
+  --text-3: color-mix(in srgb, var(--ink) 66%, var(--silver));
+  --border: color-mix(in srgb, var(--steel) 38%, var(--silver));
+  --border-strong: color-mix(in srgb, var(--steel) 70%, var(--silver));
+  --accent: var(--violet);
+  --accent-strong: var(--indigo);
+  --accent-text: var(--indigo);
+  --accent-soft: color-mix(in srgb, var(--violet) 9%, var(--white));
+  --accent-soft-2: color-mix(in srgb, var(--violet) 16%, var(--white));
+  --on-accent: var(--white);
+  --focus: color-mix(in srgb, var(--violet) 70%, var(--white));
+  --shadow-s: 0 1px 2px color-mix(in srgb, var(--ink) 8%, transparent);
+  --shadow-m: 0 6px 24px -8px color-mix(in srgb, var(--ink) 22%, transparent);
+  --shadow-l: 0 24px 60px -20px color-mix(in srgb, var(--ink) 40%, transparent);
+  --skeleton-a: color-mix(in srgb, var(--silver) 75%, var(--white));
+  --skeleton-b: color-mix(in srgb, var(--silver) 40%, var(--white));
+  --scrim: color-mix(in srgb, var(--ink) 55%, transparent);
+
+  --nav-bg: var(--ink);
+  --nav-text: color-mix(in srgb, var(--silver) 78%, var(--ink));
+  --nav-text-strong: var(--silver);
+  --nav-hover: color-mix(in srgb, var(--silver) 10%, var(--ink));
+  --nav-active: var(--violet);
+
+  color-scheme: light;
 }
 
-/* Base Body Application */
-* {
-  box-sizing: border-box;
+/* Dark ("Ink") theme */
+:root[data-theme='ink'] {
+  --bg: var(--ink);
+  --surface: color-mix(in srgb, var(--ink) 90%, var(--violet));
+  --surface-2: color-mix(in srgb, var(--ink) 84%, var(--violet));
+  --surface-3: color-mix(in srgb, var(--ink) 74%, var(--violet));
+  --text: var(--silver);
+  --text-2: color-mix(in srgb, var(--silver) 78%, var(--ink));
+  --text-3: color-mix(in srgb, var(--silver) 60%, var(--ink));
+  --border: color-mix(in srgb, var(--steel) 34%, var(--ink));
+  --border-strong: color-mix(in srgb, var(--steel) 60%, var(--ink));
+  --accent: color-mix(in srgb, var(--violet) 78%, var(--silver));
+  --accent-strong: color-mix(in srgb, var(--violet) 55%, var(--silver));
+  --accent-text: color-mix(in srgb, var(--violet) 40%, var(--silver));
+  --accent-soft: color-mix(in srgb, var(--violet) 18%, var(--ink));
+  --accent-soft-2: color-mix(in srgb, var(--violet) 30%, var(--ink));
+  --on-accent: var(--ink);
+  --focus: color-mix(in srgb, var(--violet) 40%, var(--silver));
+  --shadow-s: 0 1px 2px color-mix(in srgb, #000 40%, transparent);
+  --shadow-m: 0 8px 28px -10px color-mix(in srgb, #000 70%, transparent);
+  --shadow-l: 0 28px 70px -20px color-mix(in srgb, #000 80%, transparent);
+  --skeleton-a: color-mix(in srgb, var(--ink) 78%, var(--violet));
+  --skeleton-b: color-mix(in srgb, var(--ink) 64%, var(--violet));
+  --nav-bg: color-mix(in srgb, var(--ink) 94%, #000);
+  --nav-hover: color-mix(in srgb, var(--silver) 8%, var(--ink));
+  --nav-active: color-mix(in srgb, var(--violet) 85%, var(--ink));
+  color-scheme: dark;
 }
 
-body {
-  font-family: var(--font-body);
-  background-color: var(--color-silver);
-  color: var(--color-ink);
-  margin: 0;
-  padding: 0;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  line-height: 1.5;
-  overflow-x: hidden;
-}
-
-/* Animations */
-@keyframes pulse-violet {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(122, 15, 224, 0.4);
-  }
-  50% {
-    box-shadow: 0 0 0 10px rgba(122, 15, 224, 0);
-  }
-}
-
-@keyframes float-subtle {
-  0%,
-  100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-6px);
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-@keyframes spin-slow {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Card System */
-.pg-card {
-  background: #ffffff;
-  border-radius: var(--radius-card);
-  border: 1px solid #e2e8f0;
-  box-shadow: var(--shadow-card);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.pg-card:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-card-hover);
-  border-color: rgba(122, 15, 224, 0.3);
-}
-
-.pg-hero-card {
-  background: var(--gradient-silver);
-  border-radius: var(--radius-hero);
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  box-shadow:
-    0 28px 70px -15px rgba(26, 18, 32, 0.12),
-    0 0 0 1px rgba(230, 233, 238, 0.9);
-  position: relative;
-  overflow: hidden;
-}
-
-.pg-ink-card {
-  background: var(--gradient-ink-card);
-  border-radius: var(--radius-card);
-  border: 1px solid rgba(122, 15, 224, 0.3);
-  box-shadow: var(--shadow-ink-depth);
-  color: #ffffff;
-}
-
-/* Huge Numerals (01-05) */
-.huge-numeral {
-  font-family: var(--font-display);
-  font-size: 3.25rem;
-  line-height: 1;
-  font-weight: 800;
-  letter-spacing: -0.06em;
-  background: linear-gradient(135deg, var(--color-violet) 0%, var(--color-indigo) 60%, var(--color-steel-gray) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  display: inline-block;
-}
-
-/* Circular Violet Arrow Button with White Ring */
-.circular-arrow-btn {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: var(--color-violet);
-  border: 2px solid #ffffff;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff;
-  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-  box-shadow: 0 6px 18px rgba(122, 15, 224, 0.4);
-  cursor: pointer;
-}
-
-.circular-arrow-btn:hover {
-  background: var(--color-indigo);
-  transform: scale(1.08) translateY(-2px);
-  box-shadow: var(--shadow-violet-glow);
-}
-
-.circular-arrow-btn:active {
-  transform: scale(0.96);
-}
-
-/* Pill Navigation */
-.nav-pill {
-  border-radius: var(--radius-pill);
-  padding: 0.55rem 1.25rem;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--color-steel-gray);
-  transition: all 0.2s ease;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  border: 1px solid transparent;
-  background: transparent;
-  cursor: pointer;
-}
-
-.nav-pill:hover {
-  color: var(--color-violet);
-  background: rgba(122, 15, 224, 0.08);
-  border-color: rgba(122, 15, 224, 0.15);
-}
-
-.nav-pill.active {
-  background: var(--color-violet);
-  color: #ffffff;
-  border-color: var(--color-violet);
-  box-shadow: 0 4px 14px rgba(122, 15, 224, 0.35);
-}
-
-/* Pill Chips */
-.pill-chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.3rem 0.85rem;
-  border-radius: var(--radius-pill);
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  transition: all 0.15s ease;
-}
-
-.pill-chip-violet {
-  background: rgba(122, 15, 224, 0.1);
-  color: var(--color-violet);
-  border: 1px solid rgba(122, 15, 224, 0.25);
-}
-
-.pill-chip-demo {
-  background: #ffffff;
-  color: var(--color-steel-gray);
-  border: 1px solid #cbd5e1;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-/* Glass & Blur Surfaces */
-.glass-panel {
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.7);
-}
-
-.glass-panel-dark {
-  background: rgba(26, 18, 32, 0.88);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(122, 15, 224, 0.25);
-}
-
-/* Custom Scrollbars */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-::-webkit-scrollbar-track {
-  background: #f1f5f9;
-}
-::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-violet);
-}
-
-/* Custom Range Inputs */
-input[type='range'] {
-  -webkit-appearance: none;
-  width: 100%;
-  height: 8px;
-  border-radius: 4px;
-  background: #e2e8f0;
-  outline: none;
-}
-
-input[type='range']::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--color-violet);
-  border: 3px solid #ffffff;
-  box-shadow: 0 2px 8px rgba(122, 15, 224, 0.4);
-  cursor: pointer;
-  transition:
-    transform 0.15s ease,
-    background-color 0.15s ease;
-}
-
-input[type='range']::-webkit-slider-thumb:hover {
-  transform: scale(1.15);
-  background: var(--color-indigo);
+:root[data-motion='reduced'] {
+  --dur: 0ms;
 }
