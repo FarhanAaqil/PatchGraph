@@ -43,8 +43,16 @@ def resolve_token() -> str:
     raise RuntimeError("No GitHub token found in GITHUB_TOKEN or the git credential helper.")
 
 
+class TimeoutSession(requests.Session):
+    """Every request gets a timeout so a dropped connection cannot hang the helper."""
+
+    def request(self, *args, **kwargs):  # type: ignore[override]
+        kwargs.setdefault("timeout", 30)
+        return super().request(*args, **kwargs)
+
+
 def session() -> requests.Session:
-    s = requests.Session()
+    s = TimeoutSession()
     s.headers.update(
         {
             "Authorization": f"Bearer {resolve_token()}",
@@ -76,14 +84,15 @@ def wait_for_checks(s: requests.Session, sha: str) -> None:
         all_runs = s.get(f"{BASE_URL}/commits/{sha}/check-runs", params={"per_page": 100}).json().get("check_runs", [])
         # Only the CI workflow gates the merge; bot-owned checks (e.g. Dependabot's config job) can queue for a long time.
         runs = [r for r in all_runs if (r.get("app") or {}).get("slug") == "github-actions"]
-        if runs and all(r["status"] == "completed" for r in runs):
+        # GitHub occasionally leaves a finished duplicate check labelled "in_progress"; a conclusion means it is done.
+        if runs and all(r["status"] == "completed" or r["conclusion"] for r in runs):
             failed = [r for r in runs if r["conclusion"] not in ("success", "skipped", "neutral")]
             for r in runs:
                 print(f"  {r['name']}: {r['conclusion']}")
             if failed:
                 raise SystemExit("Checks failed, not merging: " + ", ".join(r["name"] for r in failed))
             return
-        pending = [r["name"] for r in runs if r["status"] != "completed"]
+        pending = [r["name"] for r in runs if r["status"] != "completed" and not r["conclusion"]]
         print(f"  waiting on checks: {', '.join(pending) or 'none started yet'}")
         time.sleep(POLL_SECONDS)
     raise SystemExit("Timed out waiting for checks.")
