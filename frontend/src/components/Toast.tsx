@@ -48,12 +48,21 @@ export const ToastProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         removeToast(id);
       }, 4500);
     },
-    [removeToast]
+    [removeToast],
   );
 
-  const success = useCallback((title: string, message?: string) => showToast({ type: 'success', title, message }), [showToast]);
-  const error = useCallback((title: string, message?: string) => showToast({ type: 'error', title, message }), [showToast]);
-  const info = useCallback((title: string, message?: string) => showToast({ type: 'info', title, message }), [showToast]);
+  const success = useCallback(
+    (title: string, message?: string) => showToast({ type: 'success', title, message }),
+    [showToast],
+  );
+  const error = useCallback(
+    (title: string, message?: string) => showToast({ type: 'error', title, message }),
+    [showToast],
+  );
+  const info = useCallback(
+    (title: string, message?: string) => showToast({ type: 'info', title, message }),
+    [showToast],
+  );
 
   return (
     <ToastContext.Provider value={{ showToast, success, error, info }}>
@@ -101,7 +110,9 @@ export const ToastProvider: React.FC<{ children: ReactNode }> = ({ children }) =
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--color-ink)' }}>{t.title}</div>
                 {t.message && (
-                  <div style={{ fontSize: '0.8rem', color: 'var(--color-steel-gray)', marginTop: '2px', lineHeight: 1.4 }}>
+                  <div
+                    style={{ fontSize: '0.8rem', color: 'var(--color-steel-gray)', marginTop: '2px', lineHeight: 1.4 }}
+                  >
                     {t.message}
                   </div>
                 )}
@@ -129,4 +140,3 @@ export const ToastProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     </ToastContext.Provider>
   );
 };
-

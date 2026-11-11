@@ -69,7 +69,8 @@ export const VEX_STATUS_LABELS: Record<VexStatus, { label: string; description: 
   },
   not_affected: {
     label: 'Not Affected (VEX Qualified)',
-    description: 'Match preserved in inventory, but VEX justification indicates vulnerable code is not present or reachable.',
+    description:
+      'Match preserved in inventory, but VEX justification indicates vulnerable code is not present or reachable.',
   },
   fixed: {
     label: 'Fixed',
@@ -103,19 +104,13 @@ export const REACHABILITY_LABELS: Record<ReachabilityState, { label: string; wei
 };
 
 export type UiOperationalState =
-  | 'healthy'
-  | 'loading'
-  | 'empty'
-  | 'stale'
-  | 'partial'
-  | 'unauthorized'
-  | 'failed'
-  | 'offline-demo';
+  'healthy' | 'loading' | 'empty' | 'stale' | 'partial' | 'unauthorized' | 'failed' | 'offline-demo';
 
 export const UI_STATE_BANNERS: Record<UiOperationalState, { title: string; guidance: string }> = {
   healthy: {
     title: 'Operational Telemetry Synchronized',
-    guidance: 'All upstream security feeds, graph topology mappings, and ML scoring pipelines are operational and synchronized.',
+    guidance:
+      'All upstream security feeds, graph topology mappings, and ML scoring pipelines are operational and synchronized.',
   },
   loading: {
     title: 'Loading Evidence Snapshot',
@@ -127,15 +122,18 @@ export const UI_STATE_BANNERS: Record<UiOperationalState, { title: string; guida
   },
   stale: {
     title: 'Stale External Evidence Warning',
-    guidance: 'One or more public feeds exceeded freshness targets. Showing pinned fallback snapshot with explicit cutoff timestamps.',
+    guidance:
+      'One or more public feeds exceeded freshness targets. Showing pinned fallback snapshot with explicit cutoff timestamps.',
   },
   partial: {
     title: 'Partial Evidence — Uncertainty Penalty Active',
-    guidance: 'Some findings have missing NVD or EPSS records. Unknown values are penalized and never treated as zero risk.',
+    guidance:
+      'Some findings have missing NVD or EPSS records. Unknown values are penalized and never treated as zero risk.',
   },
   unauthorized: {
     title: 'Read-Only Role Active',
-    guidance: 'Your current project membership role cannot execute this mutation. Plan approval requires Approver or Admin role.',
+    guidance:
+      'Your current project membership role cannot execute this mutation. Plan approval requires Approver or Admin role.',
   },
   failed: {
     title: 'Operation Failed',
@@ -143,7 +141,8 @@ export const UI_STATE_BANNERS: Record<UiOperationalState, { title: string; guida
   },
   'offline-demo': {
     title: 'Offline Reproducible Demo Mode',
-    guidance: 'Pinned to content-addressed snapshot snap_seed_01. All scores and plans are deterministic without network access.',
+    guidance:
+      'Pinned to content-addressed snapshot snap_seed_01. All scores and plans are deterministic without network access.',
   },
 };
 
@@ -152,7 +151,10 @@ export const DOMAIN_GLOSSARY_TERMS: Record<string, string> = {
   VEX: 'Vulnerability Exploitability eXchange statement qualifying whether a matched CVE affects a deployed product.',
   EPSS: 'Exploit Prediction Scoring System probability [0,1] estimating exploitation likelihood within 30 days.',
   KEV: 'CISA Known Exploited Vulnerabilities catalog confirming real-world exploitation.',
-  'Blast Radius': 'Bounded graph traversal (depth <= 12) resolving which services, assets, environments, and owners depend on a vulnerable package version.',
-  'Weighted Exposure Removed': 'Objective metric measuring total risk score eliminated by selected remediation actions under budget and downtime constraints.',
-  'Binding Constraint': 'A resource or compatibility constraint (e.g., max downtime minutes or budget hours) that prevented additional high-risk upgrades from being selected.',
+  'Blast Radius':
+    'Bounded graph traversal (depth <= 12) resolving which services, assets, environments, and owners depend on a vulnerable package version.',
+  'Weighted Exposure Removed':
+    'Objective metric measuring total risk score eliminated by selected remediation actions under budget and downtime constraints.',
+  'Binding Constraint':
+    'A resource or compatibility constraint (e.g., max downtime minutes or budget hours) that prevented additional high-risk upgrades from being selected.',
 };

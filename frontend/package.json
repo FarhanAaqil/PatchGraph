@@ -8,7 +8,9 @@
     "build": "tsc && vite build",
     "test": "vitest run",
     "lint": "eslint src",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write src",
+    "format:check": "prettier --check src eslint.config.js vite.config.ts"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.105.3",
@@ -31,6 +33,7 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "globals": "^17.14.0",
     "postcss": "^8.5.32",
+    "prettier": "^3.9.10",
     "tailwindcss": "^4.3.4",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.72.2",

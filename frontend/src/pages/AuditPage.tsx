@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { PatchGraphApiClient, } from '../api/generated';
+import { PatchGraphApiClient } from '../api/generated';
 import {
   FileText,
   ShieldCheck,
@@ -8,14 +8,10 @@ import {
   XCircle,
   Download,
   Search,
-  
-  
   User,
   ArrowRight,
   AlertCircle,
-  
-  
-  Lock
+  Lock,
 } from 'lucide-react';
 
 interface AuditPageProps {
@@ -51,7 +47,8 @@ export const AuditPage: React.FC<AuditPageProps> = ({ apiBaseUrl, initialPlanId 
   });
 
   const plans = React.useMemo(() => plansData?.items ?? [], [plansData]);
-  const currentPlan = (selectedPlanId && plans.find((p) => p.id === selectedPlanId)) || (plans.length > 0 ? plans[0] : null);
+  const currentPlan =
+    (selectedPlanId && plans.find((p) => p.id === selectedPlanId)) || (plans.length > 0 ? plans[0] : null);
 
   React.useEffect(() => {
     if (!selectedPlanId && plans.length > 0) {
@@ -64,7 +61,9 @@ export const AuditPage: React.FC<AuditPageProps> = ({ apiBaseUrl, initialPlanId 
     mutationFn: ({ planId, decision, reason }: { planId: string; decision: 'approved' | 'rejected'; reason: string }) =>
       client.decidePlan(planId, { decision, reason }),
     onSuccess: (data) => {
-      setDecisionSuccessMsg(`Decision '${data.decision.toUpperCase()}' committed to immutable audit entry #${data.audit_log_id}`);
+      setDecisionSuccessMsg(
+        `Decision '${data.decision.toUpperCase()}' committed to immutable audit entry #${data.audit_log_id}`,
+      );
       setDecisionErrorMsg(null);
       setDecisionComment('');
       queryClient.invalidateQueries({ queryKey: ['auditLogs'] });
@@ -114,7 +113,7 @@ export const AuditPage: React.FC<AuditPageProps> = ({ apiBaseUrl, initialPlanId 
       entry.action.toLowerCase().includes(searchQuery.toLowerCase()) ||
       entry.entity_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       entry.actor_id.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     const matchesAction = actionFilter === 'all' || entry.action.toLowerCase().includes(actionFilter.toLowerCase());
 
     return matchesSearch && matchesAction;
@@ -123,22 +122,49 @@ export const AuditPage: React.FC<AuditPageProps> = ({ apiBaseUrl, initialPlanId 
   return (
     <div style={{ padding: '2.5rem', maxWidth: '1440px', margin: '0 auto', color: 'var(--pg-ink)' }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2.5rem', flexWrap: 'wrap', gap: '1.5rem' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          marginBottom: '2.5rem',
+          flexWrap: 'wrap',
+          gap: '1.5rem',
+        }}
+      >
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-            <span className="pill-chip" style={{ background: 'rgba(122, 15, 224, 0.1)', color: 'var(--pg-violet)', border: '1px solid rgba(122, 15, 224, 0.25)' }}>
+            <span
+              className="pill-chip"
+              style={{
+                background: 'rgba(122, 15, 224, 0.1)',
+                color: 'var(--pg-violet)',
+                border: '1px solid rgba(122, 15, 224, 0.25)',
+              }}
+            >
               <Lock size={14} style={{ marginRight: '0.35rem' }} /> Append-Only Governance Log
             </span>
-            <span className="pill-chip" style={{ background: '#FFF', color: 'var(--pg-steel)', border: '1px solid #CBD5E1' }}>
+            <span
+              className="pill-chip"
+              style={{ background: '#FFF', color: 'var(--pg-steel)', border: '1px solid #CBD5E1' }}
+            >
               Demo data
             </span>
           </div>
-          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2.25rem', letterSpacing: '-0.03em', margin: 0, fontWeight: 800 }}>
+          <h1
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: '2.25rem',
+              letterSpacing: '-0.03em',
+              margin: 0,
+              fontWeight: 800,
+            }}
+          >
             Human Review & Immutable Audit
           </h1>
           <p style={{ color: 'var(--pg-steel)', marginTop: '0.5rem', fontSize: '1rem', maxWidth: '720px' }}>
-            PatchGraph explains and recommends — it never patches code automatically.
-            Every remediation plan requires human sign-off with mandatory rationale, sealed permanently into the tamper-evident audit ledger.
+            PatchGraph explains and recommends — it never patches code automatically. Every remediation plan requires
+            human sign-off with mandatory rationale, sealed permanently into the tamper-evident audit ledger.
           </p>
         </div>
 
@@ -196,9 +222,29 @@ export const AuditPage: React.FC<AuditPageProps> = ({ apiBaseUrl, initialPlanId 
             boxShadow: '0 8px 32px rgba(122, 15, 224, 0.08)',
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '1.5rem',
+              flexWrap: 'wrap',
+              gap: '1rem',
+            }}
+          >
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(122, 15, 224, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--pg-violet)' }}>
+              <div
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '50%',
+                  background: 'rgba(122, 15, 224, 0.12)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--pg-violet)',
+                }}
+              >
                 <ShieldCheck size={22} />
               </div>
               <div>
@@ -252,7 +298,14 @@ export const AuditPage: React.FC<AuditPageProps> = ({ apiBaseUrl, initialPlanId 
                 }}
               >
                 <div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--pg-steel)', textTransform: 'uppercase', fontWeight: 600 }}>
+                  <div
+                    style={{
+                      fontSize: '0.75rem',
+                      color: 'var(--pg-steel)',
+                      textTransform: 'uppercase',
+                      fontWeight: 600,
+                    }}
+                  >
                     Proposed Upgrade Action
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.35rem' }}>
@@ -261,9 +314,20 @@ export const AuditPage: React.FC<AuditPageProps> = ({ apiBaseUrl, initialPlanId 
                         <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.95rem' }}>
                           {act.package || act.package_name}
                         </span>
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: '#DC2626' }}>v{act.from || act.current_version}</span>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: '#DC2626' }}>
+                          v{act.from || act.current_version}
+                        </span>
                         <ArrowRight size={13} style={{ color: 'var(--pg-steel)' }} />
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: '#16A34A', fontWeight: 700 }}>v{act.to || act.target_version}</span>
+                        <span
+                          style={{
+                            fontFamily: 'var(--font-mono)',
+                            fontSize: '0.8rem',
+                            color: '#16A34A',
+                            fontWeight: 700,
+                          }}
+                        >
+                          v{act.to || act.target_version}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -271,20 +335,65 @@ export const AuditPage: React.FC<AuditPageProps> = ({ apiBaseUrl, initialPlanId 
 
                 <div style={{ display: 'flex', gap: '2rem' }}>
                   <div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--pg-steel)', textTransform: 'uppercase', fontWeight: 600 }}>Risk Removed</div>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: 800, color: 'var(--pg-violet)' }}>
+                    <div
+                      style={{
+                        fontSize: '0.75rem',
+                        color: 'var(--pg-steel)',
+                        textTransform: 'uppercase',
+                        fontWeight: 600,
+                      }}
+                    >
+                      Risk Removed
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '1.25rem',
+                        fontWeight: 800,
+                        color: 'var(--pg-violet)',
+                      }}
+                    >
                       -{currentPlan.risk_removed.toFixed(1)} pts
                     </div>
                   </div>
                   <div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--pg-steel)', textTransform: 'uppercase', fontWeight: 600 }}>Effort</div>
+                    <div
+                      style={{
+                        fontSize: '0.75rem',
+                        color: 'var(--pg-steel)',
+                        textTransform: 'uppercase',
+                        fontWeight: 600,
+                      }}
+                    >
+                      Effort
+                    </div>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: 700 }}>
-                      {((currentPlan as any).actions || []).reduce((a: number, b: any) => a + (b.hours || b.effort_hours || 0), 0).toFixed(1)}h
+                      {((currentPlan as any).actions || [])
+                        .reduce((a: number, b: any) => a + (b.hours || b.effort_hours || 0), 0)
+                        .toFixed(1)}
+                      h
                     </div>
                   </div>
                   <div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--pg-steel)', textTransform: 'uppercase', fontWeight: 600 }}>Current Status</div>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.1rem', fontWeight: 700, textTransform: 'uppercase', color: currentPlan.approval_state === 'approved' ? '#16A34A' : 'var(--pg-violet)' }}>
+                    <div
+                      style={{
+                        fontSize: '0.75rem',
+                        color: 'var(--pg-steel)',
+                        textTransform: 'uppercase',
+                        fontWeight: 600,
+                      }}
+                    >
+                      Current Status
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '1.1rem',
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        color: currentPlan.approval_state === 'approved' ? '#16A34A' : 'var(--pg-violet)',
+                      }}
+                    >
                       {currentPlan.approval_state || 'PENDING REVIEW'}
                     </div>
                   </div>
@@ -293,8 +402,17 @@ export const AuditPage: React.FC<AuditPageProps> = ({ apiBaseUrl, initialPlanId 
 
               {/* Mandatory Reviewer Justification Textarea */}
               <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--pg-ink)', display: 'block', marginBottom: '0.5rem' }}>
-                  Reviewer Justification & Maintenance Window Notes <span style={{ color: '#DC2626' }}>* (Required)</span>
+                <label
+                  style={{
+                    fontSize: '0.85rem',
+                    fontWeight: 700,
+                    color: 'var(--pg-ink)',
+                    display: 'block',
+                    marginBottom: '0.5rem',
+                  }}
+                >
+                  Reviewer Justification & Maintenance Window Notes{' '}
+                  <span style={{ color: '#DC2626' }}>* (Required)</span>
                 </label>
                 <textarea
                   rows={3}
@@ -316,12 +434,38 @@ export const AuditPage: React.FC<AuditPageProps> = ({ apiBaseUrl, initialPlanId 
 
               {/* Feedback messages */}
               {decisionSuccessMsg && (
-                <div style={{ padding: '1rem', background: '#F0FDF4', border: '1px solid #86EFAC', borderRadius: 'var(--radius-card)', color: '#166534', marginBottom: '1.25rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div
+                  style={{
+                    padding: '1rem',
+                    background: '#F0FDF4',
+                    border: '1px solid #86EFAC',
+                    borderRadius: 'var(--radius-card)',
+                    color: '#166534',
+                    marginBottom: '1.25rem',
+                    fontSize: '0.85rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                  }}
+                >
                   <CheckCircle2 size={16} /> {decisionSuccessMsg}
                 </div>
               )}
               {decisionErrorMsg && (
-                <div style={{ padding: '1rem', background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: 'var(--radius-card)', color: '#991B1B', marginBottom: '1.25rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div
+                  style={{
+                    padding: '1rem',
+                    background: '#FEF2F2',
+                    border: '1px solid #FCA5A5',
+                    borderRadius: 'var(--radius-card)',
+                    color: '#991B1B',
+                    marginBottom: '1.25rem',
+                    fontSize: '0.85rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                  }}
+                >
                   <AlertCircle size={16} /> {decisionErrorMsg}
                 </div>
               )}
@@ -390,7 +534,16 @@ export const AuditPage: React.FC<AuditPageProps> = ({ apiBaseUrl, initialPlanId 
           }}
         >
           {/* Timeline Title & Filter Bar */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '1.5rem',
+              flexWrap: 'wrap',
+              gap: '1rem',
+            }}
+          >
             <div>
               <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800 }}>Immutable Audit Ledger</h3>
               <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem', color: 'var(--pg-steel)' }}>
@@ -400,7 +553,16 @@ export const AuditPage: React.FC<AuditPageProps> = ({ apiBaseUrl, initialPlanId 
 
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
               <div style={{ position: 'relative', width: '240px' }}>
-                <Search size={14} style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--pg-steel)' }} />
+                <Search
+                  size={14}
+                  style={{
+                    position: 'absolute',
+                    left: '0.85rem',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: 'var(--pg-steel)',
+                  }}
+                />
                 <input
                   type="text"
                   placeholder="Filter audit log..."
@@ -450,7 +612,16 @@ export const AuditPage: React.FC<AuditPageProps> = ({ apiBaseUrl, initialPlanId 
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
                 <thead>
-                  <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', color: 'var(--pg-steel)', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.05em' }}>
+                  <tr
+                    style={{
+                      background: '#F8FAFC',
+                      borderBottom: '1px solid #E2E8F0',
+                      color: 'var(--pg-steel)',
+                      textTransform: 'uppercase',
+                      fontSize: '0.75rem',
+                      letterSpacing: '0.05em',
+                    }}
+                  >
                     <th style={{ padding: '0.85rem 1rem', fontWeight: 600 }}>Entry #</th>
                     <th style={{ padding: '0.85rem 1rem', fontWeight: 600 }}>Timestamp</th>
                     <th style={{ padding: '0.85rem 1rem', fontWeight: 600 }}>Action</th>
@@ -466,10 +637,24 @@ export const AuditPage: React.FC<AuditPageProps> = ({ apiBaseUrl, initialPlanId 
 
                     return (
                       <tr key={log.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
-                        <td style={{ padding: '1rem', fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--pg-violet)' }}>
+                        <td
+                          style={{
+                            padding: '1rem',
+                            fontFamily: 'var(--font-mono)',
+                            fontWeight: 700,
+                            color: 'var(--pg-violet)',
+                          }}
+                        >
                           #{log.id}
                         </td>
-                        <td style={{ padding: '1rem', fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--pg-steel)' }}>
+                        <td
+                          style={{
+                            padding: '1rem',
+                            fontFamily: 'var(--font-mono)',
+                            fontSize: '0.8rem',
+                            color: 'var(--pg-steel)',
+                          }}
+                        >
                           {log.created_at ? new Date(log.created_at).toLocaleString() : 'Recent'}
                         </td>
                         <td style={{ padding: '1rem' }}>
@@ -499,7 +684,16 @@ export const AuditPage: React.FC<AuditPageProps> = ({ apiBaseUrl, initialPlanId 
                         </td>
                         <td style={{ padding: '1rem 1.5rem', color: 'var(--pg-ink)' }}>
                           {reason ? (
-                            <div style={{ fontStyle: 'italic', color: '#166534', background: '#F0FDF4', padding: '0.35rem 0.75rem', borderRadius: '6px', border: '1px solid #BBF7D0' }}>
+                            <div
+                              style={{
+                                fontStyle: 'italic',
+                                color: '#166534',
+                                background: '#F0FDF4',
+                                padding: '0.35rem 0.75rem',
+                                borderRadius: '6px',
+                                border: '1px solid #BBF7D0',
+                              }}
+                            >
                               "{reason}"
                             </div>
                           ) : (
@@ -522,4 +716,3 @@ export const AuditPage: React.FC<AuditPageProps> = ({ apiBaseUrl, initialPlanId 
 };
 
 export default AuditPage;
-

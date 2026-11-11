@@ -1,17 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { 
-  Search, 
-  
-  ChevronRight, 
-  ShieldAlert, 
-  Layers, 
-  GitBranch, 
-  FileCheck2, 
-  Cpu, 
-  Lock, 
-  Settings, 
-  Server, 
-  
+import {
+  Search,
+  ChevronRight,
+  ShieldAlert,
+  Layers,
+  GitBranch,
+  FileCheck2,
+  Cpu,
+  Lock,
+  Settings,
+  Server,
 } from 'lucide-react';
 
 interface Props {
@@ -42,18 +40,51 @@ export const CommandPalette: React.FC<Props> = ({ isOpen, onClose, onNavigate })
 
   const actions = [
     { id: 'landing', label: 'Overview & 3D Topology HUD', category: 'Navigation', icon: <Layers size={16} /> },
-    { id: 'ingest', label: 'Ingest SBOM, VEX & Deployment Topology', category: 'Navigation', icon: <FileCheck2 size={16} /> },
-    { id: 'graph', label: 'Interactive Dependency & Deployment Graph', category: 'Navigation', icon: <GitBranch size={16} /> },
-    { id: 'risk', label: 'Prioritized Risk Register & Explainability', category: 'Navigation', icon: <ShieldAlert size={16} /> },
+    {
+      id: 'ingest',
+      label: 'Ingest SBOM, VEX & Deployment Topology',
+      category: 'Navigation',
+      icon: <FileCheck2 size={16} />,
+    },
+    {
+      id: 'graph',
+      label: 'Interactive Dependency & Deployment Graph',
+      category: 'Navigation',
+      icon: <GitBranch size={16} />,
+    },
+    {
+      id: 'risk',
+      label: 'Prioritized Risk Register & Explainability',
+      category: 'Navigation',
+      icon: <ShieldAlert size={16} />,
+    },
     { id: 'planner', label: 'CP-SAT Remediation Planner & Sliders', category: 'Navigation', icon: <Cpu size={16} /> },
     { id: 'audit', label: 'Human Review Gate & Append-Only Audit', category: 'Navigation', icon: <Lock size={16} /> },
-    { id: 'settings', label: 'Connector Freshness & Platform Settings', category: 'Navigation', icon: <Settings size={16} /> },
-    { id: 'cve-1001', label: 'CVE-2026-1001 (example-lib @ 1.4.0 — Score 10.57)', category: 'Vulnerabilities', icon: <ShieldAlert size={16} style={{ color: '#DC2626' }} /> },
-    { id: 'svc-checkout', label: 'service:checkout (PCI-DSS prod-cluster SLA 30m)', category: 'Services', icon: <Server size={16} style={{ color: 'var(--color-violet)' }} /> },
+    {
+      id: 'settings',
+      label: 'Connector Freshness & Platform Settings',
+      category: 'Navigation',
+      icon: <Settings size={16} />,
+    },
+    {
+      id: 'cve-1001',
+      label: 'CVE-2026-1001 (example-lib @ 1.4.0 — Score 10.57)',
+      category: 'Vulnerabilities',
+      icon: <ShieldAlert size={16} style={{ color: '#DC2626' }} />,
+    },
+    {
+      id: 'svc-checkout',
+      label: 'service:checkout (PCI-DSS prod-cluster SLA 30m)',
+      category: 'Services',
+      icon: <Server size={16} style={{ color: 'var(--color-violet)' }} />,
+    },
   ];
 
   const filtered = query.trim()
-    ? actions.filter((a) => a.label.toLowerCase().includes(query.toLowerCase()) || a.category.toLowerCase().includes(query.toLowerCase()))
+    ? actions.filter(
+        (a) =>
+          a.label.toLowerCase().includes(query.toLowerCase()) || a.category.toLowerCase().includes(query.toLowerCase()),
+      )
     : actions;
 
   const handleSelect = (actionId: string) => {
@@ -102,7 +133,15 @@ export const CommandPalette: React.FC<Props> = ({ isOpen, onClose, onNavigate })
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search Bar */}
-        <div style={{ display: 'flex', alignItems: 'center', padding: '1rem 1.5rem', borderBottom: '1px solid #E2E8F0', gap: '0.75rem' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            padding: '1rem 1.5rem',
+            borderBottom: '1px solid #E2E8F0',
+            gap: '0.75rem',
+          }}
+        >
           <Search size={20} style={{ color: 'var(--color-violet)' }} />
           <input
             type="text"
@@ -138,7 +177,9 @@ export const CommandPalette: React.FC<Props> = ({ isOpen, onClose, onNavigate })
         {/* Results List */}
         <div style={{ maxHeight: '380px', overflowY: 'auto', padding: '0.5rem' }}>
           {filtered.length === 0 ? (
-            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-steel-gray)', fontSize: '0.85rem' }}>
+            <div
+              style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-steel-gray)', fontSize: '0.85rem' }}
+            >
               No matching assets or actions found.
             </div>
           ) : (
@@ -178,10 +219,15 @@ export const CommandPalette: React.FC<Props> = ({ isOpen, onClose, onNavigate })
                     {item.icon}
                   </div>
                   <div>
-                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--color-ink)' }}>
-                      {item.label}
-                    </div>
-                    <div style={{ fontSize: '0.7rem', fontFamily: 'var(--font-mono)', color: 'var(--color-steel-gray)', textTransform: 'uppercase' }}>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--color-ink)' }}>{item.label}</div>
+                    <div
+                      style={{
+                        fontSize: '0.7rem',
+                        fontFamily: 'var(--font-mono)',
+                        color: 'var(--color-steel-gray)',
+                        textTransform: 'uppercase',
+                      }}
+                    >
                       {item.category}
                     </div>
                   </div>
@@ -194,7 +240,19 @@ export const CommandPalette: React.FC<Props> = ({ isOpen, onClose, onNavigate })
         </div>
 
         {/* Footer shortcuts */}
-        <div style={{ padding: '0.65rem 1.25rem', background: '#F8FAFC', borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', color: 'var(--color-steel-gray)', fontFamily: 'var(--font-mono)' }}>
+        <div
+          style={{
+            padding: '0.65rem 1.25rem',
+            background: '#F8FAFC',
+            borderTop: '1px solid #E2E8F0',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            fontSize: '0.75rem',
+            color: 'var(--color-steel-gray)',
+            fontFamily: 'var(--font-mono)',
+          }}
+        >
           <span>Navigate with arrows or click to select</span>
           <span>PatchGraph v2.0</span>
         </div>

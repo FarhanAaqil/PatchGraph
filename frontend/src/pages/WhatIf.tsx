@@ -4,11 +4,7 @@ export const WhatIfPage: React.FC<{
   baselineRiskRemoved?: number;
   simulatedRiskRemoved?: number;
   greedyRiskRemoved?: number;
-}> = ({
-  baselineRiskRemoved = 18.4,
-  simulatedRiskRemoved = 22.6,
-  greedyRiskRemoved = 18.4,
-}) => (
+}> = ({ baselineRiskRemoved = 18.4, simulatedRiskRemoved = 22.6, greedyRiskRemoved = 18.4 }) => (
   <section aria-labelledby="what-if-heading">
     <h1 id="what-if-heading">What-If Constrained Plan Simulation</h1>
     <table aria-label="Side-by-Side Plan Trade-Off Comparison">
