@@ -39,7 +39,7 @@ test.describe('Exhaustive Live Operations Test Suite', () => {
     const searchInput = page.getByPlaceholder('Search commands, CVEs, packages, services...');
     await expect(searchInput).toBeVisible();
     await searchInput.fill('CVE-2026-1001');
-    await expect(page.getByText('CVE-2026-1001 (example-lib @ 1.4.0 — Score 10.57)')).toBeVisible();
+    await expect(page.getByText('CVE-2026-1001 (example-lib @ 1.4.0)')).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(searchInput).toBeHidden();
 

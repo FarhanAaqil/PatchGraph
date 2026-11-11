@@ -68,7 +68,7 @@ export const CommandPalette: React.FC<Props> = ({ isOpen, onClose, onNavigate })
     },
     {
       id: 'cve-1001',
-      label: 'CVE-2026-1001 (example-lib @ 1.4.0 — Score 10.57)',
+      label: 'CVE-2026-1001 (example-lib @ 1.4.0)',
       category: 'Vulnerabilities',
       icon: <ShieldAlert size={16} style={{ color: '#DC2626' }} />,
     },

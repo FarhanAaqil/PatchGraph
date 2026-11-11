@@ -119,6 +119,36 @@ class TestExtendedApiEndpoints(unittest.TestCase):
         self.assertEqual(stale["data_freshness"], "stale")
         self.assertEqual(stale["sources"]["epss"]["status"], "stale")
 
+    def test_approval_state_follows_the_recorded_decision(self) -> None:
+        self.client.post("/api/v1/demo/load-sample", headers=self.headers)
+        plan = self.client.post(
+            "/api/v1/plans",
+            headers=self.headers,
+            json={
+                "risk_run_id": "rr_01",
+                "budget_hours": 40,
+                "max_downtime_minutes": 30,
+                "environments": ["prod"],
+                "objective": "weighted_exposure",
+            },
+        ).json()
+        plan_id = plan["id"]
+
+        def state_in_list() -> str:
+            items = self.client.get("/api/v1/plans", headers=self.headers).json()["items"]
+            return next(p for p in items if p["id"] == plan_id)["approval_state"]
+
+        self.assertEqual(state_in_list(), "pending_human_approval")
+        decided = self.client.post(
+            f"/api/v1/plans/{plan_id}/decision",
+            headers=self.headers,
+            json={"decision": "approved", "reason": "Checked against staging"},
+        )
+        self.assertEqual(decided.status_code, 200)
+        self.assertEqual(state_in_list(), "approved")
+        detail = self.client.get(f"/api/v1/plans/{plan_id}", headers=self.headers).json()
+        self.assertEqual(detail["approval_state"], "approved")
+
     def test_forced_reseed_never_deletes_memberships(self) -> None:
         """A reload of the sample data must not open a window where every caller looks like a non-member."""
         statements: list[str] = []

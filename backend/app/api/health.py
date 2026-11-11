@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from datetime import datetime, timezone
 from typing import Any, Dict
 
@@ -97,6 +98,8 @@ async def get_sources_status(
         "snapshot_sha256": snap["manifest_sha256"] if snap else None,
         "data_freshness": freshness,
         "snapshot_id": snap["id"] if snap else None,
+        "offline_demo_mode": os.environ.get("PATCHGRAPH_OFFLINE_DEMO", "true").strip().lower()
+        not in ("0", "false", "no"),
         "request_id": ctx["request_id"],
     }
 

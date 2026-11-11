@@ -58,8 +58,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ motionEnabled = true
           Environment & Connector Settings
         </h1>
         <p style={{ color: 'var(--pg-steel)', marginTop: '0.5rem', fontSize: '1rem', maxWidth: '640px' }}>
-          Inspect upstream threat intelligence connectors, adjust runtime connectivity, and customize display rendering
-          and motion preferences.
+          Inspect upstream threat intelligence connectors, and customize display rendering and motion preferences.
         </p>
       </div>
 
