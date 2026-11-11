@@ -56,7 +56,7 @@ def compute_json_depth(obj: Any, current: int = 0) -> int:
     return current
 
 
-def get_request_context(
+async def get_request_context(
     request: Request,
     authorization: Optional[str] = Header(default=None),
     x_project_id: Optional[str] = Header(default=None),
@@ -65,6 +65,10 @@ def get_request_context(
     db: DatabaseManager = Depends(get_db),
 ) -> Dict[str, str]:
     """Resolve who is calling and what they may do.
+
+    Declared `async` on purpose: the app shares one SQLite connection, and a sync dependency would run in a
+    worker thread and query it while handlers commit on the event-loop thread, which made membership lookups
+    intermittently come back empty (a spurious 403). Keeping it on the loop keeps all DB access on one thread.
 
     A signed bearer token is the real credential. Plain identity headers are only honoured while
     demo identity is enabled (never in production), and in both cases the role comes from the
