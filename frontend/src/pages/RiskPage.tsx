@@ -14,11 +14,7 @@ import {
   ArrowUpDown,
 } from 'lucide-react';
 
-interface RiskPageProps {
-  apiBaseUrl?: string;
-}
-
-export const RiskPage: React.FC<RiskPageProps> = ({ apiBaseUrl }) => {
+export const RiskPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [envFilter, setEnvFilter] = useState('all');
   const [kevFilter, setKevFilter] = useState('all');
@@ -36,7 +32,7 @@ export const RiskPage: React.FC<RiskPageProps> = ({ apiBaseUrl }) => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const client = new PatchGraphApiClient({ baseUrl: apiBaseUrl || '' });
+  const client = new PatchGraphApiClient();
 
   const {
     data: findingsData,
@@ -322,7 +318,7 @@ export const RiskPage: React.FC<RiskPageProps> = ({ apiBaseUrl }) => {
             Loading ranked findings...
           </div>
           <p style={{ color: 'var(--pg-steel)', fontSize: '0.9rem' }}>
-            Querying API risk factors and baseline score distributions.
+            Collecting risk factors and baseline score distributions.
           </p>
         </div>
       ) : error ? (
@@ -336,11 +332,9 @@ export const RiskPage: React.FC<RiskPageProps> = ({ apiBaseUrl }) => {
           }}
         >
           <h3 style={{ margin: '0 0 0.5rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <AlertTriangle size={18} /> Failed to load findings from backend
+            <AlertTriangle size={18} /> Findings could not be loaded
           </h3>
-          <p style={{ margin: 0, fontSize: '0.9rem' }}>
-            Please verify the PatchGraph API server is running on {apiBaseUrl || 'port 5000'}.
-          </p>
+          <p style={{ margin: 0, fontSize: '0.9rem' }}>Please check that PatchGraph is running and try again.</p>
         </div>
       ) : filteredItems.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '4rem', background: '#FFF', borderRadius: 'var(--radius-frame)' }}>

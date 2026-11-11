@@ -1,6 +1,10 @@
 # Changelog — PatchGraph
 
 ## [1.1.0] — 2026-11-11
+### Interface
+- The web interface no longer shows endpoint URLs or backend wording, and the Settings screen no longer has an "API Gateway Endpoint" field. `/docs`, `/redoc` and `/openapi.json` are not served unless `PATCHGRAPH_ENABLE_DOCS=true`.
+- The audit export button called a doubled path (`/api/v1/api/v1/audit/export`) whenever the default base URL was set; it now calls the right one.
+
 ### Security
 - A caller's role now always comes from the `memberships` table. `X-User-Role` can lower it but no longer raise it, and requests without headers no longer run as the seeded approver in production.
 - Signed bearer tokens are supported end to end (`scripts/issue_token.py`, client `token` option). The signing key comes from `PATCHGRAPH_AUTH_SIGNING_KEY`; production refuses to start without it and no key is committed.

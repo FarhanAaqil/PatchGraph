@@ -118,6 +118,18 @@ class TestProductionMode(unittest.TestCase):
             self.assertEqual(res.status_code, 401)
 
 
+class TestApiDocsHidden(unittest.TestCase):
+    def test_docs_are_not_published_by_default(self) -> None:
+        client = build_client(DatabaseManager(":memory:"))
+        for path in ("/docs", "/redoc", "/openapi.json"):
+            self.assertEqual(client.get(path).status_code, 404, path)
+
+    def test_docs_can_be_switched_on_explicitly(self) -> None:
+        with mock.patch.dict(os.environ, {"PATCHGRAPH_ENABLE_DOCS": "true"}):
+            client = build_client(DatabaseManager(":memory:"))
+            self.assertEqual(client.get("/openapi.json").status_code, 200)
+
+
 class TestCors(unittest.TestCase):
     def test_wildcard_origin_is_never_allowed(self) -> None:
         with mock.patch.dict(os.environ, {"CORS_ORIGINS": "*, https://app.example.com"}):

@@ -102,7 +102,7 @@ Open **[http://127.0.0.1:5000](http://127.0.0.1:5000)**. The first start creates
 docker compose up --build
 ```
 
-One container serves the API and the UI on `http://localhost:5000` (OpenAPI docs at `/docs`), with SQLite on a named
+One container serves the API and the UI on `http://localhost:5000` (interactive API docs are off by default; set `PATCHGRAPH_ENABLE_DOCS=true` to serve `/docs`), with SQLite on a named
 volume. `docker/compose.prod.yml` is the production-style variant: read-only filesystem, bearer tokens required, and
 `PATCHGRAPH_AUTH_SIGNING_KEY` must be set.
 
@@ -174,13 +174,13 @@ Tests write experiment output to a scratch directory (`PATCHGRAPH_OUTPUT_DIR`), 
 | `POST` | `/api/v1/plans/{id}/decision` | Human approval sign-off (writes to the audit log) |
 | `GET` | `/api/v1/audit`, `/api/v1/audit/export` | Append-only audit log, JSON or CSV export |
 
-`contracts/openapi.yaml` is the API contract; the running server also serves generated docs at `/docs`.
+`contracts/openapi.yaml` is the API contract. The running server does not publish `/docs`, `/redoc` or `/openapi.json` unless `PATCHGRAPH_ENABLE_DOCS=true`, and the web interface never shows endpoint URLs or lets users change an API address.
 
 ## Known limitations
 
 - Storage is SQLite only. The schema is written as PostgreSQL DDL and translated, but there is no Postgres driver.
 - Topology import acknowledges the request but does not yet parse the uploaded topology file.
-- `contracts/openapi.yaml` documents a subset of the routes above; the generated `/docs` is complete.
+- `contracts/openapi.yaml` documents a subset of the routes above; the generated docs (when enabled) are complete.
 - The frontend still has 27 `any` usages, reported as ESLint warnings.
 
 ---

@@ -28,11 +28,20 @@ def allowed_origins() -> list[str]:
     return [o.strip() for o in raw.split(",") if o.strip() and o.strip() != "*"]
 
 
+def docs_enabled() -> bool:
+    """Interactive API docs (/docs, /redoc, /openapi.json) are off unless explicitly switched on."""
+    return os.environ.get("PATCHGRAPH_ENABLE_DOCS", "").strip().lower() in ("1", "true", "yes")
+
+
 def create_app() -> FastAPI:
     if is_production():
         get_signing_key()  # refuse to boot without a configured signing key
 
+    enabled = docs_enabled()
     app = FastAPI(
+        docs_url="/docs" if enabled else None,
+        redoc_url="/redoc" if enabled else None,
+        openapi_url="/openapi.json" if enabled else None,
         title="PatchGraph API",
         version="1.0.0",
         description="Software Supply-Chain Intelligence System for Explainable, Constrained Remediation Planning",

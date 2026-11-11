@@ -761,7 +761,7 @@ export const GraphPage: React.FC<GraphPageProps> = ({ onNavigateToPlanner }) => 
                     }}
                   >
                     {selectedNode.vex_statement?.justification ||
-                      'Transitive requirement of service:checkout reachable via public API gateway.'}
+                      'Transitive requirement of service:checkout reachable via the public gateway.'}
                   </p>
                 </div>
 

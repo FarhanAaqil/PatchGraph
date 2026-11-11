@@ -15,13 +15,12 @@ import {
 } from 'lucide-react';
 
 interface AuditPageProps {
-  apiBaseUrl?: string;
   initialPlanId?: string;
 }
 
-export const AuditPage: React.FC<AuditPageProps> = ({ apiBaseUrl, initialPlanId }) => {
+export const AuditPage: React.FC<AuditPageProps> = ({ initialPlanId }) => {
   const queryClient = useQueryClient();
-  const client = new PatchGraphApiClient({ baseUrl: apiBaseUrl || '' });
+  const client = new PatchGraphApiClient();
 
   // Decision state
   const [decisionComment, setDecisionComment] = useState('');
@@ -91,7 +90,7 @@ export const AuditPage: React.FC<AuditPageProps> = ({ apiBaseUrl, initialPlanId 
 
   const handleExport = async (format: 'json' | 'csv') => {
     try {
-      const res = await fetch(`${apiBaseUrl || ''}/api/v1/audit/export?format=${format}`);
+      const res = await fetch(`/api/v1/audit/export?format=${format}`);
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
